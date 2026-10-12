@@ -57,7 +57,7 @@ Le projet démarre avec une application monopage autonome :
 
 ```
 BUDGET_HOME/
-├── Budget_et_Immo.html        # Application complète (HTML + CSS + JS)
+├── index.html        # Application complète (HTML + CSS + JS)
 ├── budget_v6_2025-12-15.json  # Exemple de fichier de sauvegarde
 └── README.md
 ```
@@ -71,7 +71,7 @@ BUDGET_HOME/
 ## 🚀 Utilisation
 
 ### En local
-Ouvrez simplement le fichier `Budget_et_Immo.html` dans un navigateur. Aucun serveur requis.
+Ouvrez simplement le fichier `index.html` dans un navigateur. Aucun serveur requis.
 
 ### Déploiement Vercel
 Ce dépôt est destiné à être déployé sur Vercel :
