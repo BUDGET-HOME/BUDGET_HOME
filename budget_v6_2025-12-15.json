@@ -1,0 +1,60 @@
+{
+  "name1": "Raphael",
+  "name2": "Sarah",
+  "salary1": 2300,
+  "salary2": 1600,
+  "force5050": false,
+  "expenses": [
+    {
+      "id": 1765811209766,
+      "desc": "Loyer",
+      "amount": 930,
+      "freq": "monthly",
+      "category": "🏠 Logement",
+      "payer": "1"
+    },
+    {
+      "id": 1765811222062,
+      "desc": "Gaz Elec",
+      "amount": 274,
+      "freq": "monthly",
+      "category": "⚡ Énergie",
+      "payer": "1"
+    },
+    {
+      "id": 1765811234237,
+      "desc": "Crèche bébé",
+      "amount": 450,
+      "freq": "monthly",
+      "category": "👶 Enfants & Bébé",
+      "payer": "2"
+    },
+    {
+      "id": 1765811247077,
+      "desc": "Free Mobile",
+      "amount": 54,
+      "freq": "monthly",
+      "category": "📱 Mobile & Internet",
+      "payer": "1"
+    },
+    {
+      "id": 1765811257941,
+      "desc": "Netflix",
+      "amount": 19,
+      "freq": "monthly",
+      "category": "📺 TV & Streaming",
+      "payer": "1"
+    },
+    {
+      "id": 1765811301806,
+      "desc": "courses",
+      "amount": 800,
+      "freq": "monthly",
+      "category": "🛒 Courses",
+      "payer": "2"
+    }
+  ],
+  "immoApport": 40000,
+  "immoRate": 3.8,
+  "immoDuration": 25
+}
