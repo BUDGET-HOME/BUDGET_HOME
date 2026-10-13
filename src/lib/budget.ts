@@ -1,0 +1,120 @@
+import { RENT_CATEGORY, type Expense } from "./types";
+
+export interface RatioResult {
+  ratio1: number;
+  ratio2: number;
+  forced: boolean;
+}
+
+export function computeRatio(
+  salary1: number,
+  salary2: number,
+  force5050: boolean
+): RatioResult {
+  const total = salary1 + salary2;
+  const forced = force5050 || total <= 0;
+  const ratio1 = forced ? 0.5 : salary1 / total;
+  return { ratio1, ratio2: 1 - ratio1, forced };
+}
+
+export function annualAmount(exp: Expense): number {
+  return exp.freq === "monthly" ? exp.amount * 12 : exp.amount;
+}
+
+export interface BudgetSummary {
+  totalAnnual: number;
+  paidAnnual1: number;
+  paidAnnual2: number;
+  categoryTotals: Record<string, number>;
+  currentAnnualRent: number;
+}
+
+export function summarizeExpenses(expenses: Expense[]): BudgetSummary {
+  const summary: BudgetSummary = {
+    totalAnnual: 0,
+    paidAnnual1: 0,
+    paidAnnual2: 0,
+    categoryTotals: {},
+    currentAnnualRent: 0,
+  };
+  for (const exp of expenses) {
+    const annual = annualAmount(exp);
+    summary.totalAnnual += annual;
+    if (exp.payer === "1") summary.paidAnnual1 += annual;
+    else summary.paidAnnual2 += annual;
+    summary.categoryTotals[exp.category] =
+      (summary.categoryTotals[exp.category] ?? 0) + annual;
+    if (exp.category === RENT_CATEGORY) summary.currentAnnualRent += annual;
+  }
+  return summary;
+}
+
+export type ViewMode = "monthly" | "annual";
+
+export interface BalanceResult {
+  displayTotal: number;
+  displayIncome: number;
+  displayPaid1: number;
+  displayPaid2: number;
+  savingsCapacity: number;
+  shouldPay1: number;
+  balance1: number;
+}
+
+export function computeBalance(
+  salary1: number,
+  salary2: number,
+  expenses: Expense[],
+  viewMode: ViewMode,
+  force5050: boolean
+): BalanceResult {
+  const { ratio1 } = computeRatio(salary1, salary2, force5050);
+  const s = summarizeExpenses(expenses);
+  const factor = viewMode === "monthly" ? 12 : 1;
+  const displayTotal = s.totalAnnual / factor;
+  const displayIncome = ((salary1 + salary2) * 12) / factor;
+  const displayPaid1 = s.paidAnnual1 / factor;
+  const displayPaid2 = s.paidAnnual2 / factor;
+  const shouldPay1 = displayTotal * ratio1;
+  return {
+    displayTotal,
+    displayIncome,
+    displayPaid1,
+    displayPaid2,
+    savingsCapacity: displayIncome - displayTotal,
+    shouldPay1,
+    balance1: displayPaid1 - shouldPay1,
+  };
+}
+
+export interface Verdict {
+  status: "empty" | "balanced" | "debt";
+  debtor: string;
+  creditor: string;
+  amount: number;
+}
+
+export function computeVerdict(
+  balance1: number,
+  totalAnnual: number,
+  name1: string,
+  name2: string
+): Verdict {
+  if (totalAnnual === 0) {
+    return { status: "empty", debtor: "", creditor: "", amount: 0 };
+  }
+  if (Math.abs(balance1) < 1) {
+    return { status: "balanced", debtor: "", creditor: "", amount: 0 };
+  }
+  const debtor = balance1 > 0 ? name2 : name1;
+  const creditor = balance1 > 0 ? name1 : name2;
+  return { status: "debt", debtor, creditor, amount: Math.abs(balance1) };
+}
+
+export function formatEUR(value: number, digits = 0): string {
+  return value.toLocaleString("fr-FR", {
+    style: "currency",
+    currency: "EUR",
+    maximumFractionDigits: digits,
+  });
+}
