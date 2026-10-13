@@ -8,6 +8,7 @@ import DepensesForm from "./DepensesForm";
 import AnalyseCard from "./AnalyseCard";
 import LoanCard from "./LoanCard";
 import ChargesTable from "./ChargesTable";
+import ChartsCard from "./ChartsCard";
 import { normalizeState } from "@/lib/budget-service";
 
 export default function BudgetApp() {
@@ -56,6 +57,7 @@ export default function BudgetApp() {
       <LoanCard state={state} update={update} />
       <AnalyseCard state={state} viewMode={viewMode} setViewMode={setViewMode} />
       <ChargesTable state={state} update={update} />
+      <ChartsCard state={state} />
     </main>
   );
 }
