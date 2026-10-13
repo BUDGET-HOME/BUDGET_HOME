@@ -16,7 +16,8 @@ interface Props {
 }
 
 export default function LoanCard({ state, update }: Props) {
-  const [extra, setExtra] = useState(0);
+  const [extraMonthly, setExtraMonthly] = useState(0);
+  const [extraOneTime, setExtraOneTime] = useState(0);
   const [showAmort, setShowAmort] = useState(false);
   const loan = state.loan;
   const summary = computeLoanSummary(loan);
@@ -24,12 +25,11 @@ export default function LoanCard({ state, update }: Props) {
   const setLoan = (patch: Partial<typeof loan>) =>
     update((p) => ({ ...p, loan: { ...p.loan, ...patch } }));
 
-  const projection = projectLoan(
-    loan,
-    summary.remainingBalance,
-    summary.remainingMonths,
-    extra
-  );
+  const projection = projectLoan(loan, summary.remainingBalance, summary.remainingMonths, {
+    oneTime: extraOneTime,
+    monthly: extraMonthly,
+  });
+  const hasExtra = extraOneTime > 0 || extraMonthly > 0;
   const savedMonths = summary.remainingMonths - projection.monthsToPayoff;
 
   return (
@@ -315,21 +315,33 @@ export default function LoanCard({ state, update }: Props) {
         <h3 className="font-bold text-indigo-800 text-sm mb-2">
           ⏩ Remboursement anticipé
         </h3>
-        <div className="flex flex-wrap items-end gap-3">
+        <div className="flex flex-wrap items-end gap-4">
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 mb-1">
+              Somme ponctuelle (€) — immédiate
+            </label>
+            <input
+              type="number"
+              value={extraOneTime || ""}
+              placeholder="0"
+              onChange={(e) => setExtraOneTime(parseFloat(e.target.value) || 0)}
+              className="rounded-md border border-slate-300 px-3 py-2 w-40"
+            />
+          </div>
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-1">
               Mensualité supplémentaire (€/mois)
             </label>
             <input
               type="number"
-              value={extra || ""}
+              value={extraMonthly || ""}
               placeholder="0"
-              onChange={(e) => setExtra(parseFloat(e.target.value) || 0)}
+              onChange={(e) => setExtraMonthly(parseFloat(e.target.value) || 0)}
               className="rounded-md border border-slate-300 px-3 py-2 w-40"
             />
           </div>
-          <div className="text-sm">
-            {extra > 0 && projection.payoffDate ? (
+          <div className="text-sm min-w-56">
+            {hasExtra && projection.payoffDate ? (
               <>
                 <p>
                   Solder en{" "}
@@ -349,10 +361,17 @@ export default function LoanCard({ state, update }: Props) {
                     </>
                   )}
                 </p>
+                {extraOneTime > 0 && (
+                  <p className="text-slate-600 text-xs mt-1">
+                    Restant dû après paiement ponctuel :{" "}
+                    {formatEUR(Math.max(0, summary.remainingBalance - extraOneTime))}
+                  </p>
+                )}
               </>
             ) : (
               <p className="text-slate-500">
-                Ajoutez un montant mensuel pour simuler un remboursement anticipé.
+                Saisissez une somme ponctuelle et/ou une mensualité
+                supplémentaire pour simuler un remboursement anticipé.
               </p>
             )}
           </div>
