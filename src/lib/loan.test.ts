@@ -1,21 +1,35 @@
 import { describe, expect, it } from "vitest";
-import { annuityPayment, computeLoanSummary, projectLoan } from "./loan";
-import type { LoanSettings } from "./types";
+import {
+  annuityPayment,
+  buildSchedule,
+  computeLoanSummary,
+  computeTAEG,
+  insuranceForMonth,
+  loanFees,
+  projectLoan,
+} from "./loan";
+import type { LoanSettings } from "./loan";
 
-const loan = (over: Partial<LoanSettings>): LoanSettings => ({
+const realOffer = (over: Partial<LoanSettings> = {}): LoanSettings => ({
   capital: 200000,
-  rate: 3.5,
-  insuranceRate: 0.34,
-  durationMonths: 240,
+  rate: 3.4,
+  durationMonths: 300,
   monthlyPayment: 0,
   startDate: "",
+  insuranceMode: "remaining",
+  insuranceRate: 1.1,
+  insuranceAvgMonthly: 0,
+  guaranteeFees: 3192,
+  brokerFees: 2500,
+  fileFees: 1300,
   ...over,
 });
 
 describe("annuityPayment", () => {
-  it("calcule la mensualité d'annuité", () => {
-    const p = annuityPayment(200000, 3.5, 240);
-    expect(p).toBeCloseTo(1159.92, -2);
+  it("calcule la mensualité pour l'offre réelle (200k€, 3.4%, 300 mois)", () => {
+    const p = annuityPayment(200000, 3.4, 300);
+    expect(p).toBeGreaterThan(985);
+    expect(p).toBeLessThan(1005);
   });
 
   it("gère un taux nul", () => {
@@ -23,66 +37,116 @@ describe("annuityPayment", () => {
   });
 });
 
-describe("computeLoanSummary", () => {
-  it("utilise la mensualité fournie si présente", () => {
-    const s = computeLoanSummary(loan({ monthlyPayment: 1200 }));
-    const months = 240;
-    const expectedInsurance = 200000 * (0.34 / 100 / 12) * months;
-    const expectedInterest = 1200 * months - 200000 - expectedInsurance;
-    expect(s.totalCost).toBeCloseTo(expectedInterest + expectedInsurance, 0);
-  });
-
-  it("calcule l'annuité si mensualité absente", () => {
-    const s = computeLoanSummary(loan({ monthlyPayment: 0 }));
-    expect(s.monthlyPrincipal + s.monthlyInterest).toBeCloseTo(
-      annuityPayment(200000, 3.5, 240),
-      -2
+describe("assurance sur capital restant dû", () => {
+  it("est dégressive : première cotisation > dernière cotisation", () => {
+    const loan = realOffer();
+    const first = insuranceForMonth(loan, loan.capital);
+    expect(first).toBeCloseTo((200000 * 0.011) / 12, 2);
+    const schedule = buildSchedule(loan);
+    expect(schedule[0].insurance).toBeGreaterThan(
+      schedule[schedule.length - 1].insurance
     );
   });
 
-  it("rembourse tout après la durée (capital = 0)", () => {
-    const start = new Date();
-    start.setFullYear(start.getFullYear() - 21);
-    const s = computeLoanSummary(
-      loan({ startDate: start.toISOString().slice(0, 10) })
-    );
-    expect(s.remainingMonths).toBe(0);
-    expect(s.remainingBalance).toBeLessThan(1);
-    expect(s.endDate).toBe("Terminé 🎉");
-  });
-
-  it("compte les mois écoulés depuis la date de départ", () => {
-    const start = new Date();
-    start.setMonth(start.getMonth() - 12);
-    const s = computeLoanSummary(
-      loan({ startDate: start.toISOString().slice(0, 10) })
-    );
-    expect(s.remainingMonths).toBe(228);
-    expect(s.progressPercent).toBeCloseTo(5, 0);
+  it("permet de calibrer le taux pour cibler la cotisation moyenne de l'offre", () => {
+    const loan = realOffer({ insuranceRate: 2.2 });
+    const schedule = buildSchedule(loan);
+    const avg = schedule.reduce((a, m) => a + m.insurance, 0) / schedule.length;
+    expect(avg).toBeGreaterThan(150);
+    expect(avg).toBeLessThan(220);
   });
 });
 
-describe("projectLoan", () => {
-  it("solde le crédit plus vite avec une mensualité supplémentaire", () => {
-    const base = projectLoan(loan({}), 200000, 240, 0);
-    const fast = projectLoan(loan({}), 200000, 240, 200);
+describe("loanFees", () => {
+  it("additionne les frais d'entrée", () => {
+    expect(loanFees(realOffer())).toBe(3192 + 2500 + 1300);
+  });
+});
+
+describe("buildSchedule", () => {
+  it("solde exactement le capital sur la durée", () => {
+    const schedule = buildSchedule(realOffer());
+    expect(schedule.length).toBe(300);
+    expect(schedule[schedule.length - 1].balance).toBeLessThan(0.01);
+  });
+
+  it("utilise la mensualité fournie si présente", () => {
+    const schedule = buildSchedule(realOffer({ monthlyPayment: 1200 }));
+    expect(schedule[0].payment).toBeCloseTo(1200, 2);
+  });
+
+  it("la somme du principal rembourse exactement le capital", () => {
+    const schedule = buildSchedule(realOffer());
+    const sum = schedule.reduce((a, m) => a + m.principal, 0);
+    expect(sum).toBeCloseTo(200000, 2);
+  });
+});
+
+describe("computeTAEG", () => {
+  it("inclut frais et assurance : TAEG > taux débiteur", () => {
+    const loan = realOffer();
+    const taeg = computeTAEG(loan);
+    expect(taeg).not.toBeNull();
+    expect(taeg!).toBeGreaterThan(3.4);
+    expect(taeg!).toBeLessThan(6);
+  });
+
+  it("sans frais ni assurance, TAEG ≈ taux débiteur", () => {
+    const loan = realOffer({
+      insuranceRate: 0,
+      guaranteeFees: 0,
+      brokerFees: 0,
+      fileFees: 0,
+    });
+    const taeg = computeTAEG(loan);
+    expect(taeg).toBeCloseTo(3.4, 1);
+  });
+});
+
+describe("computeLoanSummary", () => {
+  it("compte les mois écoulés et le restant dû", () => {
+    const start = new Date();
+    start.setMonth(start.getMonth() - 12);
+    const s = computeLoanSummary(
+      realOffer({ startDate: start.toISOString().slice(0, 7) })
+    );
+    expect(s.elapsedMonths).toBe(12);
+    expect(s.remainingMonths).toBe(288);
+    expect(s.remainingBalance).toBeLessThan(200000);
+    expect(s.progressPercent).toBeCloseTo(4, 0);
+  });
+
+  it("affiche Terminé quand tout est remboursé", () => {
+    const start = new Date();
+    start.setFullYear(start.getFullYear() - 26);
+    const s = computeLoanSummary(
+      realOffer({ startDate: start.toISOString().slice(0, 7) })
+    );
+    expect(s.remainingMonths).toBe(0);
+    expect(s.endDate).toBe("Terminé 🎉");
+  });
+
+  it("coût total = intérêts + assurance + frais", () => {
+    const s = computeLoanSummary(realOffer());
+    expect(s.totalCost).toBeCloseTo(
+      s.totalInterest + s.totalInsurance + s.totalFees,
+      2
+    );
+  });
+});
+
+describe("projectLoan (remboursement anticipé)", () => {
+  it("solder plus vite et économiser des intérêts", () => {
+    const base = projectLoan(realOffer(), 200000, 300, 0);
+    const fast = projectLoan(realOffer(), 200000, 300, 200);
     expect(fast.monthsToPayoff).toBeLessThan(base.monthsToPayoff);
     expect(fast.payoffDate).not.toBeNull();
+    expect(fast.interestSaved).toBeGreaterThan(0);
   });
 
-  it("la somme du principal projeté rembourse le solde initial", () => {
-    const { rows } = projectLoan(loan({}), 200000, 240, 0);
-    const total = rows.reduce((acc, r) => acc + r.principal, 0);
+  it("la somme du principal rembourse le solde de départ", () => {
+    const { rows } = projectLoan(realOffer(), 200000, 300, 0);
+    const total = rows.reduce((a, r) => a + r.principal, 0);
     expect(total).toBeCloseTo(200000, 0);
-  });
-
-  it("génère une ligne par tranche de 12 mois", () => {
-    const { rows } = projectLoan(
-      loan({ durationMonths: 24, monthlyPayment: 9000 }),
-      200000,
-      24,
-      0
-    );
-    expect(rows.length).toBe(2);
   });
 });

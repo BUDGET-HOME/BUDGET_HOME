@@ -1,7 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { computeLoanSummary, projectLoan } from "@/lib/loan";
+import {
+  annuityPayment,
+  computeLoanSummary,
+  insuranceForMonth,
+  loanFees,
+  projectLoan,
+} from "@/lib/loan";
 import { formatEUR } from "@/lib/budget";
 import type { BudgetState } from "@/lib/types";
 
@@ -12,6 +18,7 @@ interface Props {
 
 export default function LoanCard({ state, update }: Props) {
   const [extra, setExtra] = useState(0);
+  const [showAmort, setShowAmort] = useState(false);
   const loan = state.loan;
   const summary = computeLoanSummary(loan);
 
@@ -24,9 +31,7 @@ export default function LoanCard({ state, update }: Props) {
     summary.remainingMonths,
     extra
   );
-
-  const baseMonths = summary.remainingMonths;
-  const savedMonths = baseMonths - projection.monthsToPayoff;
+  const savedMonths = summary.remainingMonths - projection.monthsToPayoff;
 
   return (
     <section className="budget-card budget-card-immo">
@@ -42,40 +47,22 @@ export default function LoanCard({ state, update }: Props) {
           <input
             type="number"
             value={loan.capital || ""}
-            placeholder="200000"
             onChange={(e) => setLoan({ capital: parseFloat(e.target.value) || 0 })}
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
         </div>
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Taux d&apos;intérêt (%)
+            Taux débiteur fixe (%)
           </label>
           <input
             type="number"
             step="0.01"
             value={loan.rate || ""}
-            placeholder="3.5"
             onChange={(e) => setLoan({ rate: parseFloat(e.target.value) || 0 })}
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
         </div>
-        <div>
-          <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Taux assurance (%)
-          </label>
-          <input
-            type="number"
-            step="0.01"
-            value={loan.insuranceRate || ""}
-            placeholder="0.34"
-            onChange={(e) => setLoan({ insuranceRate: parseFloat(e.target.value) || 0 })}
-            className="w-full rounded-md border border-slate-300 px-3 py-2"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
             Durée (mois)
@@ -83,20 +70,30 @@ export default function LoanCard({ state, update }: Props) {
           <input
             type="number"
             value={loan.durationMonths || ""}
-            placeholder="240"
-            onChange={(e) => setLoan({ durationMonths: parseInt(e.target.value) || 0 })}
+            onChange={(e) =>
+              setLoan({ durationMonths: parseInt(e.target.value) || 0 })
+            }
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div>
-          <label className="block text-sm font-semibold text-s-500 mb-1 text-slate-500">
-            Mensualité constatée (€)
+          <label className="block text-sm font-semibold text-slate-500 mb-1">
+            Mensualité hors assurance (€)
           </label>
           <input
             type="number"
             value={loan.monthlyPayment || ""}
-            placeholder="Auto si vide"
-            onChange={(e) => setLoan({ monthlyPayment: parseFloat(e.target.value) || 0 })}
+            placeholder={`Auto : ${annuityPayment(
+              loan.capital,
+              loan.rate,
+              loan.durationMonths
+            ).toFixed(2)}`}
+            onChange={(e) =>
+              setLoan({ monthlyPayment: parseFloat(e.target.value) || 0 })
+            }
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
         </div>
@@ -111,33 +108,132 @@ export default function LoanCard({ state, update }: Props) {
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
         </div>
+        <div>
+          <label className="block text-sm font-semibold text-slate-500 mb-1">
+            Mode d&apos;assurance
+          </label>
+          <select
+            value={loan.insuranceMode}
+            onChange={(e) =>
+              setLoan({
+                insuranceMode: e.target.value as "remaining" | "capital",
+              })
+            }
+            className="w-full rounded-md border border-slate-300 px-3 py-2"
+          >
+            <option value="remaining">Sur capital restant dû (dégressive)</option>
+            <option value="capital">Prime fixe (moyenne mensuelle)</option>
+          </select>
+        </div>
       </div>
 
-      <div className="mt-5 rounded-lg border-l-4 border-purple-600 bg-purple-50 p-4">
+      {loan.insuranceMode === "remaining" ? (
+        <div className="mb-4">
+          <label className="block text-sm font-semibold text-slate-500 mb-1">
+            Taux annuel d&apos;assurance (%)
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            value={loan.insuranceRate || ""}
+            placeholder="1.10"
+            onChange={(e) =>
+              setLoan({ insuranceRate: parseFloat(e.target.value) || 0 })
+            }
+            className="w-full rounded-md border border-slate-300 px-3 py-2"
+          />
+          <p className="text-xs text-slate-500 mt-1">
+            1ʳᵉ cotisation :{" "}
+            {insuranceForMonth(loan, loan.capital).toFixed(2)} € — cotisation
+            dégressive calculée sur le capital restant dû chaque mois.
+          </p>
+        </div>
+      ) : (
+        <div className="mb-4">
+          <label className="block text-sm font-semibold text-slate-500 mb-1">
+            Cotisation moyenne par mois (€)
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            value={loan.insuranceAvgMonthly || ""}
+            onChange={(e) =>
+              setLoan({ insuranceAvgMonthly: parseFloat(e.target.value) || 0 })
+            }
+            className="w-full rounded-md border border-slate-300 px-3 py-2"
+          />
+        </div>
+      )}
+
+      <details className="mb-4 rounded-md border border-slate-200 bg-slate-50">
+        <summary className="cursor-pointer px-4 py-2 font-semibold text-slate-600 text-sm">
+          💰 Frais à l&apos;entrée (dus une seule fois)
+        </summary>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 px-4 py-3">
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 mb-1">
+              Frais de prise de garantie (€)
+            </label>
+            <input
+              type="number"
+              value={loan.guaranteeFees || ""}
+              onChange={(e) =>
+                setLoan({ guaranteeFees: parseFloat(e.target.value) || 0 })
+              }
+              className="w-full rounded-md border border-slate-300 px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 mb-1">
+              Frais d&apos;intermédiaires (€)
+            </label>
+            <input
+              type="number"
+              value={loan.brokerFees || ""}
+              onChange={(e) =>
+                setLoan({ brokerFees: parseFloat(e.target.value) || 0 })
+              }
+              className="w-full rounded-md border border-slate-300 px-3 py-2"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 mb-1">
+              Frais de dossier (€)
+            </label>
+            <input
+              type="number"
+              value={loan.fileFees || ""}
+              onChange={(e) =>
+                setLoan({ fileFees: parseFloat(e.target.value) || 0 })
+              }
+              className="w-full rounded-md border border-slate-300 px-3 py-2"
+            />
+          </div>
+        </div>
+      </details>
+
+      <div className="rounded-lg border-l-4 border-purple-600 bg-purple-50 p-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
-            <div className="text-xs uppercase font-bold text-purple-900">Restant dû</div>
+            <div className="text-xs uppercase font-bold text-purple-900">
+              Mensualité 1ʳᵉ période
+            </div>
             <div className="text-xl font-bold text-purple-800">
-              {formatEUR(summary.remainingBalance)}
+              {formatEUR(summary.firstMonth.payment + summary.firstMonth.insurance)}
             </div>
             <div className="text-xs text-slate-500">
-              sur {formatEUR(loan.capital)}
+              dont assurance {summary.firstMonth.insurance.toFixed(2)} €
             </div>
           </div>
           <div>
             <div className="text-xs uppercase font-bold text-purple-900">
-              Mensualité
+              Restant dû
             </div>
             <div className="text-xl font-bold text-purple-800">
-              {formatEUR(
-                (loan.monthlyPayment > 0
-                  ? loan.monthlyPayment
-                  : summary.monthlyPrincipal + summary.monthlyInterest) +
-                  summary.monthlyInsurance
-              )}
+              {formatEUR(summary.remainingBalance)}
             </div>
             <div className="text-xs text-slate-500">
-              dont assurance {formatEUR(summary.monthlyInsurance)}
+              {summary.remainingMonths} mois restants
             </div>
           </div>
           <div>
@@ -148,25 +244,27 @@ export default function LoanCard({ state, update }: Props) {
               {formatEUR(summary.totalCost)}
             </div>
             <div className="text-xs text-slate-500">
-              intérêts + assurance
+              intérêts {formatEUR(summary.totalInterest)} + assurance{" "}
+              {formatEUR(summary.totalInsurance)} + frais{" "}
+              {formatEUR(summary.totalFees)}
             </div>
           </div>
           <div>
             <div className="text-xs uppercase font-bold text-purple-900">
-              Il reste à payer
+              TAEG calculé
             </div>
             <div className="text-xl font-bold text-purple-800">
-              {formatEUR(summary.totalRemainingCost)}
+              {summary.taeg !== null ? `${summary.taeg.toFixed(3)} %` : "—"}
             </div>
             <div className="text-xs text-slate-500">
-              {summary.remainingMonths} mois — fin {summary.endDate}
+              à comparer à l&apos;offre ({loanFees(loan) > 0 ? "frais inclus" : "sans frais"})
             </div>
           </div>
         </div>
 
         <div className="mt-4">
           <div className="flex justify-between text-xs text-slate-500 mb-1">
-            <span>Avancement du remboursement</span>
+            <span>Avancement ({summary.elapsedMonths} mensualités payées)</span>
             <span>{summary.progressPercent.toFixed(1)} %</span>
           </div>
           <div className="h-3 bg-purple-100 rounded-full overflow-hidden">
@@ -175,12 +273,16 @@ export default function LoanCard({ state, update }: Props) {
               style={{ width: `${summary.progressPercent}%` }}
             />
           </div>
+          <p className="text-xs text-slate-500 mt-1">
+            Déjà payé : {formatEUR(summary.totalPaid)} — reste à payer :{" "}
+            {formatEUR(summary.totalRemaining)} — fin : {summary.endDate}
+          </p>
         </div>
       </div>
 
       <div className="mt-5 rounded-lg border border-indigo-200 bg-indigo-50 p-4">
         <h3 className="font-bold text-indigo-800 text-sm mb-2">
-          ⏩ Simulation de remboursement anticipé
+          ⏩ Remboursement anticipé
         </h3>
         <div className="flex flex-wrap items-end gap-3">
           <div>
@@ -199,46 +301,79 @@ export default function LoanCard({ state, update }: Props) {
             {extra > 0 && projection.payoffDate ? (
               <>
                 <p>
-                  Crédit soldé en{" "}
-                  <strong>{projection.payoffDate.toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}</strong>{" "}
-                  soit{" "}
-                  <strong className="text-green-700">
-                    {savedMonths} mois plus tôt
-                  </strong>
-                  .
+                  Solder en{" "}
+                  <strong>
+                    {projection.payoffDate.toLocaleDateString("fr-FR", {
+                      month: "long",
+                      year: "numeric",
+                    })}
+                  </strong>{" "}
+                  — <strong className="text-green-700">{savedMonths} mois gagnés</strong>
+                  {projection.interestSaved > 0 && (
+                    <>
+                      {" "}— intérêts économisés{" "}
+                      <strong className="text-green-700">
+                        {formatEUR(projection.interestSaved)}
+                      </strong>
+                    </>
+                  )}
                 </p>
               </>
             ) : (
               <p className="text-slate-500">
-                Ajoutez un montant mensuel pour voir l&apos;impact sur la durée et les intérêts.
+                Ajoutez un montant mensuel pour simuler un remboursement anticipé.
               </p>
             )}
           </div>
         </div>
-        {extra > 0 && projection.payoffDate && savedMonths > 0 && (
-          <p className="mt-2 text-xs text-slate-500">
-            Nouvelle mensualité totale :{" "}
-            {formatEUR(
-              (loan.monthlyPayment > 0
-                ? loan.monthlyPayment
-                : summary.monthlyPrincipal + summary.monthlyInterest) + extra
-            )}
-            , payée pendant {projection.monthsToPayoff} mois.
-          </p>
-        )}
       </div>
 
-      <details className="mt-4 rounded-md border border-slate-200 bg-slate-50">
-        <summary className="cursor-pointer px-4 py-2 font-semibold text-slate-600 text-sm">
-          🔍 Détail du calcul
-        </summary>
-        <div className="calc-content px-4 py-3">
-          <p>Intérêts/mois : {summary.monthlyInterest.toFixed(2)} €</p>
-          <p>Principal/mois : {summary.monthlyPrincipal.toFixed(2)} €</p>
-          <p>Assurance/mois : {summary.monthlyInsurance.toFixed(2)} €</p>
-          <p>Déjà remboursé : {formatEUR(summary.totalPaid)}</p>
+      <div className="text-center mt-4">
+        <button
+          onClick={() => setShowAmort((v) => !v)}
+          className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
+        >
+          📅 Voir la projection annuelle
+        </button>
+      </div>
+
+      {showAmort && (
+        <div className="mt-5 border-t-2 border-slate-200 pt-5">
+          <h3 className="font-bold mb-3">Projection annuelle</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-slate-200">
+                  <th className="p-2 text-right">Année</th>
+                  <th className="p-2 text-right">Restant dû</th>
+                  <th className="p-2 text-right">Intérêts</th>
+                  <th className="p-2 text-right">Principal</th>
+                  <th className="p-2 text-right">Assurance</th>
+                  <th className="p-2 text-right">Total annuel</th>
+                </tr>
+              </thead>
+              <tbody>
+                {projection.rows.map((r) => (
+                  <tr key={r.year} className="border-b border-slate-200">
+                    <td className="p-2 text-right">Année {r.year}</td>
+                    <td className="p-2 text-right">{formatEUR(r.balance)}</td>
+                    <td className="p-2 text-right text-red-600">
+                      {formatEUR(r.interest)}
+                    </td>
+                    <td className="p-2 text-right text-green-600">
+                      {formatEUR(r.principal)}
+                    </td>
+                    <td className="p-2 text-right">{formatEUR(r.insurance)}</td>
+                    <td className="p-2 text-right font-bold">
+                      {formatEUR(r.total)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </details>
+      )}
     </section>
   );
 }
