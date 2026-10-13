@@ -1,4 +1,5 @@
 import { RENT_CATEGORY, type BudgetMode, type Expense } from "./types";
+import { computeLoanSummary, type LoanSettings } from "./loan";
 
 export interface RatioResult {
   ratio1: number;
@@ -68,12 +69,18 @@ export function computeBalance(
   expenses: Expense[],
   viewMode: ViewMode,
   force5050: boolean,
-  mode: BudgetMode = "separe"
+  mode: BudgetMode = "separe",
+  loan?: LoanSettings
 ): BalanceResult {
   const { ratio1 } = computeRatio(salary1, salary2, force5050, mode);
   const s = summarizeExpenses(expenses);
   const factor = viewMode === "monthly" ? 12 : 1;
-  const displayTotal = s.totalAnnual / factor;
+  const summary = loan ? computeLoanSummary(loan) : null;
+  const loanFirst = summary
+    ? summary.firstMonth.payment + summary.firstMonth.insurance
+    : 0;
+  const loanPeriodTotal = viewMode === "monthly" ? loanFirst : loanFirst * 12;
+  const displayTotal = s.totalAnnual / factor + loanPeriodTotal;
   const displayIncome = ((salary1 + salary2) * 12) / factor;
   const displayPaid1 = s.paidAnnual1 / factor;
   const displayPaid2 = s.paidAnnual2 / factor;

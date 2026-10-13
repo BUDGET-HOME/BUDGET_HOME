@@ -13,7 +13,15 @@ interface Props {
 export default function AnalyseCard({ state, viewMode, setViewMode }: Props) {
   const s1 = parseFloat(state.salary1) || 0;
   const s2 = parseFloat(state.salary2) || 0;
-  const balance = computeBalance(s1, s2, state.expenses, viewMode, state.force5050);
+  const balance = computeBalance(
+    s1,
+    s2,
+    state.expenses,
+    viewMode,
+    state.force5050,
+    state.mode,
+    state.loan
+  );
   const verdict = computeVerdict(balance.balance1, balance.displayTotal * (viewMode === "monthly" ? 12 : 1), state.name1, state.name2);
 
   const total = balance.displayTotal;
@@ -71,7 +79,7 @@ export default function AnalyseCard({ state, viewMode, setViewMode }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5 my-5">
+      <div className={state.mode === "commun" ? "hidden" : "grid grid-cols-1 md:grid-cols-2 gap-5 my-5"}>
         <div className="border border-slate-200 rounded-lg p-4">
           <h3 className="text-sm font-bold mb-3 text-center text-slate-600">Répartition</h3>
           <div className="flex h-6 rounded overflow-hidden mb-2">
@@ -93,8 +101,8 @@ export default function AnalyseCard({ state, viewMode, setViewMode }: Props) {
             <span className="text-pink-600 font-semibold">{state.name2}</span>
           </div>
         </div>
-        <div className="border border-slate-200 rounded-lg p-4">
-          <h3 className="text-sm font-bold mb-3 text-slate-600">Top Catégories</h3>
+        <div className="border border-slate-200 rounded-lg p-4 md:col-span-2">
+          <h3 className="text-sm font-bold mb-3 text-slate-600">Top Catégories (dont crédit maison)</h3>
           {categories.length === 0 && <p className="text-sm text-slate-400">Aucune dépense.</p>}
           {categories.map(([cat, v]) => (
             <div key={cat} className="mb-2">
@@ -113,7 +121,7 @@ export default function AnalyseCard({ state, viewMode, setViewMode }: Props) {
         </div>
       </div>
 
-      <div className="border-l-4 border-blue-600 bg-blue-50 rounded-r-lg p-4">
+      <div className={state.mode === "commun" ? "hidden" : "border-l-4 border-blue-600 bg-blue-50 rounded-r-lg p-4"}>
         <h3 className="font-bold text-sm">⚖️ Charges à équilibrer</h3>
         {verdict.status === "empty" && <p className="font-bold mt-1">Aucune donnée.</p>}
         {verdict.status === "balanced" && <p className="font-bold mt-1">✅ Équilibré</p>}
@@ -128,7 +136,7 @@ export default function AnalyseCard({ state, viewMode, setViewMode }: Props) {
         )}
       </div>
 
-      <details className="mt-4 rounded-md border border-slate-200 bg-slate-50">
+      <details className={state.mode === "commun" ? "hidden" : "mt-4 rounded-md border border-slate-200 bg-slate-50"}>
         <summary className="cursor-pointer px-4 py-2 font-semibold text-slate-600 text-sm">
           🔍 Détail du calcul de l&apos;équilibre
         </summary>

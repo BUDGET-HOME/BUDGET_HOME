@@ -54,13 +54,19 @@ export default function ChargesTable({ state, update }: Props) {
                 <td className="py-3 px-3">{exp.amount} €</td>
                 <td className="py-3 px-3">{exp.freq === "monthly" ? "Mois" : "An"}</td>
                 <td className="py-3 px-3">
-                  <span
-                    className={`rounded-md px-2 py-0.5 text-xs font-semibold text-white ${
-                      exp.payer === "1" ? "bg-blue-600" : "bg-pink-600"
-                    }`}
-                  >
-                    {(exp.payer === "1" ? state.name1 : state.name2).substring(0, 3)}
-                  </span>
+                  {state.mode === "commun" ? (
+                    <span className="rounded-md bg-purple-600 px-2 py-0.5 text-xs font-semibold text-white">
+                      Commun
+                    </span>
+                  ) : (
+                    <span
+                      className={`rounded-md px-2 py-0.5 text-xs font-semibold text-white ${
+                        exp.payer === "1" ? "bg-blue-600" : "bg-pink-600"
+                      }`}
+                    >
+                      {(exp.payer === "1" ? state.name1 : state.name2).substring(0, 3)}
+                    </span>
+                  )}
                 </td>
                 <td className="py-3 px-3 text-right no-print">
                   <button

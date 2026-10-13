@@ -26,7 +26,14 @@ export default function DepensesForm({ state, update }: Props) {
       ...p,
       expenses: [
         ...p.expenses,
-        { id: Date.now(), desc, amount: value, freq, category, payer },
+        {
+          id: Date.now(),
+          desc,
+          amount: value,
+          freq,
+          category,
+          payer: p.mode === "commun" ? "1" : payer,
+        },
       ],
     }));
     setDesc("");

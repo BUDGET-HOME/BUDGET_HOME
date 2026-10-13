@@ -1,5 +1,6 @@
 import type { LoanSettings } from "./loan";
 export type { LoanSettings };
+
 export type Frequency = "monthly" | "annual";
 
 export type BudgetMode = "separe" | "commun";
@@ -20,7 +21,6 @@ export interface ImmoSettings {
   immoDuration: number;
   immoType: "ancien" | "neuf";
 }
-
 
 export interface BudgetState {
   name1: string;
@@ -57,7 +57,7 @@ export const DEFAULT_STATE: BudgetState = {
     offeredTaeg: 4.2,
     startDate: "",
     insuranceMode: "remaining",
-    insuranceRate: 1.1,
+    insuranceRate: 1.3267,
     insuranceAvgMonthly: 0,
     guaranteeFees: 3192,
     brokerFees: 2500,
