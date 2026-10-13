@@ -69,11 +69,12 @@ export default function ChartsCard({ state }: Props) {
   const payerRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const div = mode === "monthly" ? 12 : 1;
+    const loanFactor = mode === "monthly" ? 1 : 12;
     const entries = Object.entries(summary.categoryTotals)
       .map(([k, v]) => [k, v / div] as [string, number])
       .sort((a, b) => b[1] - a[1]);
     if (loanActive) {
-      entries.push([LOAN_CATEGORY, loanMonthly]);
+      entries.push([LOAN_CATEGORY, loanMonthly * loanFactor]);
       entries.sort((a, b) => b[1] - a[1]);
     }
 
