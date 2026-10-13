@@ -18,6 +18,7 @@ interface Props {
 export default function LoanCard({ state, update }: Props) {
   const [extraMonthly, setExtraMonthly] = useState(0);
   const [extraOneTime, setExtraOneTime] = useState(0);
+  const [extraOneTimeDate, setExtraOneTimeDate] = useState("");
   const [showAmort, setShowAmort] = useState(false);
   const loan = state.loan;
   const summary = computeLoanSummary(loan);
@@ -27,6 +28,7 @@ export default function LoanCard({ state, update }: Props) {
 
   const projection = projectLoan(loan, summary.remainingBalance, summary.remainingMonths, {
     oneTime: extraOneTime,
+    oneTimeDate: extraOneTimeDate,
     monthly: extraMonthly,
   });
   const hasExtra = extraOneTime > 0 || extraMonthly > 0;
@@ -318,7 +320,7 @@ export default function LoanCard({ state, update }: Props) {
         <div className="flex flex-wrap items-end gap-4">
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-1">
-              Somme ponctuelle (€) — immédiate
+              Somme ponctuelle (€)
             </label>
             <input
               type="number"
@@ -327,6 +329,20 @@ export default function LoanCard({ state, update }: Props) {
               onChange={(e) => setExtraOneTime(parseFloat(e.target.value) || 0)}
               className="rounded-md border border-slate-300 px-3 py-2 w-40"
             />
+          </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 mb-1">
+              Date du paiement ponctuel
+            </label>
+            <input
+              type="month"
+              value={extraOneTimeDate}
+              onChange={(e) => setExtraOneTimeDate(e.target.value)}
+              className="rounded-md border border-slate-300 px-3 py-2 w-40"
+            />
+            <p className="text-xs text-slate-500 mt-1">
+              Vide = ce mois-ci.
+            </p>
           </div>
           <div>
             <label className="block text-xs font-semibold text-slate-500 mb-1">
@@ -363,7 +379,7 @@ export default function LoanCard({ state, update }: Props) {
                 </p>
                 {extraOneTime > 0 && (
                   <p className="text-slate-600 text-xs mt-1">
-                    Restant dû après paiement ponctuel :{" "}
+                    Restant dû après le paiement ponctuel :{" "}
                     {formatEUR(Math.max(0, summary.remainingBalance - extraOneTime))}
                   </p>
                 )}

@@ -162,26 +162,70 @@ describe("computeLoanSummary", () => {
 });
 
 describe("projectLoan (remboursement anticipé)", () => {
+  const noExtra = { oneTime: 0, oneTimeDate: "", monthly: 0 };
+
   it("solder plus vite avec une mensualité supplémentaire", () => {
-    const base = projectLoan(realOffer(), 266000, 300, { oneTime: 0, monthly: 0 });
-    const fast = projectLoan(realOffer(), 266000, 300, { oneTime: 0, monthly: 200 });
+    const base = projectLoan(realOffer(), 266000, 300, noExtra);
+    const fast = projectLoan(realOffer(), 266000, 300, {
+      oneTime: 0,
+      oneTimeDate: "",
+      monthly: 200,
+    });
     expect(fast.monthsToPayoff).toBeLessThan(base.monthsToPayoff);
     expect(fast.payoffDate).not.toBeNull();
     expect(fast.interestSaved).toBeGreaterThan(0);
   });
 
-  it("solder plus vite avec une somme ponctuelle", () => {
-    const base = projectLoan(realOffer(), 266000, 300, { oneTime: 0, monthly: 0 });
-    const fast = projectLoan(realOffer(), 266000, 300, { oneTime: 50000, monthly: 0 });
+  it("solder plus vite avec une somme ponctuelle immédiate", () => {
+    const base = projectLoan(realOffer(), 266000, 300, noExtra);
+    const fast = projectLoan(realOffer(), 266000, 300, {
+      oneTime: 50000,
+      oneTimeDate: "",
+      monthly: 0,
+    });
     expect(fast.monthsToPayoff).toBeLessThan(base.monthsToPayoff);
     expect(fast.interestSaved).toBeGreaterThan(base.interestSaved);
     const totalPrincipal = fast.rows.reduce((a, r) => a + r.principal, 0);
     expect(totalPrincipal).toBeCloseTo(266000, 0);
   });
 
+  it("une somme ponctuelle datée dans le futur économise moins que la même immédiate", () => {
+    const today = new Date();
+    const inTwoYears = new Date(today.getFullYear() + 2, today.getMonth(), 1);
+    const now = projectLoan(realOffer(), 266000, 300, {
+      oneTime: 50000,
+      oneTimeDate: "",
+      monthly: 0,
+    });
+    const later = projectLoan(
+      realOffer(),
+      266000,
+      300,
+      { oneTime: 50000, oneTimeDate: inTwoYears.toISOString().slice(0, 7), monthly: 0 },
+      today
+    );
+    expect(later.interestSaved).toBeLessThan(now.interestSaved);
+    expect(later.monthsToPayoff).toBeLessThan(300);
+  });
+
   it("cumule somme ponctuelle et mensualité supplémentaire", () => {
-    const both = projectLoan(realOffer(), 266000, 300, { oneTime: 30000, monthly: 150 });
-    const onlyMonthly = projectLoan(realOffer(), 266000, 300, { oneTime: 0, monthly: 150 });
+    const both = projectLoan(realOffer(), 266000, 300, {
+      oneTime: 30000,
+      oneTimeDate: "",
+      monthly: 150,
+    });
+    const onlyMonthly = projectLoan(realOffer(), 266000, 300, {
+      oneTime: 0,
+      oneTimeDate: "",
+      monthly: 150,
+    });
     expect(both.monthsToPayoff).toBeLessThan(onlyMonthly.monthsToPayoff);
+  });
+
+  it("la projection annuelle commence à l'année 1 du prêt", () => {
+    const { rows } = projectLoan(realOffer(), 266000, 300, noExtra);
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows[0].year).toBe(1);
+    expect(rows[1].year).toBe(2);
   });
 });
