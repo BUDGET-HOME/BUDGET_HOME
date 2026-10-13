@@ -71,7 +71,18 @@ BUDGET_HOME/
 ## 🚀 Utilisation
 
 ### En local
-Ouvrez simplement le fichier `index.html` dans un navigateur. Aucun serveur requis.
+```bash
+npm install
+npm run dev        # http://localhost:3000
+npm run test       # tests unitaires (Vitest)
+npm run build      # build production
+```
+
+**Configuration Supabase requise** : créez un projet sur [supabase.com](https://supabase.com), exécutez `supabase/migrations/001_budgets.sql` dans l'éditeur SQL, puis créez un `.env.local` (voir `.env.example`) :
+```
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR-PROJECT.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=YOUR-ANON-KEY
+```
 
 ### Déploiement Vercel
 Ce dépôt est destiné à être déployé sur Vercel :
