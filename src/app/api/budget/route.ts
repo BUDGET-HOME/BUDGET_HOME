@@ -1,6 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
+import { isSupabaseConfigured } from "@/lib/supabase/middleware";
 
 export async function GET() {
+  if (!isSupabaseConfigured()) {
+    return Response.json({ error: "supabase_not_configured" }, { status: 503 });
+  }
   const supabase = await createClient();
   const {
     data: { user },
@@ -24,6 +28,9 @@ export async function GET() {
 }
 
 export async function PUT(request: Request) {
+  if (!isSupabaseConfigured()) {
+    return Response.json({ error: "supabase_not_configured" }, { status: 503 });
+  }
   const supabase = await createClient();
   const {
     data: { user },
