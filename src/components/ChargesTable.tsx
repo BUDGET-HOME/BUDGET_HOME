@@ -144,14 +144,6 @@ export default function ChargesTable({ state, update }: Props) {
                 </td>
               </tr>
             )}
-            {loanActive && sorted.length > 0 && (
-              <tr className="border-b-2 border-slate-200 bg-slate-50 font-semibold">
-                <td className="py-2 px-3" />
-                <td className="py-2 px-3">Total mensuel (dépenses + crédit)</td>
-                <td className="py-2 px-3">{formatEUR(totalMonthly)} /mois</td>
-                <td colSpan={3} />
-              </tr>
-            )}
             {sorted.map((exp) =>
               editingId === exp.id ? (
                 <tr key={exp.id} className="border-b border-slate-100 bg-blue-50/50">
@@ -291,8 +283,16 @@ export default function ChargesTable({ state, update }: Props) {
                 </tr>
               )
             )}
-          </tbody>
-        </table>
+
+            {loanActive && (
+              <tr className="border-t-2 border-slate-300 bg-slate-100 font-semibold">
+                <td className="py-3 px-3" />
+                <td className="py-3 px-3">Total mensuel (dépenses + crédit)</td>
+                <td className="py-3 px-3">{formatEUR(totalMonthly)} /mois</td>
+                <td colSpan={3} />
+              </tr>
+            )}
+          </tbody>        </table>
       </div>
     </section>
   );

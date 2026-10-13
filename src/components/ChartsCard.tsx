@@ -15,7 +15,8 @@ import {
   type ChartConfiguration,
 } from "chart.js";
 import { summarizeExpenses, formatEUR, type ViewMode } from "@/lib/budget";
-import type { BudgetState } from "@/lib/types";
+import { computeLoanSummary } from "@/lib/loan";
+import { LOAN_CATEGORY, type BudgetState } from "@/lib/types";
 
 Chart.register(
   ArcElement,
@@ -57,6 +58,11 @@ export default function ChartsCard({ state }: Props) {
     () => summarizeExpenses(state.expenses),
     [state.expenses]
   );
+  const loanSummary = useMemo(() => computeLoanSummary(state.loan), [state.loan]);
+  const loanActive =
+    state.loan.capital > 0 && loanSummary.remainingMonths > 0;
+  const loanMonthly =
+    loanSummary.firstMonth.payment + loanSummary.firstMonth.insurance;
 
   const pieRef = useRef<HTMLCanvasElement>(null);
   const barRef = useRef<HTMLCanvasElement>(null);
@@ -66,6 +72,10 @@ export default function ChartsCard({ state }: Props) {
     const entries = Object.entries(summary.categoryTotals)
       .map(([k, v]) => [k, v / div] as [string, number])
       .sort((a, b) => b[1] - a[1]);
+    if (loanActive) {
+      entries.push([LOAN_CATEGORY, loanMonthly]);
+      entries.sort((a, b) => b[1] - a[1]);
+    }
 
     const created: Chart[] = [];
 
@@ -166,7 +176,7 @@ export default function ChartsCard({ state }: Props) {
     return () => {
       created.forEach((c) => c.destroy());
     };
-  }, [summary, mode, state.mode, state.name1, state.name2]);
+  }, [summary, mode, state.mode, state.name1, state.name2, loanActive, loanMonthly]);
 
   return (
     <section className="budget-card">
@@ -192,7 +202,7 @@ export default function ChartsCard({ state }: Props) {
         </div>
       </div>
 
-      {state.expenses.length === 0 ? (
+      {state.expenses.length === 0 && !loanActive ? (
         <p className="py-6 text-center text-slate-400">
           Ajoutez des dépenses pour voir les graphiques.
         </p>
