@@ -6,7 +6,7 @@ import Header from "./Header";
 import RevenusCard from "./RevenusCard";
 import DepensesForm from "./DepensesForm";
 import AnalyseCard from "./AnalyseCard";
-import ImmoCard from "./ImmoCard";
+import LoanCard from "./LoanCard";
 import ChargesTable from "./ChargesTable";
 import { normalizeState } from "@/lib/budget-service";
 
@@ -54,7 +54,7 @@ export default function BudgetApp() {
       <RevenusCard state={state} update={update} />
       <DepensesForm state={state} update={update} />
       <AnalyseCard state={state} viewMode={viewMode} setViewMode={setViewMode} />
-      <ImmoCard state={state} update={update} />
+      <LoanCard state={state} update={update} />
       <ChargesTable state={state} update={update} />
     </main>
   );

@@ -1,4 +1,4 @@
-import { RENT_CATEGORY, type Expense } from "./types";
+import { RENT_CATEGORY, type BudgetMode, type Expense } from "./types";
 
 export interface RatioResult {
   ratio1: number;
@@ -9,10 +9,11 @@ export interface RatioResult {
 export function computeRatio(
   salary1: number,
   salary2: number,
-  force5050: boolean
+  force5050: boolean,
+  mode: BudgetMode = "separe"
 ): RatioResult {
   const total = salary1 + salary2;
-  const forced = force5050 || total <= 0;
+  const forced = mode === "commun" || force5050 || total <= 0;
   const ratio1 = forced ? 0.5 : salary1 / total;
   return { ratio1, ratio2: 1 - ratio1, forced };
 }
@@ -66,9 +67,10 @@ export function computeBalance(
   salary2: number,
   expenses: Expense[],
   viewMode: ViewMode,
-  force5050: boolean
+  force5050: boolean,
+  mode: BudgetMode = "separe"
 ): BalanceResult {
-  const { ratio1 } = computeRatio(salary1, salary2, force5050);
+  const { ratio1 } = computeRatio(salary1, salary2, force5050, mode);
   const s = summarizeExpenses(expenses);
   const factor = viewMode === "monthly" ? 12 : 1;
   const displayTotal = s.totalAnnual / factor;

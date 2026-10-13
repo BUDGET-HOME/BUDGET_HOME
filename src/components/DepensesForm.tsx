@@ -86,31 +86,33 @@ export default function DepensesForm({ state, update }: Props) {
             <option value="annual">Annuel (x1)</option>
           </select>
         </div>
-        <div>
-          <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Qui paye cette facture ?
-          </label>
-          <div className="flex rounded-lg bg-slate-100 p-1">
-            <button
-              type="button"
-              onClick={() => setPayer("1")}
-              className={`flex-1 rounded-md py-2 text-sm font-semibold ${
-                payer === "1" ? "bg-white text-blue-600 shadow" : "text-slate-500"
-              }`}
-            >
-              {state.name1}
-            </button>
-            <button
-              type="button"
-              onClick={() => setPayer("2")}
-              className={`flex-1 rounded-md py-2 text-sm font-semibold ${
-                payer === "2" ? "bg-white text-pink-600 shadow" : "text-slate-500"
-              }`}
-            >
-              {state.name2}
-            </button>
+        {state.mode === "separe" && (
+          <div>
+            <label className="block text-sm font-semibold text-slate-500 mb-1">
+              Qui paye cette facture ?
+            </label>
+            <div className="flex rounded-lg bg-slate-100 p-1">
+              <button
+                type="button"
+                onClick={() => setPayer("1")}
+                className={`flex-1 rounded-md py-2 text-sm font-semibold ${
+                  payer === "1" ? "bg-white text-blue-600 shadow" : "text-slate-500"
+                }`}
+              >
+                {state.name1}
+              </button>
+              <button
+                type="button"
+                onClick={() => setPayer("2")}
+                className={`flex-1 rounded-md py-2 text-sm font-semibold ${
+                  payer === "2" ? "bg-white text-pink-600 shadow" : "text-slate-500"
+                }`}
+              >
+                {state.name2}
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
       <button
         onClick={submit}

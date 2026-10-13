@@ -21,8 +21,8 @@ Logiciel web de **gestion de budget familiale** pour un couple : suivi des reven
 
 ### 1. Revenus & profils
 - Saisie des deux profils du couple (noms personnalisables) et de leurs salaires nets mensuels.
-- **Répartition automatique des charges** proportionnelle aux revenus, ou mode **50/50 forcé**.
-- Détail du calcul du ratio affichable.
+- **Mode de gestion du foyer** : comptes **séparés** (répartition proportionnelle ou 50/50 forcé) ou **compte joint** (pas de répartition).
+- Détail du calcul du ratio affichable (mode séparé).
 
 ### 2. Gestion des dépenses
 - Ajout de dépenses avec **description, montant, catégorie** (14 catégories : Logement, Énergie, Courses, Enfants, Transport, Assurances, Santé, Sorties, Vacances, etc.) et **fréquence** (mensuelle ou annuelle).
@@ -35,14 +35,11 @@ Logiciel web de **gestion de budget familiale** pour un couple : suivi des reven
 - Graphiques (Chart.js) : répartition des paiements par personne et top 5 des catégories de dépenses.
 - **Verdict d'équilibre** : indique qui doit de l'argent à qui pour atteindre la répartition équitable.
 
-### 4. Simulateur d'achat immobilier 🏡
-- Paramètres : apport, taux d'intérêt, taux d'assurance, durée (15/20/25 ans), type de bien (ancien ~8 % de frais de notaire, neuf ~2,5 %).
-- Mensualité maximale retenue = la plus contrainte entre :
-  - le **plafond bancaire de 35 % d'endettement** ;
-  - le **reste à vivre réel** (revenus − dépenses hors loyer actuel).
-- Résultats : enveloppe globale (prêt + apport), prix net vendeur, frais de notaire, mensualité (dont assurance), coût total du crédit.
-- **Tableau d'amortissement** annuel (restant dû, intérêts, principal, assurance).
-- Estimation de la **durée d'épargne** nécessaire pour constituer l'apport.
+### 4. Suivi du crédit maison 🏦
+- Saisie du **crédit réel** : capital, taux, assurance, durée, mensualité constatée (calculée automatiquement si vide) et date de première échéance.
+- Indicateurs : **restant dû**, mensualité (dont assurance), **coût total du crédit**, **reste à payer** et date de fin estimée.
+- **Barre d'avancement** du remboursement.
+- **Simulation de remboursement anticipé** : ajoutez une mensualité supplémentaire pour voir la nouvelle date de fin et les mois économisés.
 
 ### 5. Sauvegarde & export
 - **Persistance automatique** dans le navigateur (`localStorage`).
