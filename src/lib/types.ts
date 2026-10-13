@@ -50,10 +50,11 @@ export const DEFAULT_STATE: BudgetState = {
     immoType: "ancien",
   },
   loan: {
-    capital: 200000,
+    capital: 266000,
     rate: 3.4,
     durationMonths: 300,
-    monthlyPayment: 0,
+    monthlyPayment: 1518.88,
+    offeredTaeg: 4.2,
     startDate: "",
     insuranceMode: "remaining",
     insuranceRate: 1.1,
