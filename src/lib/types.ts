@@ -1,5 +1,7 @@
 export type Frequency = "monthly" | "annual";
 
+export type BudgetMode = "separe" | "commun";
+
 export interface Expense {
   id: number;
   desc: string;
@@ -17,14 +19,25 @@ export interface ImmoSettings {
   immoType: "ancien" | "neuf";
 }
 
+export interface LoanSettings {
+  capital: number;
+  rate: number;
+  insuranceRate: number;
+  durationMonths: number;
+  monthlyPayment: number;
+  startDate: string;
+}
+
 export interface BudgetState {
   name1: string;
   name2: string;
   salary1: string;
   salary2: string;
   force5050: boolean;
+  mode: BudgetMode;
   expenses: Expense[];
   immo: ImmoSettings;
+  loan: LoanSettings;
 }
 
 export const DEFAULT_STATE: BudgetState = {
@@ -33,6 +46,7 @@ export const DEFAULT_STATE: BudgetState = {
   salary1: "",
   salary2: "",
   force5050: false,
+  mode: "separe",
   expenses: [],
   immo: {
     immoApport: 20000,
@@ -40,6 +54,14 @@ export const DEFAULT_STATE: BudgetState = {
     immoInsurance: 0.34,
     immoDuration: 20,
     immoType: "ancien",
+  },
+  loan: {
+    capital: 200000,
+    rate: 3.5,
+    insuranceRate: 0.34,
+    durationMonths: 240,
+    monthlyPayment: 0,
+    startDate: "",
   },
 };
 
@@ -61,3 +83,5 @@ export const CATEGORIES = [
 ] as const;
 
 export const RENT_CATEGORY = "🏠 Logement";
+
+export const LOAN_CATEGORY = "🏦 Crédit Maison";

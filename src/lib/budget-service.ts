@@ -1,4 +1,4 @@
-import type { BudgetState, Expense, Frequency, ImmoSettings } from "./types";
+import type { BudgetState, Expense, Frequency, ImmoSettings, LoanSettings } from "./types";
 import { DEFAULT_STATE } from "./types";
 
 const STORAGE_KEY = "budget_couple_v9";
@@ -14,6 +14,18 @@ export function normalizeState(raw: unknown): BudgetState {
     immoDuration: num(immoRaw.immoDuration, DEFAULT_STATE.immo.immoDuration),
     immoType: immoRaw.immoType === "neuf" ? "neuf" : "ancien",
   };
+  const loanRaw = (o.loan ?? {}) as Record<string, unknown>;
+  const durationMonths = num(loanRaw.durationMonths, 0);
+  const capital = num(loanRaw.capital, 0);
+  const loan: LoanSettings = {
+    capital,
+    rate: num(loanRaw.rate, 3.5),
+    insuranceRate: num(loanRaw.insuranceRate, 0.34),
+    durationMonths,
+    monthlyPayment: num(loanRaw.monthlyPayment, 0),
+    startDate: typeof loanRaw.startDate === "string" ? loanRaw.startDate : "",
+  };
+  const mode = o.mode === "commun" ? "commun" : "separe";
   const expenses: Expense[] = Array.isArray(o.expenses)
     ? o.expenses
         .filter((e): e is Record<string, unknown> => !!e && typeof e === "object")
@@ -33,8 +45,10 @@ export function normalizeState(raw: unknown): BudgetState {
     salary1: str(o.salary1, ""),
     salary2: str(o.salary2, ""),
     force5050: o.force5050 === true,
+    mode,
     expenses,
     immo,
+    loan,
   };
 }
 

@@ -56,21 +56,50 @@ export default function RevenusCard({ state, update }: Props) {
           />
         </div>
       </div>
-      <label className="flex items-center gap-2 mt-4 rounded-md bg-slate-100 px-3 py-2 text-sm">
-        <input
-          type="checkbox"
-          checked={state.force5050}
-          onChange={(e) => update((p) => ({ ...p, force5050: e.target.checked }))}
-        />
-        Forcer le 50/50 pour les dépenses courantes
-      </label>
-      <p className="mt-2 text-sm text-slate-500">
-        Ratio appliqué :{" "}
-        <span className="font-bold text-slate-900">
-          {(ratio.ratio1 * 100).toFixed(0)}% - {(ratio.ratio2 * 100).toFixed(0)}%
-          {ratio.forced && " (Forcé)"}
-        </span>
-      </p>
+      <div className="mt-4">
+        <label className="block text-sm font-semibold text-slate-500 mb-1">
+          Mode de gestion du foyer
+        </label>
+        <div className="flex rounded-lg bg-slate-100 p-1 max-w-md">
+          <button
+            type="button"
+            onClick={() => update((p) => ({ ...p, mode: "separe" }))}
+            className={`flex-1 rounded-md py-2 text-sm font-semibold ${
+              state.mode === "separe" ? "bg-white shadow text-blue-600" : "text-slate-500"
+            }`}
+          >
+            ✌️ Comptes séparés
+          </button>
+          <button
+            type="button"
+            onClick={() => update((p) => ({ ...p, mode: "commun" }))}
+            className={`flex-1 rounded-md py-2 text-sm font-semibold ${
+              state.mode === "commun" ? "bg-white shadow text-purple-600" : "text-slate-500"
+            }`}
+          >
+            💍 Compte joint
+          </button>
+        </div>
+      </div>
+      {state.mode === "separe" && (
+        <>
+          <label className="flex items-center gap-2 mt-4 rounded-md bg-slate-100 px-3 py-2 text-sm">
+            <input
+              type="checkbox"
+              checked={state.force5050}
+              onChange={(e) => update((p) => ({ ...p, force5050: e.target.checked }))}
+            />
+            Forcer le 50/50 pour les dépenses courantes
+          </label>
+          <p className="mt-2 text-sm text-slate-500">
+            Ratio appliqué :{" "}
+            <span className="font-bold text-slate-900">
+              {(ratio.ratio1 * 100).toFixed(0)}% - {(ratio.ratio2 * 100).toFixed(0)}%
+              {ratio.forced && " (Forcé)"}
+            </span>
+          </p>
+        </>
+      )}
       <details className="mt-4 rounded-md border border-slate-200 bg-slate-50">
         <summary className="cursor-pointer px-4 py-2 font-semibold text-slate-600 text-sm">
           🔍 Détail du calcul du Ratio
