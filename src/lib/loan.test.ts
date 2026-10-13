@@ -162,11 +162,26 @@ describe("computeLoanSummary", () => {
 });
 
 describe("projectLoan (remboursement anticipé)", () => {
-  it("solder plus vite et économiser des intérêts", () => {
-    const base = projectLoan(realOffer(), 266000, 300, 0);
-    const fast = projectLoan(realOffer(), 266000, 300, 200);
+  it("solder plus vite avec une mensualité supplémentaire", () => {
+    const base = projectLoan(realOffer(), 266000, 300, { oneTime: 0, monthly: 0 });
+    const fast = projectLoan(realOffer(), 266000, 300, { oneTime: 0, monthly: 200 });
     expect(fast.monthsToPayoff).toBeLessThan(base.monthsToPayoff);
     expect(fast.payoffDate).not.toBeNull();
     expect(fast.interestSaved).toBeGreaterThan(0);
+  });
+
+  it("solder plus vite avec une somme ponctuelle", () => {
+    const base = projectLoan(realOffer(), 266000, 300, { oneTime: 0, monthly: 0 });
+    const fast = projectLoan(realOffer(), 266000, 300, { oneTime: 50000, monthly: 0 });
+    expect(fast.monthsToPayoff).toBeLessThan(base.monthsToPayoff);
+    expect(fast.interestSaved).toBeGreaterThan(base.interestSaved);
+    const totalPrincipal = fast.rows.reduce((a, r) => a + r.principal, 0);
+    expect(totalPrincipal).toBeCloseTo(266000, 0);
+  });
+
+  it("cumule somme ponctuelle et mensualité supplémentaire", () => {
+    const both = projectLoan(realOffer(), 266000, 300, { oneTime: 30000, monthly: 150 });
+    const onlyMonthly = projectLoan(realOffer(), 266000, 300, { oneTime: 0, monthly: 150 });
+    expect(both.monthsToPayoff).toBeLessThan(onlyMonthly.monthsToPayoff);
   });
 });

@@ -222,11 +222,16 @@ export interface YearProjection {
   total: number;
 }
 
+export interface ExtraRepayment {
+  oneTime: number;
+  monthly: number;
+}
+
 export function projectLoan(
   loan: LoanSettings,
   startBalance: number,
   remainingMonths: number,
-  extraMonthly: number,
+  extra: ExtraRepayment,
   today: Date = new Date()
 ): {
   rows: YearProjection[];
@@ -236,7 +241,8 @@ export function projectLoan(
 } {
   const r = monthlyRate(loan.rate);
   const rows: YearProjection[] = [];
-  let balance = startBalance;
+  let balance = Math.max(0, startBalance - extra.oneTime);
+  const oneTimeApplied = startBalance - balance;
   let months = 0;
   let yearInterest = 0;
   let yearPrincipal = 0;
@@ -251,12 +257,22 @@ export function projectLoan(
   }
 
   let projectedInterest = 0;
+  if (oneTimeApplied > 0) {
+    rows.push({
+      year: Math.ceil(elapsed / 12),
+      balance,
+      interest: 0,
+      principal: oneTimeApplied,
+      insurance: 0,
+      total: oneTimeApplied,
+    });
+  }
 
   while (balance > 0.005 && months < 600) {
     const interest = balance * r;
     const monthlyBase = baseSchedule[Math.min(elapsed + months, baseSchedule.length - 1)];
     const basePayment = monthlyBase?.payment ?? 0;
-    let principal = basePayment + extraMonthly - interest;
+    let principal = basePayment + extra.monthly - interest;
     if (principal > balance) principal = balance;
     if (principal <= 0) break;
     const insurance = insuranceForMonth(loan, balance);
