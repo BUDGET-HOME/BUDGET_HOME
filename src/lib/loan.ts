@@ -3,6 +3,7 @@ export interface LoanSettings {
   rate: number;
   durationMonths: number;
   monthlyPayment: number;
+  offeredTaeg: number;
   startDate: string;
   insuranceMode: "capital" | "remaining";
   insuranceRate: number;
@@ -60,22 +61,22 @@ export function loanFees(loan: LoanSettings): number {
 export function buildSchedule(loan: LoanSettings): MonthDetail[] {
   const n = loan.durationMonths;
   const r = monthlyRate(loan.rate);
-  const monthlyPayment =
-    loan.monthlyPayment > 0
-      ? loan.monthlyPayment
-      : annuityPayment(loan.capital, loan.rate, n);
+  const annuity = annuityPayment(loan.capital, loan.rate, n);
+  const totalPayment = loan.monthlyPayment > 0;
 
   const rows: MonthDetail[] = [];
   let balance = loan.capital;
 
   for (let m = 1; m <= n && balance > 0.005; m++) {
     const interest = balance * r;
-    let principal = monthlyPayment - interest;
-    if (m === n || principal > balance) principal = balance;
     const insurance =
       loan.insuranceMode === "remaining"
         ? balance * monthlyRate(loan.insuranceRate)
         : loan.insuranceAvgMonthly;
+    let principal = totalPayment
+      ? loan.monthlyPayment - interest - insurance
+      : annuity - interest;
+    if (m === n || principal > balance) principal = balance;
     balance = Math.max(0, balance - principal);
     rows.push({
       month: m,

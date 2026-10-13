@@ -20,6 +20,7 @@ export function normalizeState(raw: unknown): BudgetState {
     rate: num(loanRaw.rate, 3.4),
     durationMonths: num(loanRaw.durationMonths, 300),
     monthlyPayment: num(loanRaw.monthlyPayment, 0),
+    offeredTaeg: num(loanRaw.offeredTaeg, 0),
     startDate: typeof loanRaw.startDate === "string" ? loanRaw.startDate : "",
     insuranceMode: loanRaw.insuranceMode === "capital" ? "capital" : "remaining",
     insuranceRate: num(loanRaw.insuranceRate, 1.1),

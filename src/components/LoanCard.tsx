@@ -5,7 +5,6 @@ import {
   annuityPayment,
   computeLoanSummary,
   insuranceForMonth,
-  loanFees,
   projectLoan,
 } from "@/lib/loan";
 import { formatEUR } from "@/lib/budget";
@@ -78,24 +77,46 @@ export default function LoanCard({ state, update }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Mensualité hors assurance (€)
+            Versement mensuel (€) — assurance incluse
           </label>
           <input
             type="number"
             value={loan.monthlyPayment || ""}
-            placeholder={`Auto : ${annuityPayment(
+            placeholder={`Auto : ${(annuityPayment(
               loan.capital,
               loan.rate,
               loan.durationMonths
-            ).toFixed(2)}`}
+            ) + insuranceForMonth(loan, loan.capital)).toFixed(2)}`}
             onChange={(e) =>
               setLoan({ monthlyPayment: parseFloat(e.target.value) || 0 })
             }
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
+          <p className="text-xs text-slate-500 mt-1">
+            Montant total du versement (comme sur le tableau d&apos;amortissement).
+            Laissez vide pour un calcul automatique hors assurance.
+          </p>
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-slate-500 mb-1">
+            TAEG de l&apos;offre (%)
+          </label>
+          <input
+            type="number"
+            step="0.001"
+            value={loan.offeredTaeg || ""}
+            placeholder="4.200"
+            onChange={(e) =>
+              setLoan({ offeredTaeg: parseFloat(e.target.value) || 0 })
+            }
+            className="w-full rounded-md border border-slate-300 px-3 py-2"
+          />
+          <p className="text-xs text-slate-500 mt-1">
+            Indiqué sur l&apos;offre de prêt, pour comparaison avec le TAEG recalculé.
+          </p>
         </div>
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
@@ -256,9 +277,19 @@ export default function LoanCard({ state, update }: Props) {
             <div className="text-xl font-bold text-purple-800">
               {summary.taeg !== null ? `${summary.taeg.toFixed(3)} %` : "—"}
             </div>
-            <div className="text-xs text-slate-500">
-              à comparer à l&apos;offre ({loanFees(loan) > 0 ? "frais inclus" : "sans frais"})
-            </div>
+            {loan.offeredTaeg > 0 && summary.taeg !== null && (
+              <div className="text-xs text-slate-500">
+                offre : {loan.offeredTaeg.toFixed(3)} %{" "}
+                {Math.abs(summary.taeg - loan.offeredTaeg) < 0.15 ? (
+                  <span className="text-green-600 font-semibold">✓ cohérent</span>
+                ) : (
+                  <span className="text-amber-600 font-semibold">
+                    — écart : l&apos;offre n&apos;inclut que la part obligatoire de
+                    l&apos;assurance dans le TAEG
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
