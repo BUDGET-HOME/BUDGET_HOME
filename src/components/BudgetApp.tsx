@@ -29,14 +29,14 @@ export default function BudgetApp() {
 
   if (!authReady || !loaded) {
     return (
-      <main className="mx-auto max-w-4xl p-5">
+      <div className="mx-auto max-w-4xl">
         <p className="text-slate-500">Chargement…</p>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="mx-auto max-w-4xl p-5">
+    <div className="mx-auto max-w-4xl">
       <Header user={user} syncStatus={syncStatus} state={state} onImport={handleImport} />
       {error && (
         <div className="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-700">
@@ -58,6 +58,6 @@ export default function BudgetApp() {
       <AnalyseCard state={state} viewMode={viewMode} setViewMode={setViewMode} />
       <ChargesTable state={state} update={update} />
       <ChartsCard state={state} />
-    </main>
+    </div>
   );
 }
