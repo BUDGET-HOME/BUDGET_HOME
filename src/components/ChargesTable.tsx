@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { CATEGORIES, type BudgetState, type Frequency } from "@/lib/types";
+import { computeLoanSummary } from "@/lib/loan";
+import { formatEUR } from "@/lib/budget";
 
 interface Props {
   state: BudgetState;
@@ -73,6 +75,17 @@ export default function ChargesTable({ state, update }: Props) {
     setError(null);
   };
 
+  const loanSummary = computeLoanSummary(state.loan);
+  const loanActive =
+    state.loan.capital > 0 && loanSummary.remainingMonths > 0;
+  const loanMonthly =
+    loanSummary.firstMonth.payment + loanSummary.firstMonth.insurance;
+  const expensesMonthly = state.expenses.reduce(
+    (a, e) => a + (e.freq === "monthly" ? e.amount : e.amount / 12),
+    0
+  );
+  const totalMonthly = expensesMonthly + loanMonthly;
+
   return (
     <section className="budget-card">
       <div className="flex justify-between items-center border-b-2 border-slate-100 pb-2 mb-5">
@@ -98,11 +111,45 @@ export default function ChargesTable({ state, update }: Props) {
             </tr>
           </thead>
           <tbody>
-            {sorted.length === 0 && (
+            {sorted.length === 0 && !loanActive && (
               <tr>
                 <td colSpan={6} className="py-6 text-center text-slate-400">
                   Aucune dépense enregistrée.
                 </td>
+              </tr>
+            )}
+            {loanActive && (
+              <tr className="border-b border-slate-100 bg-purple-50/60">
+                <td className="py-3 px-3">🏦</td>
+                <td className="py-3 px-3 font-semibold">
+                  Crédit maison
+                  <span className="ml-2 text-xs font-normal text-slate-500">
+                    ({loanSummary.remainingMonths} mois restants, fin{" "}
+                    {loanSummary.endDate})
+                  </span>
+                </td>
+                <td className="py-3 px-3 font-semibold">
+                  {loanMonthly.toFixed(2)} €
+                </td>
+                <td className="py-3 px-3">Mois</td>
+                <td className="py-3 px-3">
+                  <span className="rounded-md bg-purple-600 px-2 py-0.5 text-xs font-semibold text-white">
+                    Commun
+                  </span>
+                </td>
+                <td className="py-3 px-3 text-right no-print">
+                  <span className="text-xs text-slate-400" title="Montant calculé depuis la carte crédit maison">
+                    auto
+                  </span>
+                </td>
+              </tr>
+            )}
+            {loanActive && sorted.length > 0 && (
+              <tr className="border-b-2 border-slate-200 bg-slate-50 font-semibold">
+                <td className="py-2 px-3" />
+                <td className="py-2 px-3">Total mensuel (dépenses + crédit)</td>
+                <td className="py-2 px-3">{formatEUR(totalMonthly)} /mois</td>
+                <td colSpan={3} />
               </tr>
             )}
             {sorted.map((exp) =>
