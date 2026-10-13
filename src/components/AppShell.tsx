@@ -4,8 +4,8 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 
 const TABS = [
-  { href: "/", label: "Budget du Foyer", icon: "🏠" },
-  { href: "/entreprise", label: "Gestion Entreprise", icon: "💼" },
+  { href: "/", label: "Budget du Foyer" },
+  { href: "/entreprise", label: "Gestion Entreprise" },
 ];
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
@@ -15,7 +15,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <div className="flex min-h-screen">
       <aside className="no-print w-60 shrink-0 border-r border-slate-200 bg-white">
         <div className="px-4 py-5 border-b border-slate-100">
-          <h1 className="text-lg font-bold text-slate-900">💰 BUDGET_HOME</h1>
+          <h1 className="text-lg font-bold text-slate-900">BUDGET_HOME</h1>
         </div>
         <nav className="p-3 space-y-1">
           {TABS.map((tab) => {
@@ -31,7 +31,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     : "text-slate-600 hover:bg-slate-100"
                 }`}
               >
-                <span className="text-base">{tab.icon}</span>
                 {tab.label}
               </Link>
             );

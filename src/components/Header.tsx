@@ -32,7 +32,7 @@ export default function Header({ user, syncStatus, state, onImport }: HeaderProp
 
   return (
     <header className="flex flex-wrap items-center justify-between gap-3 mb-5 no-print">
-      <h1 className="text-2xl font-bold text-slate-900">💰 Budget & Projet Immo</h1>
+      <h1 className="text-2xl font-bold text-slate-900">Budget & Projet Immo</h1>
       <div className="flex flex-wrap items-center gap-2">
         {user && (
           <span className="text-sm text-slate-600">
