@@ -106,3 +106,38 @@ describe("computeVerdict", () => {
     expect(v.creditor).toBe("B");
   });
 });
+
+describe("computeBalance avec crédit maison", () => {
+  const loan = {
+    capital: 266000,
+    rate: 3.4,
+    durationMonths: 300,
+    monthlyPayment: 1518.88,
+    offeredTaeg: 4.2,
+    startDate: "",
+    insuranceMode: "remaining" as const,
+    insuranceRate: 1.3267,
+    insuranceAvgMonthly: 0,
+    guaranteeFees: 3192,
+    brokerFees: 2500,
+    fileFees: 1300,
+  };
+
+  it("inclut la mensualité du prêt dans le total mensuel", () => {
+    const without = computeBalance(2000, 1000, [], "monthly", false);
+    const withLoan = computeBalance(2000, 1000, [], "monthly", false, "separe", loan);
+    expect(withLoan.displayTotal).toBeCloseTo(1518.88, 1);
+    expect(withLoan.savingsCapacity).toBeCloseTo(3000 - 1518.88, 1);
+    expect(withLoan.displayTotal).toBeGreaterThan(without.displayTotal);
+  });
+
+  it("sans prêt, le total ne change pas", () => {
+    const without = computeBalance(2000, 1000, [], "monthly", false);
+    expect(without.displayTotal).toBe(0);
+  });
+
+  it("mode commun force le ratio 50/50", () => {
+    const b = computeBalance(2000, 1000, [exp({ amount: 100, payer: "1" })], "monthly", false, "commun");
+    expect(b.shouldPay1).toBeCloseTo(50, 0);
+  });
+});
