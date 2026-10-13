@@ -224,7 +224,37 @@ export interface YearProjection {
 
 export interface ExtraRepayment {
   oneTime: number;
+  oneTimeDate: string;
   monthly: number;
+}
+
+function simulate(
+  loan: LoanSettings,
+  startBalance: number,
+  startMonthIndex: number,
+  totalMonths: number,
+  paymentFor: (monthIndex: number, balance: number) => number,
+  oneTimeAmount: number,
+  oneTimeMonthOffset: number
+): { totalInterest: number; months: number; balance: number } {
+  const r = monthlyRate(loan.rate);
+  let balance = startBalance;
+  let totalInterest = 0;
+  let m = 0;
+  while (balance > 0.005 && m < 600) {
+    if (oneTimeAmount > 0 && m === oneTimeMonthOffset) {
+      balance = Math.max(0, balance - oneTimeAmount);
+      if (balance <= 0.005) break;
+    }
+    const interest = balance * r;
+    let principal = paymentFor(startMonthIndex + m, balance) - interest;
+    if (principal > balance) principal = balance;
+    if (principal <= 0) break;
+    balance = Math.max(0, balance - principal);
+    totalInterest += interest;
+    m++;
+  }
+  return { totalInterest, months: m, balance };
 }
 
 export function projectLoan(
@@ -238,54 +268,99 @@ export function projectLoan(
   payoffDate: Date | null;
   monthsToPayoff: number;
   interestSaved: number;
+  elapsedMonths: number;
 } {
   const r = monthlyRate(loan.rate);
+  const elapsed = loan.durationMonths - remainingMonths;
+  const base = buildSchedule(loan);
+  const paymentOf = (monthIndex: number, balance: number): number => {
+    const row = base[Math.min(monthIndex, base.length - 1)];
+    const scheduled = row ? row.payment : 0;
+    if (scheduled === 0) return balance + balance * r;
+    return scheduled + extra.monthly;
+  };
+
+  // Mois (0-based depuis aujourd'hui) auquel appliquer le ponctuel
+  let oneTimeOffset = 0;
+  if (extra.oneTime > 0 && extra.oneTimeDate) {
+    const d = new Date(extra.oneTimeDate + "-01");
+    if (!isNaN(d.getTime())) {
+      const diff =
+        (d.getFullYear() - today.getFullYear()) * 12 +
+        (d.getMonth() - today.getMonth());
+      oneTimeOffset = Math.max(0, diff);
+    }
+  }
+
+  // Référence: simulation sans remboursement anticipé
+  const ref = simulate(
+    loan,
+    startBalance,
+    elapsed,
+    loan.durationMonths,
+    (mi, bal) => {
+      const row = base[Math.min(mi, base.length - 1)];
+      return row ? row.payment : bal + bal * r;
+    },
+    0,
+    0
+  );
+
+  // Projection avec remboursements
+  const withExtra = simulate(
+    loan,
+    startBalance,
+    elapsed,
+    loan.durationMonths,
+    paymentOf,
+    extra.oneTime,
+    oneTimeOffset
+  );
+
+  const interestSaved = Math.max(0, ref.totalInterest - withExtra.totalInterest);
+  const monthsToPayoff = withExtra.months;
+
+  // Lignes annuelles (année calendaire du prêt, pas du bloc)
   const rows: YearProjection[] = [];
-  let balance = Math.max(0, startBalance - extra.oneTime);
-  const oneTimeApplied = startBalance - balance;
-  let months = 0;
+  let balance = startBalance;
+  let m = 0;
   let yearInterest = 0;
   let yearPrincipal = 0;
   let yearIns = 0;
-  let payoffDate: Date | null = null;
-  let baseInterestRemaining = 0;
+  const yearOf = (absoluteMonth: number): number =>
+    Math.floor((absoluteMonth - 1) / 12) + 1;
 
-  const baseSchedule = buildSchedule(loan);
-  const elapsed = loan.durationMonths - remainingMonths;
-  for (const m of baseSchedule.slice(Math.max(0, elapsed))) {
-    baseInterestRemaining += m.interest;
-  }
-
-  let projectedInterest = 0;
-  if (oneTimeApplied > 0) {
-    rows.push({
-      year: Math.ceil(elapsed / 12),
-      balance,
-      interest: 0,
-      principal: oneTimeApplied,
-      insurance: 0,
-      total: oneTimeApplied,
-    });
-  }
-
-  while (balance > 0.005 && months < 600) {
+  while (balance > 0.005 && m < 600 && m < monthsToPayoff + 1) {
+    const applyOneTime = extra.oneTime > 0 && m === oneTimeOffset;
+    if (applyOneTime) {
+      yearPrincipal += Math.min(balance, extra.oneTime);
+      balance = Math.max(0, balance - extra.oneTime);
+      if (balance <= 0.005) {
+        rows.push({
+          year: yearOf(elapsed + m + 1),
+          balance,
+          interest: yearInterest,
+          principal: yearPrincipal,
+          insurance: yearIns,
+          total: yearInterest + yearPrincipal + yearIns,
+        });
+        break;
+      }
+    }
     const interest = balance * r;
-    const monthlyBase = baseSchedule[Math.min(elapsed + months, baseSchedule.length - 1)];
-    const basePayment = monthlyBase?.payment ?? 0;
-    let principal = basePayment + extra.monthly - interest;
+    let principal = paymentOf(elapsed + m, balance) - interest;
     if (principal > balance) principal = balance;
     if (principal <= 0) break;
     const insurance = insuranceForMonth(loan, balance);
     balance = Math.max(0, balance - principal);
-    months++;
-    projectedInterest += interest;
     yearInterest += interest;
     yearPrincipal += principal;
     yearIns += insurance;
-
-    if (months % 12 === 0 || balance <= 0.005) {
+    m++;
+    const absoluteMonth = elapsed + m;
+    if (absoluteMonth % 12 === 0 || balance <= 0.005) {
       rows.push({
-        year: Math.ceil((elapsed + months) / 12),
+        year: yearOf(absoluteMonth),
         balance,
         interest: yearInterest,
         principal: yearPrincipal,
@@ -296,15 +371,18 @@ export function projectLoan(
       yearPrincipal = 0;
       yearIns = 0;
     }
-    if (balance <= 0.005) {
-      payoffDate = new Date(today.getFullYear(), today.getMonth() + months, 1);
-    }
   }
+
+  const payoffDate =
+    monthsToPayoff > 0
+      ? new Date(today.getFullYear(), today.getMonth() + monthsToPayoff, 1)
+      : null;
 
   return {
     rows,
     payoffDate,
-    monthsToPayoff: months,
-    interestSaved: Math.max(0, baseInterestRemaining - projectedInterest),
+    monthsToPayoff,
+    interestSaved,
+    elapsedMonths: elapsed,
   };
 }
