@@ -1,0 +1,1037 @@
+"use client";
+
+import { useState, useEffect, useRef } from "react";
+import { formatEUR } from "@/lib/budget";
+
+type StatusType = "auto" | "eurl" | "sasu" | "portage";
+
+const PLAFOND_MICRO_BNC = 77700;
+const CFE_LISSEE = 50;
+
+interface SimulationResult {
+  net: number;
+  taxes: number;
+  ir: number;
+  deductible: number;
+  nonDeductible: number;
+}
+
+interface PodiumResult {
+  id: string;
+  val: number;
+  code: StatusType;
+  penalty: boolean;
+}
+
+interface AREData {
+  daily: number;
+  monthly: number;
+  duration: number;
+}
+
+export default function FreelanceSimulatorCard() {
+  // State for inputs
+  const [status, setStatus] = useState<StatusType>("auto");
+  const [tjm, setTjm] = useState<number>(480);
+  const [days, setDays] = useState<number>(18);
+  const [costRetirement, setCostRetirement] = useState<number>(300);
+  const [costLld, setCostLld] = useState<number>(450);
+  const [costFuel, setCostFuel] = useState<number>(150);
+  const [costMutuelle, setCostMutuelle] = useState<number>(80);
+  const [costBankIns, setCostBankIns] = useState<number>(45);
+  const [costAccountant, setCostAccountant] = useState<number>(150);
+  const [pctPortage, setPctPortage] = useState<number>(7);
+  const [costMeals, setCostMeals] = useState<number>(200);
+  const [costTelecom, setCostTelecom] = useState<number>(50);
+  const [costTech, setCostTech] = useState<number>(50);
+  const [acre, setAcre] = useState<boolean>(true);
+  const [fiscalParts, setFiscalParts] = useState<number>(1);
+  const [areToggle, setAreToggle] = useState<boolean>(false);
+  const [salaryGross, setSalaryGross] = useState<number>(3500);
+  const [salaryBonus, setSalaryBonus] = useState<number>(0);
+  const [salaryMonths, setSalaryMonths] = useState<number>(12);
+  const [userAge, setUserAge] = useState<number>(35);
+
+  // State for outputs
+  const [headerCA, setHeaderCA] = useState<string>("0 €");
+  const [caMensuel, setCaMensuel] = useState<string>("0 €");
+  const [tvaBadge, setTvaBadge] = useState<{ text: string; className: string }>({
+    text: "Franchise TVA",
+    className: "mt-1 inline-flex items-center px-2 py-0.5 rounded text-[9px] font-medium bg-green-100 text-green-800",
+  });
+  const [displayTaxes, setDisplayTaxes] = useState<string>("0 €");
+  const [displayFrais, setDisplayFrais] = useState<string>("0 €");
+  const [superNet, setSuperNet] = useState<string>("0 €");
+  const [marginPct, setMarginPct] = useState<string>("0%");
+  const [totalChargesInput, setTotalChargesInput] = useState<string>("0 €");
+  const [appliedRateLabel, setAppliedRateLabel] = useState<string>("--");
+  const [retirementNote, setRetirementNote] = useState<string>("En Auto, payé \"de votre poche\".");
+  const [areMonthly, setAreMonthly] = useState<string>("0 €");
+  const [areDaily, setAreDaily] = useState<string>("0 €");
+  const [areDuration, setAreDuration] = useState<string>("Durée : 18 mois");
+  const [verdictTitle, setVerdictTitle] = useState<string>("Analyse en cours...");
+  const [verdictText, setVerdictText] = useState<string>("Analyse en cours...");
+
+  // State for chart
+  const [showDeductible, setShowDeductible] = useState<boolean>(false);
+  const [showNonDeductible, setShowNonDeductible] = useState<boolean>(true);
+  const [barDeductibleWidth, setBarDeductibleWidth] = useState<number>(0);
+  const [barTaxesWidth, setBarTaxesWidth] = useState<number>(0);
+  const [barNonDeductibleWidth, setBarNonDeductibleWidth] = useState<number>(0);
+  const [valDeductible, setValDeductible] = useState<string>("0 €");
+  const [valTaxes, setValTaxes] = useState<string>("0 €");
+  const [valNonDeductible, setValNonDeductible] = useState<string>("0 €");
+  const [labelTaxes, setLabelTaxes] = useState<string>("2. Charges Sociales & Impôts");
+  const [chartMode, setChartMode] = useState<string>("Auto-Ent");
+
+  // State for podium
+  const [podium1, setPodium1] = useState<{ name: string; val: string; penalty: boolean }>({ name: "Auto-Ent", val: "0€", penalty: false });
+  const [podium2, setPodium2] = useState<{ name: string; val: string }>({ name: "EURL", val: "0€" });
+  const [podium3, setPodium3] = useState<{ name: string; val: string }>({ name: "SASU", val: "0€" });
+  const [podium1Height, setPodium1Height] = useState<number>(90);
+  const [podium2Height, setPodium2Height] = useState<number>(60);
+  const [podium3Height, setPodium3Height] = useState<number>(40);
+
+  const appRef = useRef<HTMLDivElement>(null);
+
+  // Helper functions
+  const money = (val: number): string => {
+    return new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(val);
+  };
+
+  const estimateIR = (taxableAnnual: number, parts: number): number => {
+    const base = taxableAnnual * 0.9; // 10% forfaitaire
+    const quotient = base / parts;
+    let tax = 0;
+    // Barème 2024
+    if (quotient > 11294) { tax += (Math.min(quotient, 28797) - 11294) * 0.11; }
+    if (quotient > 28797) { tax += (Math.min(quotient, 82341) - 28797) * 0.30; }
+    if (quotient > 82341) { tax += (Math.min(quotient, 177106) - 82341) * 0.41; }
+    if (quotient > 177106) { tax += (quotient - 177106) * 0.45; }
+    return tax * parts;
+  };
+
+  const calculateARE = (monthlyGross: number, annualBonus: number, age: number, monthsCount: number): AREData => {
+    const annualTotal = (monthlyGross * monthsCount) + annualBonus;
+    const sjr = annualTotal / 365;
+    const formula1 = (sjr * 0.404) + 13.11;
+    const formula2 = sjr * 0.57;
+    let areBrut = Math.max(formula1, formula2);
+    const ceiling = sjr * 0.75;
+    const floor = 31.97;
+    areBrut = Math.min(areBrut, ceiling);
+    areBrut = Math.max(areBrut, floor);
+    const areNetDaily = areBrut * 0.97;
+    let durationMonths = 18;
+    if (age >= 53 && age < 55) durationMonths = 22.5;
+    if (age >= 55) durationMonths = 27;
+    return { daily: areNetDaily, monthly: areNetDaily * 30.42, duration: durationMonths };
+  };
+
+  const simulateStatus = (status: StatusType, params: {
+    caMois: number;
+    costs: { ret: number; lld: number; fuel: number; mutuelle: number; bank: number; acct: number; meals: number; tel: number; tech: number };
+    pctPortage: number;
+    isAcre: boolean;
+    parts: number;
+  }): SimulationResult => {
+    const caMois = params.caMois;
+    const parts = params.parts;
+    const commonCosts = params.costs.lld + params.costs.fuel + params.costs.mutuelle + params.costs.bank + params.costs.meals + params.costs.tel + params.costs.tech + params.costs.ret;
+    let deductible = 0;
+    let nonDeductible = 0;
+    let taxes = 0;
+    let ir = 0;
+    let net = 0;
+
+    if (status === 'auto') {
+      const tauxUrssaf = params.isAcre ? 11.0 : 21.2;
+      taxes = caMois * (tauxUrssaf / 100);
+      const baseImposable = (caMois * 12) * 0.66; // Abattement 34%
+      ir = estimateIR(baseImposable, parts) / 12;
+      deductible = 0;
+      nonDeductible = commonCosts + CFE_LISSEE;
+      net = caMois - taxes - ir - nonDeductible;
+    } else if (status === 'eurl') {
+      deductible = commonCosts + params.costs.acct + CFE_LISSEE;
+      nonDeductible = 0;
+      const marge = caMois - deductible;
+      const netAvantIR = marge / 1.45;
+      taxes = marge - netAvantIR;
+      ir = estimateIR(netAvantIR * 12, parts) / 12;
+      net = netAvantIR - ir;
+    } else if (status === 'sasu') {
+      deductible = commonCosts + params.costs.acct + CFE_LISSEE;
+      nonDeductible = 0;
+      const marge = caMois - deductible;
+      const netAvantIR = marge / 1.82;
+      taxes = marge - netAvantIR;
+      ir = estimateIR(netAvantIR * 12, parts) / 12;
+      net = netAvantIR - ir;
+    } else if (status === 'portage') {
+      const gestion = caMois * (params.pctPortage / 100);
+      deductible = commonCosts + gestion;
+      nonDeductible = 0;
+      const dispo = caMois - deductible;
+      const netAvantIR = dispo * 0.51;
+      taxes = dispo - netAvantIR;
+      ir = estimateIR(netAvantIR * 12, parts) / 12;
+      net = netAvantIR - ir;
+    }
+
+    return { net, taxes, ir, deductible, nonDeductible };
+  };
+
+  const calculate = () => {
+    const caMois = tjm * days;
+    const caAnnuel = caMois * 12;
+    const parts = fiscalParts;
+    const costs = {
+      ret: costRetirement,
+      lld: costLld,
+      fuel: costFuel,
+      mutuelle: costMutuelle,
+      bank: costBankIns,
+      acct: costAccountant,
+      meals: costMeals,
+      tel: costTelecom,
+      tech: costTech
+    };
+    const pctPortageVal = pctPortage;
+    const isAcreVal = acre;
+
+    // ARE Logic
+    if (areToggle) {
+      const sGross = salaryGross;
+      const sBonus = salaryBonus;
+      const uAge = userAge;
+      const sMonths = salaryMonths;
+      const areData = calculateARE(sGross, sBonus, uAge, sMonths);
+      setAreMonthly(money(areData.monthly));
+      setAreDaily(money(areData.daily));
+      setAreDuration(`Durée estimée : ${areData.duration} mois`);
+    }
+
+    const params = { caMois, costs, pctPortage: pctPortageVal, isAcre: isAcreVal, parts };
+
+    // Selected Status UI
+    const currentSim = simulateStatus(status, params);
+
+    setHeaderCA(money(caAnnuel));
+    setCaMensuel(money(caMois));
+    setTotalChargesInput(money(Object.values(costs).reduce((a, b) => a + b, 0) + costs.acct + CFE_LISSEE));
+    setDisplayTaxes(`- ${money(currentSim.taxes + currentSim.ir)}`);
+    setDisplayFrais(`- ${money(currentSim.deductible + currentSim.nonDeductible)}`);
+    setSuperNet(money(currentSim.net));
+    setMarginPct(`${((currentSim.net / caMois) * 100).toFixed(0)}%`);
+
+    setValDeductible(money(currentSim.deductible));
+    setValTaxes(money(currentSim.taxes + currentSim.ir));
+    setValNonDeductible(money(currentSim.nonDeductible));
+
+    const maxVal = caMois || 1;
+    setBarDeductibleWidth((currentSim.deductible / maxVal * 100));
+    setBarTaxesWidth(((currentSim.taxes + currentSim.ir) / maxVal * 100));
+    setBarNonDeductibleWidth((currentSim.nonDeductible / maxVal * 100));
+
+    setShowDeductible(currentSim.deductible > 0);
+    setShowNonDeductible(currentSim.nonDeductible > 0);
+    setChartMode(status.toUpperCase());
+
+    if (status === 'auto') {
+      setRetirementNote("Payé de votre poche (après impôts et charges)");
+      const tauxUrssaf = isAcreVal ? 11.0 : 21.2;
+      setAppliedRateLabel(`${tauxUrssaf}% (ACRE: ${isAcreVal ? 'OUI' : 'NON'})`);
+    } else if (status === 'eurl') {
+      setRetirementNote("Déductible - Réduit vos charges");
+      setAppliedRateLabel("~45% sur Net (Régime TNS)");
+    } else if (status === 'sasu') {
+      setRetirementNote("Déductible - Réduit vos charges");
+      setAppliedRateLabel("~82% sur Net (Régime Salarié)");
+    } else if (status === 'portage') {
+      setRetirementNote("Déductible - Réduit vos charges");
+      setAppliedRateLabel("Charges Salariales + Patronales");
+    }
+
+    if (caAnnuel > 39100) {
+      setTvaBadge({
+        text: "Assujetti TVA (20%)",
+        className: "mt-1 inline-flex items-center px-2 py-0.5 rounded text-[9px] font-medium bg-blue-100 text-blue-800"
+      });
+    } else {
+      setTvaBadge({
+        text: "Franchise TVA (si Auto)",
+        className: "mt-1 inline-flex items-center px-2 py-0.5 rounded text-[9px] font-medium bg-green-100 text-green-800"
+      });
+    }
+
+    // COMPARATIVE LOGIC
+    const resAuto = simulateStatus('auto', params);
+    const resEurl = simulateStatus('eurl', params);
+    const resSasu = simulateStatus('sasu', params);
+    const resPortage = simulateStatus('portage', params);
+
+    let results: PodiumResult[] = [
+      { id: 'Auto-Ent', val: resAuto.net, code: 'auto', penalty: false },
+      { id: 'EURL', val: resEurl.net, code: 'eurl', penalty: false },
+      { id: 'SASU', val: resSasu.net, code: 'sasu', penalty: false },
+      { id: 'Portage', val: resPortage.net, code: 'portage', penalty: false }
+    ];
+
+    if (caAnnuel > PLAFOND_MICRO_BNC) {
+      results.find(r => r.code === 'auto')!.penalty = true;
+    }
+    const fraisReelsAuto = resAuto.nonDeductible;
+    const ratioFrais = fraisReelsAuto / caMois;
+
+    results.sort((a, b) => b.val - a.val);
+
+    // Display Podium
+    setPodium1({ name: results[0].id, val: money(results[0].val), penalty: results[0].penalty });
+    setPodium2({ name: results[1].id, val: money(results[1].val) });
+    setPodium3({ name: results[2].id, val: money(results[2].val) });
+
+    // Normalize heights for podium
+    const maxNet = Math.max(resAuto.net, resEurl.net, resSasu.net, resPortage.net) || 1;
+    setPodium1Height((results[0].val / maxNet) * 100);
+    setPodium2Height((results[1].val / maxNet) * 100);
+    setPodium3Height((results[2].val / maxNet) * 100);
+
+    // Verdict Text
+    const financialWinner = results[0];
+    const runnerUp = results[1];
+    const gap = financialWinner.val - runnerUp.val;
+    let verdictTitle = "";
+    let verdictBody = "";
+
+    if (financialWinner.code === 'auto') {
+      if (financialWinner.penalty) {
+        const realWinner = results.find(r => r.code !== 'auto');
+        verdictTitle = `🚨 Attention : Plafond Dépassé !`;
+        verdictBody = `L'<strong>Auto-Entreprise</strong> affiche le meilleur net (${money(financialWinner.val)}), mais votre CA (${money(caAnnuel)}) dépasse le plafond légal. <br>👉 <strong>Orientez-vous vers l'${realWinner?.id}</strong> (Net: ${money(realWinner?.val || 0)}).`;
+      } else if (ratioFrais > 0.34) {
+        const realWinner = results.find(r => r.code !== 'auto');
+        verdictTitle = `⚠️ Attention aux Frais Réels`;
+        verdictBody = `L'Auto-Entreprise est devant grâce à l'ACRE, mais vos frais (${(ratioFrais*100).toFixed(0)}%) dépassent l'abattement (34%). Vous perdez de l'argent fiscalement. Préparez le passage en <strong>${realWinner?.id}</strong>.`;
+      } else {
+        verdictTitle = `🏆 Vainqueur : Auto-Entreprise`;
+        verdictBody = `C'est le statut idéal pour démarrer. Vous gagnez <strong>${money(gap)}</strong> de plus par mois que l'${runnerUp.id}.`;
+      }
+    } else {
+      verdictTitle = `🏆 Vainqueur : ${financialWinner.id}`;
+      if (financialWinner.code === 'eurl') {
+        verdictBody = `L'<strong>EURL</strong> est la plus performante grâce à la déduction réelle de vos frais élevés (Voiture, Retraite).`;
+      } else {
+        verdictBody = `La <strong>SASU</strong> l'emporte. C'est souvent lié à une optimisation spécifique ou un niveau de frais particulier.`;
+      }
+    }
+
+    setVerdictTitle(verdictTitle);
+    setVerdictText(verdictBody);
+  };
+
+  useEffect(() => {
+    calculate();
+  }, [
+    status, tjm, days, costRetirement, costLld, costFuel, costMutuelle, costBankIns,
+    costAccountant, pctPortage, costMeals, costTelecom, costTech, acre, fiscalParts,
+    areToggle, salaryGross, salaryBonus, salaryMonths, userAge
+  ]);
+
+  const downloadPDF = async () => {
+    const btn = document.getElementById('btnDownload');
+    const btnText = document.getElementById('btnText');
+    const mainApp = appRef.current;
+
+    if (!mainApp || !btn || !btnText) return;
+
+    const originalText = btnText.innerText;
+    btnText.innerText = "Génération...";
+    btn.classList.add('opacity-75', 'cursor-not-allowed');
+
+    // Add print-mode for clean layout
+    document.body.classList.add('print-mode');
+
+    await new Promise(r => setTimeout(r, 800));
+
+    try {
+      const { default: html2canvas } = await import('html2canvas');
+      const { jsPDF } = await import('jspdf');
+
+      const canvas = await html2canvas(mainApp, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        windowWidth: 1100,
+        backgroundColor: '#ffffff'
+      });
+
+      const imgData = canvas.toDataURL('image/jpeg', 0.90);
+      const imgWidth = 210; // A4 Width mm
+      const pageHeight = (canvas.height * imgWidth) / canvas.width;
+
+      const pdf = new jsPDF({
+        orientation: 'p',
+        unit: 'mm',
+        format: [imgWidth, pageHeight]
+      });
+
+      pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, pageHeight);
+      pdf.save('simulation_freelance_portrait.pdf');
+
+    } catch (err) {
+      console.error("PDF Error:", err);
+      alert("Erreur PDF. Veuillez réessayer.");
+    } finally {
+      document.body.classList.remove('print-mode');
+      btnText.innerText = originalText;
+      btn.classList.remove('opacity-75', 'cursor-not-allowed');
+    }
+  };
+
+  return (
+    <section className="budget-card">
+      <div className="bg-slate-900 p-6 text-white flex justify-between items-center relative overflow-hidden rounded-t-3xl -mx-4 -mt-4 mb-4">
+        <div className="relative z-10">
+          <div className="flex items-center gap-3">
+            <div className="bg-indigo-600 p-2 rounded-lg no-print">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold tracking-tight">Simulateur Freelance Ultimate</h1>
+              <p className="text-slate-400 text-xs md:text-sm print:text-gray-600">V24.0 • Décisionnel & Pédagogique</p>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-4 relative z-10">
+          <div className="hidden md:block text-right">
+            <div className="text-xs text-slate-400 uppercase tracking-widest font-semibold print:text-gray-500">CA Annuel Projeté</div>
+            <div id="headerAnnualCA" className="text-3xl font-bold text-white tracking-tight">{headerCA}</div>
+          </div>
+          <button
+            onClick={downloadPDF}
+            id="btnDownload"
+            className="no-print bg-indigo-600 hover:bg-indigo-500 text-white p-2 px-4 rounded-lg transition shadow-lg flex items-center gap-2 text-sm font-bold"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            </svg>
+            <span id="btnText">Télécharger PDF</span>
+          </button>
+        </div>
+        <div className="absolute -top-10 -right-10 w-64 h-64 bg-indigo-600 rounded-full opacity-10 blur-3xl no-print" />
+      </div>
+
+      <div ref={appRef} className="grid grid-cols-1 xl:grid-cols-12">
+        {/* GAUCHE : PARAMÈTRES */}
+        <div className="xl:col-span-5 p-6 bg-gray-50 border-r border-gray-200 space-y-6 max-h-[calc(100vh-100px)] overflow-y-auto custom-scrollbar">
+          {/* 0. STATUT */}
+          <div className="bg-indigo-50 p-4 rounded-xl shadow-sm border border-indigo-100">
+            <h2 className="text-xs font-bold text-indigo-800 uppercase tracking-wider mb-3 flex items-center gap-2">
+              0. Statut & Facturation
+            </h2>
+            <div className="space-y-4">
+              <div className="relative">
+                <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                  <label className="block text-[10px] font-semibold text-gray-500">Statut Juridique</label>
+                  <svg className="w-3 h-3 text-indigo-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="tooltip-content">Cadre légal de votre activité. Définit vos charges sociales (RSI/URSSAF) et votre protection sociale.</div>
+                </div>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value as StatusType)}
+                  className="w-full p-2.5 border border-indigo-200 rounded-lg bg-white font-bold text-indigo-900 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                >
+                  <option value="auto">Auto-Entrepreneur (Micro-BNC)</option>
+                  <option value="eurl">Société EURL (IS / TNS)</option>
+                  <option value="sasu">Société SASU (IS / Salarié)</option>
+                  <option value="portage">Portage Salarial</option>
+                </select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                    <label className="block text-[10px] font-semibold text-gray-500">TJM (HT)</label>
+                    <svg className="w-3 h-3 text-indigo-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="tooltip-content">Tarif Journalier Moyen Hors Taxes. C'est le prix facturé au client pour une journée de prestation.</div>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={tjm}
+                      onChange={(e) => setTjm(parseFloat(e.target.value) || 0)}
+                      className="w-full pl-3 pr-8 py-2 border border-gray-200 bg-white rounded-lg outline-none text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-500"
+                    />
+                    <span className="absolute right-3 top-2 text-gray-400 text-xs pointer-events-none">€</span>
+                  </div>
+                </div>
+                <div>
+                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                    <label className="block text-[10px] font-semibold text-gray-500">Jours / mois</label>
+                    <svg className="w-3 h-3 text-indigo-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="tooltip-content">Nombre moyen de jours facturés. On compte généralement 18 jours pour inclure congés, maladie et intercontrats.</div>
+                  </div>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      value={days}
+                      onChange={(e) => setDays(parseFloat(e.target.value) || 0)}
+                      max={25}
+                      className="w-full pl-3 pr-8 py-2 border border-gray-200 bg-white rounded-lg outline-none text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-500"
+                    />
+                    <span className="absolute right-3 top-2 text-gray-400 text-xs pointer-events-none">j</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* 2. CHARGES */}
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 ring-1 ring-orange-100">
+            <h2 className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-3">2. Charges & Investissements</h2>
+            <div className="space-y-4">
+              {/* Retraite */}
+              <div>
+                <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                  <label className="block text-[10px] font-bold text-emerald-600">Epargne Retraite (Mensuelle)</label>
+                  <svg className="w-3 h-3 text-emerald-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="tooltip-content">Montant placé volontairement (PER, Assurance Vie) pour compenser la perte de revenus à la retraite.</div>
+                </div>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={costRetirement}
+                    onChange={(e) => setCostRetirement(parseFloat(e.target.value) || 0)}
+                    className="w-full p-2 pr-16 text-sm border border-emerald-200 rounded text-right font-bold text-emerald-800 focus:ring-2 focus:ring-emerald-500 outline-none"
+                  />
+                  <span className="absolute right-4 top-2.5 text-emerald-600 text-xs font-bold pointer-events-none">€/mois</span>
+                </div>
+                <p className="text-[9px] text-emerald-600 mt-1 italic">{retirementNote}</p>
+              </div>
+
+              {/* Mobilité */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                    <label className="block text-[10px] text-gray-500">Loyer Véhicule (LLD)</label>
+                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="tooltip-content">Coût de la Location Longue Durée ou LOA de votre véhicule professionnel.</div>
+                  </div>
+                  <input
+                    type="number"
+                    value={costLld}
+                    onChange={(e) => setCostLld(parseFloat(e.target.value) || 0)}
+                    className="w-full p-2 text-sm border border-gray-200 rounded text-right"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                    <label className="block text-[10px] text-gray-500">Carburant/Entretien</label>
+                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="tooltip-content">Frais d'essence, péages, assurance, réparations et maintenance.</div>
+                  </div>
+                  <input
+                    type="number"
+                    value={costFuel}
+                    onChange={(e) => setCostFuel(parseFloat(e.target.value) || 0)}
+                    className="w-full p-2 text-sm border border-gray-200 rounded text-right"
+                  />
+                </div>
+              </div>
+
+              {/* Structure */}
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                    <label className="block text-[10px] text-gray-500">Mutuelle Santé</label>
+                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="tooltip-content">Cotisation mensuelle pour votre complémentaire santé (Madelin possible en société).</div>
+                  </div>
+                  <input
+                    type="number"
+                    value={costMutuelle}
+                    onChange={(e) => setCostMutuelle(parseFloat(e.target.value) || 0)}
+                    className="w-full p-2 text-sm border border-gray-200 rounded text-right"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                    <label className="block text-[10px] text-gray-500">RC Pro & Banque</label>
+                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="tooltip-content">Assurance Responsabilité Civile Pro (obligatoire ou conseillée) et frais de compte bancaire.</div>
+                  </div>
+                  <input
+                    type="number"
+                    value={costBankIns}
+                    onChange={(e) => setCostBankIns(parseFloat(e.target.value) || 0)}
+                    className="w-full p-2 text-sm border border-gray-200 rounded text-right"
+                  />
+                </div>
+              </div>
+
+              {/* Variable */}
+              <div className="grid grid-cols-2 gap-3 bg-gray-50 p-2 rounded">
+                <div>
+                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                    <label className="block text-[10px] text-gray-500">Comptable (si Soc.)</label>
+                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="tooltip-content">Honoraires mensuels de l'expert-comptable (Bilan, TVA). Obligatoire en EURL/SASU.</div>
+                  </div>
+                  <input
+                    type="number"
+                    value={costAccountant}
+                    onChange={(e) => setCostAccountant(parseFloat(e.target.value) || 0)}
+                    className="w-full p-2 text-sm border border-gray-200 rounded bg-white text-right"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                    <label className="block text-[10px] text-gray-500">Frais Portage (%)</label>
+                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="tooltip-content">Commission de gestion prélevée sur votre CA par la société de portage (souvent 5% à 10%).</div>
+                  </div>
+                  <input
+                    type="number"
+                    value={pctPortage}
+                    onChange={(e) => setPctPortage(parseFloat(e.target.value) || 0)}
+                    className="w-full p-2 text-sm border border-gray-200 rounded bg-white text-right"
+                  />
+                </div>
+              </div>
+
+              {/* Tech/Repas */}
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                    <label className="block text-[10px] text-gray-500">Repas</label>
+                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="tooltip-content">Frais de repas du midi lors de vos journées de travail.</div>
+                  </div>
+                  <input
+                    type="number"
+                    value={costMeals}
+                    onChange={(e) => setCostMeals(parseFloat(e.target.value) || 0)}
+                    className="w-full p-2 text-sm border border-gray-200 rounded text-right"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                    <label className="block text-[10px] text-gray-500">Tel/Net</label>
+                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="tooltip-content">Quote-part professionnelle de vos abonnements téléphone et internet.</div>
+                  </div>
+                  <input
+                    type="number"
+                    value={costTelecom}
+                    onChange={(e) => setCostTelecom(parseFloat(e.target.value) || 0)}
+                    className="w-full p-2 text-sm border border-gray-200 rounded text-right"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                    <label className="block text-[10px] text-gray-500">Matos</label>
+                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="tooltip-content">Petit équipement, fournitures de bureau, licences logicielles (SaaS), etc.</div>
+                  </div>
+                  <input
+                    type="number"
+                    value={costTech}
+                    onChange={(e) => setCostTech(parseFloat(e.target.value) || 0)}
+                    className="w-full p-2 text-sm border border-gray-200 rounded text-right"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
+              <span className="text-xs font-bold text-gray-600">TOTAL SORTIES / mois</span>
+              <span className="text-sm font-bold text-orange-600">{totalChargesInput}</span>
+            </div>
+          </div>
+
+          {/* 3. PARAMÈTRES SOCIAUX & FAMILLE */}
+          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <h2 className="text-xs font-bold text-red-500 uppercase tracking-wider mb-3">3. Paramètres Sociaux & Famille</h2>
+
+            {/* ACRE & PARTS FISCALES */}
+            <div className="grid grid-cols-2 gap-4 mb-4">
+              <div className="flex flex-col justify-center bg-red-50 p-2 rounded border border-red-100 relative">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1 tooltip-trigger cursor-help relative">
+                    <span className="text-xs font-bold text-red-800">ACRE (An 1)</span>
+                    <svg className="w-3 h-3 text-red-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="tooltip-content">Aide aux Créateurs : Exonération partielle de charges sociales (-50%) la première année (sous conditions).</div>
+                  </div>
+                  <div className="relative inline-block w-8 align-middle select-none">
+                    <input
+                      type="checkbox"
+                      checked={acre}
+                      onChange={(e) => setAcre(e.target.checked)}
+                      className="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300"
+                    />
+                    <label htmlFor="acreToggle" className="toggle-label block overflow-hidden h-4 rounded-full bg-gray-300 cursor-pointer" />
+                  </div>
+                </div>
+              </div>
+
+              {/* PARTS FISCALES */}
+              <div className="bg-blue-50 p-2 rounded border border-blue-100 relative">
+                <div className="flex items-center gap-1 mb-1 tooltip-trigger cursor-help relative">
+                  <label className="block text-[10px] font-bold text-blue-800">Parts Fiscales</label>
+                  <svg className="w-3 h-3 text-blue-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="tooltip-content">Utilisé pour calculer l'Impôt sur le Revenu (Quotient familial). Dépend de votre situation (Marié, Enfants...).</div>
+                </div>
+                <select
+                  value={fiscalParts}
+                  onChange={(e) => setFiscalParts(parseFloat(e.target.value) || 1)}
+                  className="w-full p-1 text-sm bg-white border border-blue-200 rounded text-blue-900 font-bold outline-none"
+                >
+                  <option value="1">1 Part (Célib)</option>
+                  <option value="1.5">1.5 Parts (1 Enf)</option>
+                  <option value="2">2 Parts (Marié)</option>
+                  <option value="2.5">2.5 Parts (Marié+1)</option>
+                  <option value="3">3 Parts (Marié+2)</option>
+                  <option value="4">4 Parts (Marié+3)</option>
+                </select>
+              </div>
+            </div>
+
+            {/* ARE TOGGLE */}
+            <div className="flex items-center justify-between mb-3 bg-blue-50 p-2 rounded border border-blue-100 relative">
+              <div className="flex items-center gap-1 tooltip-trigger cursor-help relative">
+                <span className="text-xs font-bold text-blue-800">Bénéficiaire Chômage (ARE) ?</span>
+                <svg className="w-3 h-3 text-blue-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="tooltip-content">Allocation d'Aide au Retour à l'Emploi versée par France Travail. Peut se cumuler partiellement avec vos revenus.</div>
+              </div>
+              <div className="relative inline-block w-8 align-middle select-none">
+                <input
+                  type="checkbox"
+                  checked={areToggle}
+                  onChange={(e) => setAreToggle(e.target.checked)}
+                  className="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300"
+                />
+                <label htmlFor="areToggle" className="toggle-label block overflow-hidden h-4 rounded-full bg-gray-300 cursor-pointer" />
+              </div>
+            </div>
+
+            {/* ARE INPUTS */}
+            {areToggle && (
+              <div className="space-y-3 bg-blue-50/50 p-3 rounded-lg border border-blue-100">
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                      <label className="block text-[10px] text-gray-500">Salaire Brut Mensuel</label>
+                      <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="tooltip-content">Votre ancien salaire brut mensuel moyen, base de calcul de vos indemnités.</div>
+                    </div>
+                    <input
+                      type="number"
+                      value={salaryGross}
+                      onChange={(e) => setSalaryGross(parseFloat(e.target.value) || 0)}
+                      className="w-full p-2 text-sm border border-gray-200 rounded text-right"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                      <label className="block text-[10px] text-gray-500">Sur combien de mois</label>
+                      <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="tooltip-content">Si vous aviez un 13ème ou 14ème mois, cela augmente le Salaire Journalier de Référence (SJR).</div>
+                    </div>
+                    <select
+                      value={salaryMonths}
+                      onChange={(e) => setSalaryMonths(parseFloat(e.target.value) || 12)}
+                      className="w-full p-2 text-sm border border-gray-200 rounded text-right bg-white"
+                    >
+                      <option value="12">12 mois</option>
+                      <option value="13">13 mois</option>
+                      <option value="13.5">13.5</option>
+                      <option value="14">14 mois</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                      <label className="block text-[10px] text-gray-500">Primes (An)</label>
+                      <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="tooltip-content">Total annuel brut de vos primes (objectifs, vacances...) pour le calcul du SJR.</div>
+                    </div>
+                    <input
+                      type="number"
+                      value={salaryBonus}
+                      onChange={(e) => setSalaryBonus(parseFloat(e.target.value) || 0)}
+                      className="w-full p-2 text-sm border border-gray-200 rounded text-right"
+                    />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                      <label className="block text-[10px] text-gray-500">Âge</label>
+                      <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                      <div className="tooltip-content">Détermine la durée d'indemnisation (18 mois avant 53 ans, plus au-delà).</div>
+                    </div>
+                    <input
+                      type="number"
+                      value={userAge}
+                      onChange={(e) => setUserAge(parseFloat(e.target.value) || 0)}
+                      className="w-full p-2 text-sm border border-gray-200 rounded text-right"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center text-xs text-gray-500 mt-2">
+              <span>Taux appliqué :</span>
+              <span className="font-bold text-gray-700">{appliedRateLabel}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* DROITE : DASHBOARD (Sticky) */}
+        <div className="xl:col-span-7 p-6 bg-white flex flex-col gap-6 xl:h-screen xl:sticky xl:top-0 overflow-y-auto">
+          {/* KPI GRID */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {/* CA */}
+            <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 col-span-2">
+              <div className="text-blue-500 text-[10px] font-bold uppercase tracking-wider mb-1">CA Mensuel HT</div>
+              <div className="text-2xl md:text-3xl font-bold text-blue-900">{caMensuel}</div>
+              <div className={tvaBadge.className}>{tvaBadge.text}</div>
+            </div>
+            {/* SOCIAL */}
+            <div className="bg-red-50 p-4 rounded-2xl border border-red-100">
+              <div className="text-red-500 text-[10px] font-bold uppercase tracking-wider mb-1">Cotis. & Impôts</div>
+              <div className="text-xl md:text-2xl font-bold text-red-900">{displayTaxes}</div>
+            </div>
+            {/* CHARGES */}
+            <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100">
+              <div className="text-orange-600 text-[10px] font-bold uppercase tracking-wider mb-1">Total Charges</div>
+              <div className="text-xl md:text-2xl font-bold text-orange-700">{displayFrais}</div>
+            </div>
+          </div>
+
+          {/* ARE RESULT CARD */}
+          {areToggle && (
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-5 rounded-2xl shadow-lg text-white relative overflow-hidden">
+              <div className="relative z-10 flex justify-between items-center">
+                <div>
+                  <div className="text-blue-200 text-xs font-bold uppercase tracking-wider mb-1">Filet de Sécurité (ARE)</div>
+                  <div className="flex items-baseline gap-2">
+                    <div className="text-3xl font-bold">{areMonthly}</div>
+                    <span className="text-sm opacity-80">/ mois (Net)</span>
+                  </div>
+                  <div className="text-xs text-blue-100 mt-1">{areDuration}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-[10px] text-blue-300 uppercase font-bold">Alloc. Journalière</div>
+                  <div className="text-xl font-bold">{areDaily}</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SUPER NET */}
+          <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-6 rounded-2xl shadow-xl text-white relative overflow-hidden group">
+            <div className="relative z-10">
+              <div className="text-emerald-100 text-xs font-bold uppercase tracking-wider mb-2">Reste à vivre (Super Net) / Mois</div>
+              <div className="flex items-baseline gap-4">
+                <div className="text-5xl font-extrabold tracking-tight">{superNet}</div>
+                <div className="text-xl font-medium text-emerald-300">{marginPct}</div>
+              </div>
+              <div className="mt-3 text-xs text-emerald-100 opacity-90 font-medium">
+                Montant NET réel disponible après TOUT (Charges, Retraite, Impôts).
+              </div>
+            </div>
+          </div>
+
+          {/* GRAPHIQUE BARRES */}
+          <div className="bg-white rounded-2xl border border-gray-100 p-6">
+            <div className="flex justify-between items-end mb-4">
+              <h3 className="text-gray-400 text-xs font-bold uppercase">Flux Financier (Statut Sélectionné)</h3>
+              <span className="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-500 font-mono">{chartMode}</span>
+            </div>
+            <div className="space-y-5">
+              {showDeductible && (
+                <div>
+                  <div className="flex justify-between text-xs mb-1 font-semibold text-gray-600">
+                    <span>1. Frais Déduits</span>
+                    <span className="text-orange-600">{valDeductible}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                    <div
+                      className="bg-orange-400 h-2.5 rounded-full transition-all duration-700"
+                      style={{ width: `${barDeductibleWidth}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+              <div>
+                <div className="flex justify-between text-xs mb-1 font-semibold text-gray-600">
+                  <span>{labelTaxes}</span>
+                  <span className="text-red-600">{valTaxes}</span>
+                </div>
+                <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                  <div
+                    className="bg-red-500 h-2.5 rounded-full transition-all duration-700"
+                    style={{ width: `${barTaxesWidth}%` }}
+                  />
+                </div>
+              </div>
+              {showNonDeductible && (
+                <div>
+                  <div className="flex justify-between text-xs mb-1 font-semibold text-gray-600">
+                    <span>3. Frais Non Déductibles</span>
+                    <span className="text-orange-600">{valNonDeductible}</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
+                    <div
+                      className="bg-orange-600 h-2.5 rounded-full transition-all duration-700"
+                      style={{ width: `${barNonDeductibleWidth}%` }}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* VERDICT SECTION */}
+          <div className="bg-indigo-900 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden transition-all duration-500">
+            <div className="relative z-10">
+              <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
+                <span>🏆</span> Bilan & Recommandation
+              </h3>
+
+              {/* PODIUM VISUEL */}
+              <div className="flex items-end justify-center gap-4 mb-8 h-40">
+                {/* 2nd Place */}
+                <div className="flex flex-col items-center w-1/4 group transition-all duration-500">
+                  <div className="text-xs text-indigo-300 font-bold mb-1">{podium2.name}</div>
+                  <div className="text-[10px] text-indigo-400 mb-1">{podium2.val}</div>
+                  <div
+                    className="w-full bg-indigo-500/50 rounded-t-lg relative podium-bar group-hover:bg-indigo-500/70 transition-all duration-500"
+                    style={{ height: `${podium2Height}%` }}
+                  >
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 text-xl">🥈</div>
+                  </div>
+                </div>
+                {/* 1st Place */}
+                <div
+                  className={`flex flex-col items-center w-1/3 group transition-all duration-500 ${podium1.penalty ? 'blur-locked' : ''}`}
+                >
+                  <div className="text-sm text-yellow-300 font-bold mb-1">{podium1.name}</div>
+                  <div className="text-xs text-white font-bold mb-1">{podium1.val}</div>
+                  <div
+                    className="w-full bg-gradient-to-t from-yellow-600 to-yellow-400 rounded-t-lg relative podium-bar shadow-[0_0_15px_rgba(250,204,21,0.4)] transition-all duration-500"
+                    style={{ height: `${podium1Height}%` }}
+                  >
+                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 text-2xl">🥇</div>
+                  </div>
+                </div>
+                {/* 3rd Place */}
+                <div className="flex flex-col items-center w-1/4 group transition-all duration-500">
+                  <div className="text-xs text-indigo-300 font-bold mb-1">{podium3.name}</div>
+                  <div className="text-[10px] text-indigo-400 mb-1">{podium3.val}</div>
+                  <div
+                    className="w-full bg-indigo-700/50 rounded-t-lg relative podium-bar group-hover:bg-indigo-700/70 transition-all duration-500"
+                    style={{ height: `${podium3Height}%` }}
+                  >
+                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 text-xl">🥉</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* TEXTE DE CONCLUSION */}
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-5 border border-white/10">
+                <h4 className="text-lg font-bold text-yellow-300 mb-2" dangerouslySetInnerHTML={{ __html: verdictTitle }} />
+                <p className="text-sm text-indigo-100 leading-relaxed" dangerouslySetInnerHTML={{ __html: verdictText }} />
+              </div>
+            </div>
+
+            {/* Background Decoration */}
+            <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-indigo-600 rounded-full blur-3xl opacity-30 no-print" />
+          </div>
+        </div>
+      </div>
+
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #c7c7c7; border-radius: 3px; }
+        .podium-bar { transition: height 1s cubic-bezier(0.4, 0, 0.2, 1); }
+        .blur-locked { filter: grayscale(1) opacity(0.5); }
+        .toggle-checkbox:checked { right: 0; border-color: #2563EB; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #2563EB; }
+        .tooltip-trigger:hover .tooltip-content { display: block; }
+        .tooltip-content {
+          display: none;
+          position: absolute;
+          bottom: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 200px;
+          padding: 8px;
+          background-color: #1e293b;
+          color: white;
+          font-size: 10px;
+          border-radius: 6px;
+          z-index: 50;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+          text-align: center;
+          line-height: 1.4;
+          pointer-events: none;
+          margin-bottom: 5px;
+        }
+        .tooltip-content::after {
+          content: " ";
+          position: absolute;
+          top: 100%;
+          left: 50%;
+          margin-left: -5px;
+          border-width: 5px;
+          border-style: solid;
+          border-color: #1e293b transparent transparent transparent;
+        }
+      `}</style>
+    </section>
+  );
+}

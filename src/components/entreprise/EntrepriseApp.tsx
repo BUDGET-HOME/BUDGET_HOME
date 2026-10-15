@@ -5,12 +5,14 @@ import LaunchSimCard from "./LaunchSimCard";
 import GanttCard from "./GanttCard";
 import RevenueSimCard from "./RevenueSimCard";
 import StatusCompareCard from "./StatusCompareCard";
+import FreelanceSimulatorCard from "./FreelanceSimulatorCard";
 
 const TOOLS = [
   { id: "lancement", label: "Simulateur de lancement" },
   { id: "gantt", label: "Planning de lancement" },
   { id: "revenus", label: "Simulateur de revenus" },
   { id: "statuts", label: "Choix du statut" },
+  { id: "freelance", label: "Simulateur Freelance" },
 ] as const;
 
 type ToolId = (typeof TOOLS)[number]["id"];
@@ -40,6 +42,7 @@ export default function EntrepriseApp() {
       {activeTool === "gantt" && <GanttCard />}
       {activeTool === "revenus" && <RevenueSimCard />}
       {activeTool === "statuts" && <StatusCompareCard />}
+      {activeTool === "freelance" && <FreelanceSimulatorCard />}
     </div>
   );
 }
