@@ -141,7 +141,9 @@ export default function StatusCompareCard() {
 
       <div className="rounded-lg border-l-4 border-emerald-600 bg-emerald-50 p-4 mb-5">
         <div className="text-sm font-bold text-emerald-900">Recommandation</div>
-        <div className="text-xl font-bold text-emerald-800">{best.label}</div>
+        <div className="text-xl font-bold text-emerald-800">
+          {(best.status === "eurl" || best.status === "sasu") ? "EURL / SASU" : best.label}
+        </div>
         <div className="text-sm text-emerald-700">
           Revenu net annuel estimé : {formatEUR(best.totalTakeHome)} — taux
           effectif {(best.effectiveRate * 100).toFixed(1)} %
