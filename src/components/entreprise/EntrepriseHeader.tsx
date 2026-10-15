@@ -3,7 +3,6 @@
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import type { SyncStatus } from "@/lib/budget-service";
-import { exportJSON } from "@/lib/budget-service";
 import type { BudgetState } from "@/lib/types";
 
 interface EntrepriseHeaderProps {
@@ -39,25 +38,6 @@ export default function EntrepriseHeader({ user, syncStatus, state, onImport }: 
             {SYNC_LABEL[syncStatus] || ""}
           </span>
         )}
-        <button
-          className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
-          onClick={() => exportJSON(state)}
-        >
-          💾 Export JSON
-        </button>
-        <label className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer">
-          📁 Importer
-          <input
-            type="file"
-            accept=".json"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) onImport(f);
-              e.target.value = "";
-            }}
-          />
-        </label>
         <button
           className="rounded-md bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
           onClick={() => window.print()}

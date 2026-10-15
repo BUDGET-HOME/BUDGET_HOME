@@ -32,32 +32,13 @@ export default function Header({ user, syncStatus, state, onImport }: HeaderProp
 
   return (
     <header className="flex flex-wrap items-center justify-between gap-3 mb-5 no-print">
-      <h1 className="text-2xl font-bold text-slate-900">Budget & Projet Immo</h1>
+      <h1 className="text-2xl font-bold text-slate-900">Budget du foyer</h1>
       <div className="flex flex-wrap items-center gap-2">
         {user && (
           <span className="text-sm text-slate-600">
             {SYNC_LABEL[syncStatus] || ""}
           </span>
         )}
-        <button
-          className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
-          onClick={() => exportJSON(state)}
-        >
-          💾 Export JSON
-        </button>
-        <label className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer">
-          📂 Importer
-          <input
-            type="file"
-            accept=".json"
-            className="hidden"
-            onChange={(e) => {
-              const f = e.target.files?.[0];
-              if (f) onImport(f);
-              e.target.value = "";
-            }}
-          />
-        </label>
         <button
           className="rounded-md bg-slate-700 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
           onClick={() => window.print()}
