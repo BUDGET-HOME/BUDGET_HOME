@@ -15,6 +15,7 @@ export default function GanttCard() {
     saveData,
   } = useGanttData();
 
+  // Local state for inputs (not auto-saved)
   const [tasks, setTasks] = useState<GanttTask[]>(DEFAULT_TASKS);
   const [name, setName] = useState("");
   const [startMonth, setStartMonth] = useState(1);
@@ -67,7 +68,7 @@ export default function GanttCard() {
         <div className="flex items-center justify-center p-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2" />
-            <p className="text-slate-500">Chargement des données...</p>
+            <p className="text-slate-500">Chargement des donn\u00e9es...</p>
           </div>
         </div>
       </section>
@@ -87,22 +88,22 @@ export default function GanttCard() {
   return (
     <section className="budget-card">
       <h2 className="text-xl font-bold border-b-2 border-slate-100 pb-2 mb-5">
-        Planning de lancement — 24 mois
+        Planning de lancement \u2014 24 mois
       </h2>
 
       <div className="flex flex-wrap items-end gap-3 mb-5 no-print">
         <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1">Nouvelle tâche</label>
+          <label className="block text-xs font-semibold text-slate-500 mb-1">Nouvelle t\u00e2che</label>
           <input
             type="text"
             value={name}
-            placeholder="Ex: Dépôt de marque"
+            placeholder="Ex: D\u00e9p\u00f4t de marque"
             onChange={(e) => setName(e.target.value)}
             className="rounded-md border border-slate-300 px-3 py-2"
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1">Début (mois)</label>
+          <label className="block text-xs font-semibold text-slate-500 mb-1">D\u00e9but (mois)</label>
           <input
             type="number"
             min={1}
@@ -113,7 +114,7 @@ export default function GanttCard() {
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1">Durée (mois)</label>
+          <label className="block text-xs font-semibold text-slate-500 mb-1">Dur\u00e9e (mois)</label>
           <input
             type="number"
             min={1}
@@ -123,7 +124,7 @@ export default function GanttCard() {
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1">Catégorie</label>
+          <label className="block text-xs font-semibold text-slate-500 mb-1">Cat\u00e9gorie</label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value as GanttTask["category"])}
@@ -177,7 +178,7 @@ export default function GanttCard() {
                     left: `${((task.startMonth - 1) / MONTHS) * 100}%`,
                     width: `${(Math.min(task.durationMonths, MONTHS - task.startMonth + 1) / MONTHS) * 100}%`,
                   }}
-                  title={`${task.name} : ${yearLabel(task.startMonth)} → ${yearLabel(
+                  title={`${task.name} : ${yearLabel(task.startMonth)} \u2192 ${yearLabel(
                     Math.min(task.startMonth + task.durationMonths - 1, MONTHS)
                   )}`}
                 />
@@ -187,7 +188,7 @@ export default function GanttCard() {
                 className="ml-2 rounded bg-red-100 text-red-500 px-2 py-0.5 opacity-0 group-hover:opacity-100 transition-opacity no-print"
                 title="Supprimer"
               >
-                ×
+                \u00d7
               </button>
             </div>
           ))}

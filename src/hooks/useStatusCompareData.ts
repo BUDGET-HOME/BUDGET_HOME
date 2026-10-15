@@ -101,6 +101,7 @@ export function useStatusCompareData() {
     fetchData();
   }, [isClient]);
 
+  // Sauvegarde manuelle - à appeler explicitement
   const saveData = useCallback(async (updates: Partial<Omit<StatusCompareData, 'updatedAt' | 'userId'>>) => {
     if (!isClient) return false;
     
@@ -168,7 +169,8 @@ export function useStatusCompareData() {
     }
   }, [data, isClient]);
 
-  const updateField = useCallback(async <K extends keyof Omit<StatusCompareData, 'updatedAt' | 'userId'>>(
+  // Sauvegarde un champ spécifique
+  const saveField = useCallback(async <K extends keyof Omit<StatusCompareData, 'updatedAt' | 'userId'>>(
     field: K,
     value: StatusCompareData[K]
   ) => {
@@ -181,6 +183,6 @@ export function useStatusCompareData() {
     error,
     saving,
     saveData,
-    updateField,
+    saveField,
   };
 }

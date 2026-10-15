@@ -11,7 +11,7 @@ export default function LaunchSimCard() {
     loading: dataLoading,
     error: dataError,
     saving,
-    updateField,
+    saveField,
   } = useLaunchData();
 
   // Use saved data or defaults
@@ -23,46 +23,87 @@ export default function LaunchSimCard() {
   const needLow = savedData?.needLow || 1500;
   const needHigh = savedData?.needHigh || 2500;
 
-  // Handlers with auto-save
+  // Local state for inputs (not auto-saved)
+  const [localStatus, setLocalStatus] = useState<CompanyStatus>(status);
+  const [localGrantMonthly, setLocalGrantMonthly] = useState<number>(grantMonthly);
+  const [localGrantMonths, setLocalGrantMonths] = useState<number>(grantMonths);
+  const [localAcre, setLocalAcre] = useState<boolean>(acre);
+  const [localContribution, setLocalContribution] = useState<number>(contribution);
+  const [localNeedLow, setLocalNeedLow] = useState<number>(needLow);
+  const [localNeedHigh, setLocalNeedHigh] = useState<number>(needHigh);
+
+  // Sync local state with saved data when it changes
+  useEffect(() => {
+    if (savedData) {
+      setLocalStatus(savedData.status || "micro");
+      setLocalGrantMonthly(savedData.grantMonthly || 1000);
+      setLocalGrantMonths(savedData.grantMonths || 6);
+      setLocalAcre(savedData.acre ?? true);
+      setLocalContribution(savedData.contribution || 15000);
+      setLocalNeedLow(savedData.needLow || 1500);
+      setLocalNeedHigh(savedData.needHigh || 2500);
+    }
+  }, [savedData]);
+
+  // Generic save handler
+  const handleSave = useCallback(async <K extends keyof Omit<typeof savedData, 'updatedAt' | 'userId'>>(
+    field: K,
+    value: any
+  ) => {
+    await saveField(field, value);
+  }, [saveField, savedData]);
+
+  // Generic key down handler
+  const handleKeyDown = useCallback(<K extends keyof Omit<typeof savedData, 'updatedAt' | 'userId'>>(
+    field: K,
+    value: any,
+    e: React.KeyboardEvent
+  ) => {
+    if (e.key === "Enter") {
+      handleSave(field, value);
+    }
+  }, [handleSave]);
+
+  // Change handlers for local state
   const handleStatusChange = useCallback((value: CompanyStatus) => {
-    updateField('status', value);
-  }, [updateField]);
+    setLocalStatus(value);
+  }, []);
 
   const handleGrantMonthlyChange = useCallback((value: number) => {
-    updateField('grantMonthly', value);
-  }, [updateField]);
+    setLocalGrantMonthly(value);
+  }, []);
 
   const handleGrantMonthsChange = useCallback((value: number) => {
-    updateField('grantMonths', value);
-  }, [updateField]);
+    setLocalGrantMonths(value);
+  }, []);
 
   const handleAcreChange = useCallback((value: boolean) => {
-    updateField('acre', value);
-  }, [updateField]);
+    setLocalAcre(value);
+  }, []);
 
   const handleContributionChange = useCallback((value: number) => {
-    updateField('contribution', value);
-  }, [updateField]);
+    setLocalContribution(value);
+  }, []);
 
   const handleNeedLowChange = useCallback((value: number) => {
-    updateField('needLow', value);
-  }, [updateField]);
+    setLocalNeedLow(value);
+  }, []);
 
   const handleNeedHighChange = useCallback((value: number) => {
-    updateField('needHigh', value);
-  }, [updateField]);
+    setLocalNeedHigh(value);
+  }, []);
 
   const result = simulateLaunch(
     { 
-      status, 
-      regionMonthlyGrant: grantMonthly, 
-      regionGrantMonths: grantMonths, 
-      acre, 
-      personalContribution: contribution, 
+      status: localStatus, 
+      regionMonthlyGrant: localGrantMonthly, 
+      regionGrantMonths: localGrantMonths, 
+      acre: localAcre, 
+      personalContribution: localContribution, 
       monthlyProvision: 0 
     },
-    needLow,
-    needHigh
+    localNeedLow,
+    localNeedHigh
   );
 
   if (dataLoading) {
@@ -71,7 +112,7 @@ export default function LaunchSimCard() {
         <div className="flex items-center justify-center p-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2" />
-            <p className="text-slate-500">Chargement des données...</p>
+            <p className="text-slate-500">Chargement des donn\u00e9es...</p>
           </div>
         </div>
       </section>
@@ -97,43 +138,49 @@ export default function LaunchSimCard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Statut envisagé
+            Statut envisag\u00e9
           </label>
           <select
-            value={status}
+            value={localStatus}
             onChange={(e) => handleStatusChange(e.target.value as CompanyStatus)}
+            onBlur={() => handleSave('status', localStatus)}
+            onKeyDown={(e) => handleKeyDown('status', localStatus, e)}
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           >
             <option value="micro">Micro-entreprise</option>
-            <option value="ei">EI (réel)</option>
+            <option value="ei">EI (r\u00e9el)</option>
             <option value="eurl">EURL</option>
             <option value="sasu">SASU</option>
           </select>
           <p className="text-xs text-slate-500 mt-1">
-            Exonération ACRE : −{(acreRate(status) * 100).toFixed(0)} % de cotisations
-            la 1ʳᵉ année (maintien du droit à l'exonération debut
-            d'activité).
+            Exon\u00e9ration ACRE : \u2212{(acreRate(localStatus) * 100).toFixed(0)} % de cotisations
+            la 1\u02b3\u1d49 ann\u00e9e (maintien du droit \u00e0 l'exon\u00e9ration debut
+            d'activit\u00e9).
           </p>
         </div>
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Aide région / mois (€)
+            Aide r\u00e9gion / mois (\u20ac)
           </label>
           <input
             type="number"
-            value={grantMonthly || ""}
+            value={localGrantMonthly || ""}
             onChange={(e) => handleGrantMonthlyChange(parseFloat(e.target.value) || 0)}
+            onBlur={() => handleSave('grantMonthly', localGrantMonthly)}
+            onKeyDown={(e) => handleKeyDown('grantMonthly', localGrantMonthly, e)}
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
         </div>
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Durée de l'aide (mois)
+            Dur\u00e9e de l'aide (mois)
           </label>
           <input
             type="number"
-            value={grantMonths || ""}
+            value={localGrantMonths || ""}
             onChange={(e) => handleGrantMonthsChange(parseInt(e.target.value) || 0)}
+            onBlur={() => handleSave('grantMonths', localGrantMonths)}
+            onKeyDown={(e) => handleKeyDown('grantMonths', localGrantMonths, e)}
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
         </div>
@@ -142,34 +189,40 @@ export default function LaunchSimCard() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Apport personnel (€)
+            Apport personnel (\u20ac)
           </label>
           <input
             type="number"
-            value={contribution || ""}
+            value={localContribution || ""}
             onChange={(e) => handleContributionChange(parseFloat(e.target.value) || 0)}
+            onBlur={() => handleSave('contribution', localContribution)}
+            onKeyDown={(e) => handleKeyDown('contribution', localContribution, e)}
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
         </div>
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Besoin mensuel mini (€)
+            Besoin mensuel mini (\u20ac)
           </label>
           <input
             type="number"
-            value={needLow || ""}
+            value={localNeedLow || ""}
             onChange={(e) => handleNeedLowChange(parseFloat(e.target.value) || 0)}
+            onBlur={() => handleSave('needLow', localNeedLow)}
+            onKeyDown={(e) => handleKeyDown('needLow', localNeedLow, e)}
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
         </div>
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Besoin mensuel maxi (€)
+            Besoin mensuel maxi (\u20ac)
           </label>
           <input
             type="number"
-            value={needHigh || ""}
+            value={localNeedHigh || ""}
             onChange={(e) => handleNeedHighChange(parseFloat(e.target.value) || 0)}
+            onBlur={() => handleSave('needHigh', localNeedHigh)}
+            onKeyDown={(e) => handleKeyDown('needHigh', localNeedHigh, e)}
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
         </div>
@@ -177,10 +230,12 @@ export default function LaunchSimCard() {
           <label className="flex items-center gap-2 mt-6 rounded-md bg-slate-100 px-3 py-2 text-sm">
             <input 
               type="checkbox" 
-              checked={acre} 
-              onChange={(e) => handleAcreChange(e.target.checked)} 
+              checked={localAcre} 
+              onChange={(e) => handleAcreChange(e.target.checked)}
+              onBlur={() => handleSave('acre', localAcre)}
+              onKeyDown={(e) => handleKeyDown('acre', localAcre, e)}
             />
-            Bénéficie de l'ACRE
+            B\u00e9n\u00e9ficie de l'ACRE
           </label>
         </div>
       </div>
@@ -188,7 +243,7 @@ export default function LaunchSimCard() {
       <div className="rounded-lg border-l-4 border-emerald-600 bg-emerald-50 p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <div className="text-xs uppercase font-bold text-emerald-900">
-            Aides régionales
+            Aides r\u00e9gionales
           </div>
           <div className="text-xl font-bold text-emerald-800">
             {formatEUR(result.totalGrants)}
@@ -196,7 +251,7 @@ export default function LaunchSimCard() {
         </div>
         <div>
           <div className="text-xs uppercase font-bold text-emerald-900">
-            Exonération ACRE
+            Exon\u00e9ration ACRE
           </div>
           <div className="text-xl font-bold text-emerald-800">
             {formatEUR(result.totalAcreExemption)}
@@ -204,7 +259,7 @@ export default function LaunchSimCard() {
         </div>
         <div>
           <div className="text-xs uppercase font-bold text-emerald-900">
-            Trésorerie tenable
+            Tr\u00e9sorerie tenable
           </div>
           <div className="text-xl font-bold text-emerald-800">
             {result.runwayMonths} mois
@@ -215,15 +270,15 @@ export default function LaunchSimCard() {
             Apport personnel
           </div>
           <div className="text-xl font-bold text-emerald-800">
-            {formatEUR(contribution)}
+            {formatEUR(localContribution)}
           </div>
         </div>
       </div>
 
       <p className="text-xs text-slate-500 mt-3">
-        Estimation indicative. Vérifiez les dispositifs exacts de votre région
-        (aides à la création, prêts d'honneur, Bourse French Tech…) et les
-        conditions ACRE auprès de votre CFE.
+        Estimation indicative. V\u00e9rifiez les dispositifs exacts de votre r\u00e9gion
+        (aides \u00e0 la cr\u00e9ation, pr\u00eats d'honneur, Bourse French Tech\u2026) et les
+        conditions ACRE aupr\u00e8s de votre CFE.
       </p>
 
       {saving && (

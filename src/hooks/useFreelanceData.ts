@@ -180,6 +180,7 @@ export function useFreelanceData() {
     fetchData();
   }, [isClient]);
 
+  // Sauvegarde manuelle - à appeler explicitement
   const saveData = useCallback(async (updates: Partial<Omit<FreelanceSimulatorData, 'updatedAt' | 'userId'>>) => {
     if (!isClient) return false;
     
@@ -241,7 +242,8 @@ export function useFreelanceData() {
     }
   }, [data, isClient]);
 
-  const updateField = useCallback(async <K extends keyof Omit<FreelanceSimulatorData, 'updatedAt' | 'userId'>>(
+  // Sauvegarde un champ spécifique
+  const saveField = useCallback(async <K extends keyof Omit<FreelanceSimulatorData, 'updatedAt' | 'userId'>>(
     field: K,
     value: FreelanceSimulatorData[K]
   ) => {
@@ -254,6 +256,6 @@ export function useFreelanceData() {
     error,
     saving,
     saveData,
-    updateField,
+    saveField,
   };
 }

@@ -36,7 +36,8 @@ export default function FreelanceSimulatorCard() {
     loading: dataLoading,
     error: dataError,
     saving,
-    updateField,
+    saveField,
+    saveData,
   } = useFreelanceData();
 
   // Use saved data or defaults
@@ -61,128 +62,53 @@ export default function FreelanceSimulatorCard() {
   const salaryMonths = savedData?.salaryMonths || 12;
   const userAge = savedData?.userAge || 35;
 
-  // Handlers for input changes with auto-save
-  const handleStatusChange = useCallback((value: StatusType) => {
-    updateField('status', value);
-  }, [updateField]);
+  // Local state for inputs (not auto-saved)
+  const [localStatus, setLocalStatus] = useState<StatusType>(status as StatusType);
+  const [localTjm, setLocalTjm] = useState<number>(tjm);
+  const [localDays, setLocalDays] = useState<number>(days);
+  const [localCostRetirement, setLocalCostRetirement] = useState<number>(costRetirement);
+  const [localCostLld, setLocalCostLld] = useState<number>(costLld);
+  const [localCostFuel, setLocalCostFuel] = useState<number>(costFuel);
+  const [localCostMutuelle, setLocalCostMutuelle] = useState<number>(costMutuelle);
+  const [localCostBankIns, setLocalCostBankIns] = useState<number>(costBankIns);
+  const [localCostAccountant, setLocalCostAccountant] = useState<number>(costAccountant);
+  const [localPctPortage, setLocalPctPortage] = useState<number>(pctPortage);
+  const [localCostMeals, setLocalCostMeals] = useState<number>(costMeals);
+  const [localCostTelecom, setLocalCostTelecom] = useState<number>(costTelecom);
+  const [localCostTech, setLocalCostTech] = useState<number>(costTech);
+  const [localAcre, setLocalAcre] = useState<boolean>(acre);
+  const [localFiscalParts, setLocalFiscalParts] = useState<number>(fiscalParts);
+  const [localAreToggle, setLocalAreToggle] = useState<boolean>(areToggle);
+  const [localSalaryGross, setLocalSalaryGross] = useState<number>(salaryGross);
+  const [localSalaryBonus, setLocalSalaryBonus] = useState<number>(salaryBonus);
+  const [localSalaryMonths, setLocalSalaryMonths] = useState<number>(salaryMonths);
+  const [localUserAge, setLocalUserAge] = useState<number>(userAge);
 
-  const handleTjmChange = useCallback((value: number) => {
-    updateField('tjm', value);
-  }, [updateField]);
-
-  const handleDaysChange = useCallback((value: number) => {
-    updateField('days', value);
-  }, [updateField]);
-
-  const handleCostRetirementChange = useCallback((value: number) => {
-    updateField('costRetirement', value);
-  }, [updateField]);
-
-  const handleCostLldChange = useCallback((value: number) => {
-    updateField('costLld', value);
-  }, [updateField]);
-
-  const handleCostFuelChange = useCallback((value: number) => {
-    updateField('costFuel', value);
-  }, [updateField]);
-
-  const handleCostMutuelleChange = useCallback((value: number) => {
-    updateField('costMutuelle', value);
-  }, [updateField]);
-
-  const handleCostBankInsChange = useCallback((value: number) => {
-    updateField('costBankIns', value);
-  }, [updateField]);
-
-  const handleCostAccountantChange = useCallback((value: number) => {
-    updateField('costAccountant', value);
-  }, [updateField]);
-
-  const handlePctPortageChange = useCallback((value: number) => {
-    updateField('pctPortage', value);
-  }, [updateField]);
-
-  const handleCostMealsChange = useCallback((value: number) => {
-    updateField('costMeals', value);
-  }, [updateField]);
-
-  const handleCostTelecomChange = useCallback((value: number) => {
-    updateField('costTelecom', value);
-  }, [updateField]);
-
-  const handleCostTechChange = useCallback((value: number) => {
-    updateField('costTech', value);
-  }, [updateField]);
-
-  const handleAcreChange = useCallback((value: boolean) => {
-    updateField('acre', value);
-  }, [updateField]);
-
-  const handleFiscalPartsChange = useCallback((value: number) => {
-    updateField('fiscalParts', value);
-  }, [updateField]);
-
-  const handleAreToggleChange = useCallback((value: boolean) => {
-    updateField('areToggle', value);
-  }, [updateField]);
-
-  const handleSalaryGrossChange = useCallback((value: number) => {
-    updateField('salaryGross', value);
-  }, [updateField]);
-
-  const handleSalaryBonusChange = useCallback((value: number) => {
-    updateField('salaryBonus', value);
-  }, [updateField]);
-
-  const handleSalaryMonthsChange = useCallback((value: number) => {
-    updateField('salaryMonths', value);
-  }, [updateField]);
-
-  const handleUserAgeChange = useCallback((value: number) => {
-    updateField('userAge', value);
-  }, [updateField]);
-
-  // State for outputs (calculated values)
-  const [headerCA, setHeaderCA] = useState<string>("0 €");
-  const [caMensuel, setCaMensuel] = useState<string>("0 €");
-  const [tvaBadge, setTvaBadge] = useState<{ text: string; className: string }>({
-    text: "Franchise TVA",
-    className: "mt-1 inline-flex items-center px-2 py-0.5 rounded text-[9px] font-medium bg-green-100 text-green-800",
-  });
-  const [displayTaxes, setDisplayTaxes] = useState<string>("0 €");
-  const [displayFrais, setDisplayFrais] = useState<string>("0 €");
-  const [superNet, setSuperNet] = useState<string>("0 €");
-  const [marginPct, setMarginPct] = useState<string>("0%");
-  const [totalChargesInput, setTotalChargesInput] = useState<string>("0 €");
-  const [appliedRateLabel, setAppliedRateLabel] = useState<string>("--");
-  const [retirementNote, setRetirementNote] = useState<string>("En Auto, payé \"de votre poche\".");
-  const [areMonthly, setAreMonthly] = useState<string>("0 €");
-  const [areDaily, setAreDaily] = useState<string>("0 €");
-  const [areDuration, setAreDuration] = useState<string>("Durée : 18 mois");
-  const [verdictTitle, setVerdictTitle] = useState<string>("Analyse en cours...");
-  const [verdictText, setVerdictText] = useState<string>("Analyse en cours...");
-
-  // State for chart
-  const [showDeductible, setShowDeductible] = useState<boolean>(false);
-  const [showNonDeductible, setShowNonDeductible] = useState<boolean>(true);
-  const [barDeductibleWidth, setBarDeductibleWidth] = useState<number>(0);
-  const [barTaxesWidth, setBarTaxesWidth] = useState<number>(0);
-  const [barNonDeductibleWidth, setBarNonDeductibleWidth] = useState<number>(0);
-  const [valDeductible, setValDeductible] = useState<string>("0 €");
-  const [valTaxes, setValTaxes] = useState<string>("0 €");
-  const [valNonDeductible, setValNonDeductible] = useState<string>("0 €");
-  const [labelTaxes, setLabelTaxes] = useState<string>("2. Charges Sociales & Impôts");
-  const [chartMode, setChartMode] = useState<string>("Auto-Ent");
-
-  // State for podium
-  const [podium1, setPodium1] = useState<{ name: string; val: string; penalty: boolean }>({ name: "Auto-Ent", val: "0€", penalty: false });
-  const [podium2, setPodium2] = useState<{ name: string; val: string }>({ name: "EURL", val: "0€" });
-  const [podium3, setPodium3] = useState<{ name: string; val: string }>({ name: "SASU", val: "0€" });
-  const [podium1Height, setPodium1Height] = useState<number>(90);
-  const [podium2Height, setPodium2Height] = useState<number>(60);
-  const [podium3Height, setPodium3Height] = useState<number>(40);
-
-  const appRef = useRef<HTMLDivElement>(null);
+  // Sync local state with saved data when it changes
+  useEffect(() => {
+    if (savedData) {
+      setLocalStatus((savedData.status as StatusType) || "auto");
+      setLocalTjm(savedData.tjm || 480);
+      setLocalDays(savedData.days || 18);
+      setLocalCostRetirement(savedData.costRetirement || 300);
+      setLocalCostLld(savedData.costLld || 450);
+      setLocalCostFuel(savedData.costFuel || 150);
+      setLocalCostMutuelle(savedData.costMutuelle || 80);
+      setLocalCostBankIns(savedData.costBankIns || 45);
+      setLocalCostAccountant(savedData.costAccountant || 150);
+      setLocalPctPortage(savedData.pctPortage || 7);
+      setLocalCostMeals(savedData.costMeals || 200);
+      setLocalCostTelecom(savedData.costTelecom || 50);
+      setLocalCostTech(savedData.costTech || 50);
+      setLocalAcre(savedData.acre ?? true);
+      setLocalFiscalParts(savedData.fiscalParts || 1);
+      setLocalAreToggle(savedData.areToggle || false);
+      setLocalSalaryGross(savedData.salaryGross || 3500);
+      setLocalSalaryBonus(savedData.salaryBonus || 0);
+      setLocalSalaryMonths(savedData.salaryMonths || 12);
+      setLocalUserAge(savedData.userAge || 35);
+    }
+  }, [savedData]);
 
   // Helper functions
   const money = (val: number): string => {
@@ -190,10 +116,9 @@ export default function FreelanceSimulatorCard() {
   };
 
   const estimateIR = (taxableAnnual: number, parts: number): number => {
-    const base = taxableAnnual * 0.9; // 10% forfaitaire
+    const base = taxableAnnual * 0.9;
     const quotient = base / parts;
     let tax = 0;
-    // Barème 2024
     if (quotient > 11294) { tax += (Math.min(quotient, 28797) - 11294) * 0.11; }
     if (quotient > 28797) { tax += (Math.min(quotient, 82341) - 28797) * 0.30; }
     if (quotient > 82341) { tax += (Math.min(quotient, 177106) - 82341) * 0.41; }
@@ -237,7 +162,7 @@ export default function FreelanceSimulatorCard() {
     if (status === 'auto') {
       const tauxUrssaf = params.isAcre ? 11.0 : 21.2;
       taxes = caMois * (tauxUrssaf / 100);
-      const baseImposable = (caMois * 12) * 0.66; // Abattement 34%
+      const baseImposable = (caMois * 12) * 0.66;
       ir = estimateIR(baseImposable, parts) / 12;
       deductible = 0;
       nonDeductible = commonCosts + CFE_LISSEE;
@@ -272,30 +197,111 @@ export default function FreelanceSimulatorCard() {
     return { net, taxes, ir, deductible, nonDeductible };
   };
 
+  // Handler for field changes with manual save on blur/enter
+  const handleChange = useCallback((field: keyof Omit<FreelanceSimulatorData, 'updatedAt' | 'userId'>, value: any) => {
+    // Update local state immediately for UI responsiveness
+    switch (field) {
+      case 'status': setLocalStatus(value); break;
+      case 'tjm': setLocalTjm(value); break;
+      case 'days': setLocalDays(value); break;
+      case 'costRetirement': setLocalCostRetirement(value); break;
+      case 'costLld': setLocalCostLld(value); break;
+      case 'costFuel': setLocalCostFuel(value); break;
+      case 'costMutuelle': setLocalCostMutuelle(value); break;
+      case 'costBankIns': setLocalCostBankIns(value); break;
+      case 'costAccountant': setLocalCostAccountant(value); break;
+      case 'pctPortage': setLocalPctPortage(value); break;
+      case 'costMeals': setLocalCostMeals(value); break;
+      case 'costTelecom': setLocalCostTelecom(value); break;
+      case 'costTech': setLocalCostTech(value); break;
+      case 'acre': setLocalAcre(value); break;
+      case 'fiscalParts': setLocalFiscalParts(value); break;
+      case 'areToggle': setLocalAreToggle(value); break;
+      case 'salaryGross': setLocalSalaryGross(value); break;
+      case 'salaryBonus': setLocalSalaryBonus(value); break;
+      case 'salaryMonths': setLocalSalaryMonths(value); break;
+      case 'userAge': setLocalUserAge(value); break;
+    }
+  }, []);
+
+  const handleSave = useCallback((field: keyof Omit<FreelanceSimulatorData, 'updatedAt' | 'userId'>, value: any) => {
+    saveField(field, value);
+  }, [saveField]);
+
+  const handleBlur = useCallback((field: keyof Omit<FreelanceSimulatorData, 'updatedAt' | 'userId'>, value: any) => {
+    handleSave(field, value);
+  }, [handleSave]);
+
+  const handleKeyDown = useCallback((field: keyof Omit<FreelanceSimulatorData, 'updatedAt' | 'userId'>, value: any, e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSave(field, value);
+    }
+  }, [handleSave]);
+
+  // State for outputs (calculated values)
+  const [headerCA, setHeaderCA] = useState<string>("0 €");
+  const [caMensuel, setCaMensuel] = useState<string>("0 €");
+  const [tvaBadge, setTvaBadge] = useState<{ text: string; className: string }>({
+    text: "Franchise TVA",
+    className: "mt-1 inline-flex items-center px-2 py-0.5 rounded text-[9px] font-medium bg-green-100 text-green-800",
+  });
+  const [displayTaxes, setDisplayTaxes] = useState<string>("0 €");
+  const [displayFrais, setDisplayFrais] = useState<string>("0 €");
+  const [superNet, setSuperNet] = useState<string>("0 €");
+  const [marginPct, setMarginPct] = useState<string>("0%");
+  const [totalChargesInput, setTotalChargesInput] = useState<string>("0 €");
+  const [appliedRateLabel, setAppliedRateLabel] = useState<string>("--");
+  const [retirementNote, setRetirementNote] = useState<string>("En Auto, payé \"de votre poche\".");
+  const [areMonthly, setAreMonthly] = useState<string>("0 €");
+  const [areDaily, setAreDaily] = useState<string>("0 €");
+  const [areDuration, setAreDuration] = useState<string>("Durée : 18 mois");
+  const [verdictTitle, setVerdictTitle] = useState<string>("Analyse en cours...");
+  const [verdictText, setVerdictText] = useState<string>("Analyse en cours...");
+
+  const [showDeductible, setShowDeductible] = useState<boolean>(false);
+  const [showNonDeductible, setShowNonDeductible] = useState<boolean>(true);
+  const [barDeductibleWidth, setBarDeductibleWidth] = useState<number>(0);
+  const [barTaxesWidth, setBarTaxesWidth] = useState<number>(0);
+  const [barNonDeductibleWidth, setBarNonDeductibleWidth] = useState<number>(0);
+  const [valDeductible, setValDeductible] = useState<string>("0 €");
+  const [valTaxes, setValTaxes] = useState<string>("0 €");
+  const [valNonDeductible, setValNonDeductible] = useState<string>("0 €");
+  const [labelTaxes, setLabelTaxes] = useState<string>("2. Charges Sociales & Impôts");
+  const [chartMode, setChartMode] = useState<string>("Auto-Ent");
+
+  const [podium1, setPodium1] = useState<{ name: string; val: string; penalty: boolean }>({ name: "Auto-Ent", val: "0€", penalty: false });
+  const [podium2, setPodium2] = useState<{ name: string; val: string }>({ name: "EURL", val: "0€" });
+  const [podium3, setPodium3] = useState<{ name: string; val: string }>({ name: "SASU", val: "0€" });
+  const [podium1Height, setPodium1Height] = useState<number>(90);
+  const [podium2Height, setPodium2Height] = useState<number>(60);
+  const [podium3Height, setPodium3Height] = useState<number>(40);
+
+  const appRef = useRef<HTMLDivElement>(null);
+
   const calculate = useCallback(() => {
-    const caMois = tjm * days;
+    const caMois = localTjm * localDays;
     const caAnnuel = caMois * 12;
-    const parts = fiscalParts;
+    const parts = localFiscalParts;
     const costs = {
-      ret: costRetirement,
-      lld: costLld,
-      fuel: costFuel,
-      mutuelle: costMutuelle,
-      bank: costBankIns,
-      acct: costAccountant,
-      meals: costMeals,
-      tel: costTelecom,
-      tech: costTech
+      ret: localCostRetirement,
+      lld: localCostLld,
+      fuel: localCostFuel,
+      mutuelle: localCostMutuelle,
+      bank: localCostBankIns,
+      acct: localCostAccountant,
+      meals: localCostMeals,
+      tel: localCostTelecom,
+      tech: localCostTech
     };
-    const pctPortageVal = pctPortage;
-    const isAcreVal = acre;
+    const pctPortageVal = localPctPortage;
+    const isAcreVal = localAcre;
 
     // ARE Logic
-    if (areToggle) {
-      const sGross = salaryGross;
-      const sBonus = salaryBonus;
-      const uAge = userAge;
-      const sMonths = salaryMonths;
+    if (localAreToggle) {
+      const sGross = localSalaryGross;
+      const sBonus = localSalaryBonus;
+      const uAge = localUserAge;
+      const sMonths = localSalaryMonths;
       const areData = calculateARE(sGross, sBonus, uAge, sMonths);
       setAreMonthly(money(areData.monthly));
       setAreDaily(money(areData.daily));
@@ -304,8 +310,7 @@ export default function FreelanceSimulatorCard() {
 
     const params = { caMois, costs, pctPortage: pctPortageVal, isAcre: isAcreVal, parts };
 
-    // Selected Status UI
-    const currentSim = simulateStatus(status as StatusType, params);
+    const currentSim = simulateStatus(localStatus, params);
 
     setHeaderCA(money(caAnnuel));
     setCaMensuel(money(caMois));
@@ -326,19 +331,19 @@ export default function FreelanceSimulatorCard() {
 
     setShowDeductible(currentSim.deductible > 0);
     setShowNonDeductible(currentSim.nonDeductible > 0);
-    setChartMode((status as string).toUpperCase());
+    setChartMode(localStatus.toUpperCase());
 
-    if (status === 'auto') {
+    if (localStatus === 'auto') {
       setRetirementNote("Payé de votre poche (après impôts et charges)");
       const tauxUrssaf = isAcreVal ? 11.0 : 21.2;
       setAppliedRateLabel(`${tauxUrssaf}% (ACRE: ${isAcreVal ? 'OUI' : 'NON'})`);
-    } else if (status === 'eurl') {
+    } else if (localStatus === 'eurl') {
       setRetirementNote("Déductible - Réduit vos charges");
       setAppliedRateLabel("~45% sur Net (Régime TNS)");
-    } else if (status === 'sasu') {
+    } else if (localStatus === 'sasu') {
       setRetirementNote("Déductible - Réduit vos charges");
       setAppliedRateLabel("~82% sur Net (Régime Salarié)");
-    } else if (status === 'portage') {
+    } else if (localStatus === 'portage') {
       setRetirementNote("Déductible - Réduit vos charges");
       setAppliedRateLabel("Charges Salariales + Patronales");
     }
@@ -376,18 +381,15 @@ export default function FreelanceSimulatorCard() {
 
     results.sort((a, b) => b.val - a.val);
 
-    // Display Podium
     setPodium1({ name: results[0].id, val: money(results[0].val), penalty: results[0].penalty });
     setPodium2({ name: results[1].id, val: money(results[1].val) });
     setPodium3({ name: results[2].id, val: money(results[2].val) });
 
-    // Normalize heights for podium
     const maxNet = Math.max(resAuto.net, resEurl.net, resSasu.net, resPortage.net) || 1;
     setPodium1Height((results[0].val / maxNet) * 100);
     setPodium2Height((results[1].val / maxNet) * 100);
     setPodium3Height((results[2].val / maxNet) * 100);
 
-    // Verdict Text
     const financialWinner = results[0];
     const runnerUp = results[1];
     const gap = financialWinner.val - runnerUp.val;
@@ -419,12 +421,11 @@ export default function FreelanceSimulatorCard() {
     setVerdictTitle(verdictTitle);
     setVerdictText(verdictBody);
   }, [
-    status, tjm, days, costRetirement, costLld, costFuel, costMutuelle, costBankIns,
-    costAccountant, pctPortage, costMeals, costTelecom, costTech, acre, fiscalParts,
-    areToggle, salaryGross, salaryBonus, salaryMonths, userAge
+    localStatus, localTjm, localDays, localCostRetirement, localCostLld, localCostFuel, localCostMutuelle,
+    localCostBankIns, localCostAccountant, localPctPortage, localCostMeals, localCostTelecom, localCostTech,
+    localAcre, localFiscalParts, localAreToggle, localSalaryGross, localSalaryBonus, localSalaryMonths, localUserAge
   ]);
 
-  // Recalculate when data changes
   useEffect(() => {
     calculate();
   }, [calculate]);
@@ -440,7 +441,6 @@ export default function FreelanceSimulatorCard() {
     btnText.innerText = "Génération...";
     btn.classList.add('opacity-75', 'cursor-not-allowed');
 
-    // Add print-mode for clean layout
     document.body.classList.add('print-mode');
 
     await new Promise(r => setTimeout(r, 800));
@@ -458,7 +458,7 @@ export default function FreelanceSimulatorCard() {
       });
 
       const imgData = canvas.toDataURL('image/jpeg', 0.90);
-      const imgWidth = 210; // A4 Width mm
+      const imgWidth = 210;
       const pageHeight = (canvas.height * imgWidth) / canvas.width;
 
       const pdf = new jsPDF({
@@ -556,8 +556,13 @@ export default function FreelanceSimulatorCard() {
                   <div className="tooltip-content">Cadre légal de votre activité. Définit vos charges sociales (RSI/URSSAF) et votre protection sociale.</div>
                 </div>
                 <select
-                  value={status}
-                  onChange={(e) => handleStatusChange(e.target.value as StatusType)}
+                  value={localStatus}
+                  onChange={(e) => {
+                    const value = e.target.value as StatusType;
+                    handleChange('status', value);
+                    handleSave('status', value);
+                  }}
+                  onBlur={() => handleSave('status', localStatus)}
                   className="w-full p-2.5 border border-indigo-200 rounded-lg bg-white font-bold text-indigo-900 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                 >
                   <option value="auto">Auto-Entrepreneur (Micro-BNC)</option>
@@ -578,8 +583,10 @@ export default function FreelanceSimulatorCard() {
                   <div className="relative">
                     <input
                       type="number"
-                      value={tjm}
-                      onChange={(e) => handleTjmChange(parseFloat(e.target.value) || 0)}
+                      value={localTjm}
+                      onChange={(e) => handleChange('tjm', parseFloat(e.target.value) || 0)}
+                      onBlur={() => handleSave('tjm', localTjm)}
+                      onKeyDown={(e) => handleKeyDown('tjm', localTjm, e)}
                       className="w-full pl-3 pr-8 py-2 border border-gray-200 bg-white rounded-lg outline-none text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-500"
                     />
                     <span className="absolute right-3 top-2 text-gray-400 text-xs pointer-events-none">€</span>
@@ -596,8 +603,10 @@ export default function FreelanceSimulatorCard() {
                   <div className="relative">
                     <input
                       type="number"
-                      value={days}
-                      onChange={(e) => handleDaysChange(parseFloat(e.target.value) || 0)}
+                      value={localDays}
+                      onChange={(e) => handleChange('days', parseFloat(e.target.value) || 0)}
+                      onBlur={() => handleSave('days', localDays)}
+                      onKeyDown={(e) => handleKeyDown('days', localDays, e)}
                       max={25}
                       className="w-full pl-3 pr-8 py-2 border border-gray-200 bg-white rounded-lg outline-none text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-500"
                     />
@@ -612,7 +621,6 @@ export default function FreelanceSimulatorCard() {
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 ring-1 ring-orange-100">
             <h2 className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-3">2. Charges & Investissements</h2>
             <div className="space-y-4">
-              {/* Retraite */}
               <div>
                 <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
                   <label className="block text-[10px] font-bold text-emerald-600">Epargne Retraite (Mensuelle)</label>
@@ -624,8 +632,10 @@ export default function FreelanceSimulatorCard() {
                 <div className="relative">
                   <input
                     type="number"
-                    value={costRetirement}
-                    onChange={(e) => handleCostRetirementChange(parseFloat(e.target.value) || 0)}
+                    value={localCostRetirement}
+                    onChange={(e) => handleChange('costRetirement', parseFloat(e.target.value) || 0)}
+                    onBlur={() => handleSave('costRetirement', localCostRetirement)}
+                    onKeyDown={(e) => handleKeyDown('costRetirement', localCostRetirement, e)}
                     className="w-full p-2 pr-16 text-sm border border-emerald-200 rounded text-right font-bold text-emerald-800 focus:ring-2 focus:ring-emerald-500 outline-none"
                   />
                   <span className="absolute right-4 top-2.5 text-emerald-600 text-xs font-bold pointer-events-none">€/mois</span>
@@ -633,7 +643,6 @@ export default function FreelanceSimulatorCard() {
                 <p className="text-[9px] text-emerald-600 mt-1 italic">{retirementNote}</p>
               </div>
 
-              {/* Mobilité */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
@@ -645,8 +654,10 @@ export default function FreelanceSimulatorCard() {
                   </div>
                   <input
                     type="number"
-                    value={costLld}
-                    onChange={(e) => handleCostLldChange(parseFloat(e.target.value) || 0)}
+                    value={localCostLld}
+                    onChange={(e) => handleChange('costLld', parseFloat(e.target.value) || 0)}
+                    onBlur={() => handleSave('costLld', localCostLld)}
+                    onKeyDown={(e) => handleKeyDown('costLld', localCostLld, e)}
                     className="w-full p-2 text-sm border border-gray-200 rounded text-right"
                   />
                 </div>
@@ -660,14 +671,15 @@ export default function FreelanceSimulatorCard() {
                   </div>
                   <input
                     type="number"
-                    value={costFuel}
-                    onChange={(e) => handleCostFuelChange(parseFloat(e.target.value) || 0)}
+                    value={localCostFuel}
+                    onChange={(e) => handleChange('costFuel', parseFloat(e.target.value) || 0)}
+                    onBlur={() => handleSave('costFuel', localCostFuel)}
+                    onKeyDown={(e) => handleKeyDown('costFuel', localCostFuel, e)}
                     className="w-full p-2 text-sm border border-gray-200 rounded text-right"
                   />
                 </div>
               </div>
 
-              {/* Structure */}
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
@@ -679,8 +691,10 @@ export default function FreelanceSimulatorCard() {
                   </div>
                   <input
                     type="number"
-                    value={costMutuelle}
-                    onChange={(e) => handleCostMutuelleChange(parseFloat(e.target.value) || 0)}
+                    value={localCostMutuelle}
+                    onChange={(e) => handleChange('costMutuelle', parseFloat(e.target.value) || 0)}
+                    onBlur={() => handleSave('costMutuelle', localCostMutuelle)}
+                    onKeyDown={(e) => handleKeyDown('costMutuelle', localCostMutuelle, e)}
                     className="w-full p-2 text-sm border border-gray-200 rounded text-right"
                   />
                 </div>
@@ -694,14 +708,15 @@ export default function FreelanceSimulatorCard() {
                   </div>
                   <input
                     type="number"
-                    value={costBankIns}
-                    onChange={(e) => handleCostBankInsChange(parseFloat(e.target.value) || 0)}
+                    value={localCostBankIns}
+                    onChange={(e) => handleChange('costBankIns', parseFloat(e.target.value) || 0)}
+                    onBlur={() => handleSave('costBankIns', localCostBankIns)}
+                    onKeyDown={(e) => handleKeyDown('costBankIns', localCostBankIns, e)}
                     className="w-full p-2 text-sm border border-gray-200 rounded text-right"
                   />
                 </div>
               </div>
 
-              {/* Variable */}
               <div className="grid grid-cols-2 gap-3 bg-gray-50 p-2 rounded">
                 <div>
                   <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
@@ -713,8 +728,10 @@ export default function FreelanceSimulatorCard() {
                   </div>
                   <input
                     type="number"
-                    value={costAccountant}
-                    onChange={(e) => handleCostAccountantChange(parseFloat(e.target.value) || 0)}
+                    value={localCostAccountant}
+                    onChange={(e) => handleChange('costAccountant', parseFloat(e.target.value) || 0)}
+                    onBlur={() => handleSave('costAccountant', localCostAccountant)}
+                    onKeyDown={(e) => handleKeyDown('costAccountant', localCostAccountant, e)}
                     className="w-full p-2 text-sm border border-gray-200 rounded bg-white text-right"
                   />
                 </div>
@@ -728,14 +745,15 @@ export default function FreelanceSimulatorCard() {
                   </div>
                   <input
                     type="number"
-                    value={pctPortage}
-                    onChange={(e) => handlePctPortageChange(parseFloat(e.target.value) || 0)}
+                    value={localPctPortage}
+                    onChange={(e) => handleChange('pctPortage', parseFloat(e.target.value) || 0)}
+                    onBlur={() => handleSave('pctPortage', localPctPortage)}
+                    onKeyDown={(e) => handleKeyDown('pctPortage', localPctPortage, e)}
                     className="w-full p-2 text-sm border border-gray-200 rounded bg-white text-right"
                   />
                 </div>
               </div>
 
-              {/* Tech/Repas */}
               <div className="grid grid-cols-3 gap-2">
                 <div>
                   <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
@@ -747,8 +765,10 @@ export default function FreelanceSimulatorCard() {
                   </div>
                   <input
                     type="number"
-                    value={costMeals}
-                    onChange={(e) => handleCostMealsChange(parseFloat(e.target.value) || 0)}
+                    value={localCostMeals}
+                    onChange={(e) => handleChange('costMeals', parseFloat(e.target.value) || 0)}
+                    onBlur={() => handleSave('costMeals', localCostMeals)}
+                    onKeyDown={(e) => handleKeyDown('costMeals', localCostMeals, e)}
                     className="w-full p-2 text-sm border border-gray-200 rounded text-right"
                   />
                 </div>
@@ -762,8 +782,10 @@ export default function FreelanceSimulatorCard() {
                   </div>
                   <input
                     type="number"
-                    value={costTelecom}
-                    onChange={(e) => handleCostTelecomChange(parseFloat(e.target.value) || 0)}
+                    value={localCostTelecom}
+                    onChange={(e) => handleChange('costTelecom', parseFloat(e.target.value) || 0)}
+                    onBlur={() => handleSave('costTelecom', localCostTelecom)}
+                    onKeyDown={(e) => handleKeyDown('costTelecom', localCostTelecom, e)}
                     className="w-full p-2 text-sm border border-gray-200 rounded text-right"
                   />
                 </div>
@@ -777,8 +799,10 @@ export default function FreelanceSimulatorCard() {
                   </div>
                   <input
                     type="number"
-                    value={costTech}
-                    onChange={(e) => handleCostTechChange(parseFloat(e.target.value) || 0)}
+                    value={localCostTech}
+                    onChange={(e) => handleChange('costTech', parseFloat(e.target.value) || 0)}
+                    onBlur={() => handleSave('costTech', localCostTech)}
+                    onKeyDown={(e) => handleKeyDown('costTech', localCostTech, e)}
                     className="w-full p-2 text-sm border border-gray-200 rounded text-right"
                   />
                 </div>
@@ -794,7 +818,6 @@ export default function FreelanceSimulatorCard() {
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
             <h2 className="text-xs font-bold text-red-500 uppercase tracking-wider mb-3">3. Paramètres Sociaux & Famille</h2>
 
-            {/* ACRE & PARTS FISCALES */}
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="flex flex-col justify-center bg-red-50 p-2 rounded border border-red-100 relative">
                 <div className="flex items-center justify-between">
@@ -808,16 +831,19 @@ export default function FreelanceSimulatorCard() {
                   <div className="relative inline-block w-8 align-middle select-none">
                     <input
                       type="checkbox"
-                      checked={acre}
-                      onChange={(e) => handleAcreChange(e.target.checked)}
+                      checked={localAcre}
+                      onChange={(e) => {
+                        const value = e.target.checked;
+                        handleChange('acre', value);
+                        handleSave('acre', value);
+                      }}
                       className="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300"
                     />
-                    <label htmlFor="acreToggle" className="toggle-label block overflow-hidden h-4 rounded-full bg-gray-300 cursor-pointer" />
+                    <label className="toggle-label block overflow-hidden h-4 rounded-full bg-gray-300 cursor-pointer" />
                   </div>
                 </div>
               </div>
 
-              {/* PARTS FISCALES */}
               <div className="bg-blue-50 p-2 rounded border border-blue-100 relative">
                 <div className="flex items-center gap-1 mb-1 tooltip-trigger cursor-help relative">
                   <label className="block text-[10px] font-bold text-blue-800">Parts Fiscales</label>
@@ -827,8 +853,13 @@ export default function FreelanceSimulatorCard() {
                   <div className="tooltip-content">Utilisé pour calculer l'Impôt sur le Revenu (Quotient familial). Dépend de votre situation (Marié, Enfants...).</div>
                 </div>
                 <select
-                  value={fiscalParts}
-                  onChange={(e) => handleFiscalPartsChange(parseFloat(e.target.value) || 1)}
+                  value={localFiscalParts}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value) || 1;
+                    handleChange('fiscalParts', value);
+                    handleSave('fiscalParts', value);
+                  }}
+                  onBlur={() => handleSave('fiscalParts', localFiscalParts)}
                   className="w-full p-1 text-sm bg-white border border-blue-200 rounded text-blue-900 font-bold outline-none"
                 >
                   <option value="1">1 Part (Célib)</option>
@@ -841,7 +872,6 @@ export default function FreelanceSimulatorCard() {
               </div>
             </div>
 
-            {/* ARE TOGGLE */}
             <div className="flex items-center justify-between mb-3 bg-blue-50 p-2 rounded border border-blue-100 relative">
               <div className="flex items-center gap-1 tooltip-trigger cursor-help relative">
                 <span className="text-xs font-bold text-blue-800">Bénéficiaire Chômage (ARE) ?</span>
@@ -853,16 +883,19 @@ export default function FreelanceSimulatorCard() {
               <div className="relative inline-block w-8 align-middle select-none">
                 <input
                   type="checkbox"
-                  checked={areToggle}
-                  onChange={(e) => handleAreToggleChange(e.target.checked)}
+                  checked={localAreToggle}
+                  onChange={(e) => {
+                    const value = e.target.checked;
+                    handleChange('areToggle', value);
+                    handleSave('areToggle', value);
+                  }}
                   className="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300"
                 />
-                <label htmlFor="areToggle" className="toggle-label block overflow-hidden h-4 rounded-full bg-gray-300 cursor-pointer" />
+                <label className="toggle-label block overflow-hidden h-4 rounded-full bg-gray-300 cursor-pointer" />
               </div>
             </div>
 
-            {/* ARE INPUTS */}
-            {areToggle && (
+            {localAreToggle && (
               <div className="space-y-3 bg-blue-50/50 p-3 rounded-lg border border-blue-100">
                 <div className="grid grid-cols-2 gap-2">
                   <div>
@@ -875,8 +908,10 @@ export default function FreelanceSimulatorCard() {
                     </div>
                     <input
                       type="number"
-                      value={salaryGross}
-                      onChange={(e) => handleSalaryGrossChange(parseFloat(e.target.value) || 0)}
+                      value={localSalaryGross}
+                      onChange={(e) => handleChange('salaryGross', parseFloat(e.target.value) || 0)}
+                      onBlur={() => handleSave('salaryGross', localSalaryGross)}
+                      onKeyDown={(e) => handleKeyDown('salaryGross', localSalaryGross, e)}
                       className="w-full p-2 text-sm border border-gray-200 rounded text-right"
                     />
                   </div>
@@ -889,8 +924,13 @@ export default function FreelanceSimulatorCard() {
                       <div className="tooltip-content">Si vous aviez un 13ème ou 14ème mois, cela augmente le Salaire Journalier de Référence (SJR).</div>
                     </div>
                     <select
-                      value={salaryMonths}
-                      onChange={(e) => handleSalaryMonthsChange(parseFloat(e.target.value) || 12)}
+                      value={localSalaryMonths}
+                      onChange={(e) => {
+                        const value = parseFloat(e.target.value) || 12;
+                        handleChange('salaryMonths', value);
+                        handleSave('salaryMonths', value);
+                      }}
+                      onBlur={() => handleSave('salaryMonths', localSalaryMonths)}
                       className="w-full p-2 text-sm border border-gray-200 rounded text-right bg-white"
                     >
                       <option value="12">12 mois</option>
@@ -911,8 +951,10 @@ export default function FreelanceSimulatorCard() {
                     </div>
                     <input
                       type="number"
-                      value={salaryBonus}
-                      onChange={(e) => handleSalaryBonusChange(parseFloat(e.target.value) || 0)}
+                      value={localSalaryBonus}
+                      onChange={(e) => handleChange('salaryBonus', parseFloat(e.target.value) || 0)}
+                      onBlur={() => handleSave('salaryBonus', localSalaryBonus)}
+                      onKeyDown={(e) => handleKeyDown('salaryBonus', localSalaryBonus, e)}
                       className="w-full p-2 text-sm border border-gray-200 rounded text-right"
                     />
                   </div>
@@ -926,8 +968,10 @@ export default function FreelanceSimulatorCard() {
                     </div>
                     <input
                       type="number"
-                      value={userAge}
-                      onChange={(e) => handleUserAgeChange(parseFloat(e.target.value) || 0)}
+                      value={localUserAge}
+                      onChange={(e) => handleChange('userAge', parseFloat(e.target.value) || 0)}
+                      onBlur={() => handleSave('userAge', localUserAge)}
+                      onKeyDown={(e) => handleKeyDown('userAge', localUserAge, e)}
                       className="w-full p-2 text-sm border border-gray-200 rounded text-right"
                     />
                   </div>
@@ -942,30 +986,25 @@ export default function FreelanceSimulatorCard() {
           </div>
         </div>
 
-        {/* DROITE : DASHBOARD (Sticky) */}
+        {/* DROITE : DASHBOARD */}
         <div className="xl:col-span-7 p-6 bg-white flex flex-col gap-6 xl:h-screen xl:sticky xl:top-0 overflow-y-auto">
-          {/* KPI GRID */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {/* CA */}
             <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 col-span-2">
               <div className="text-blue-500 text-[10px] font-bold uppercase tracking-wider mb-1">CA Mensuel HT</div>
               <div className="text-2xl md:text-3xl font-bold text-blue-900">{caMensuel}</div>
               <div className={tvaBadge.className}>{tvaBadge.text}</div>
             </div>
-            {/* SOCIAL */}
             <div className="bg-red-50 p-4 rounded-2xl border border-red-100">
               <div className="text-red-500 text-[10px] font-bold uppercase tracking-wider mb-1">Cotis. & Impôts</div>
               <div className="text-xl md:text-2xl font-bold text-red-900">{displayTaxes}</div>
             </div>
-            {/* CHARGES */}
             <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100">
               <div className="text-orange-600 text-[10px] font-bold uppercase tracking-wider mb-1">Total Charges</div>
               <div className="text-xl md:text-2xl font-bold text-orange-700">{displayFrais}</div>
             </div>
           </div>
 
-          {/* ARE RESULT CARD */}
-          {areToggle && (
+          {localAreToggle && (
             <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-5 rounded-2xl shadow-lg text-white relative overflow-hidden">
               <div className="relative z-10 flex justify-between items-center">
                 <div>
@@ -984,7 +1023,6 @@ export default function FreelanceSimulatorCard() {
             </div>
           )}
 
-          {/* SUPER NET */}
           <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-6 rounded-2xl shadow-xl text-white relative overflow-hidden group">
             <div className="relative z-10">
               <div className="text-emerald-100 text-xs font-bold uppercase tracking-wider mb-2">Reste à vivre (Super Net) / Mois</div>
@@ -998,7 +1036,6 @@ export default function FreelanceSimulatorCard() {
             </div>
           </div>
 
-          {/* GRAPHIQUE BARRES */}
           <div className="bg-white rounded-2xl border border-gray-100 p-6">
             <div className="flex justify-between items-end mb-4">
               <h3 className="text-gray-400 text-xs font-bold uppercase">Flux Financier (Statut Sélectionné)</h3>
@@ -1012,10 +1049,7 @@ export default function FreelanceSimulatorCard() {
                     <span className="text-orange-600">{valDeductible}</span>
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                    <div
-                      className="bg-orange-400 h-2.5 rounded-full transition-all duration-700"
-                      style={{ width: `${barDeductibleWidth}%` }}
-                    />
+                    <div className="bg-orange-400 h-2.5 rounded-full transition-all duration-700" style={{ width: `${barDeductibleWidth}%` }} />
                   </div>
                 </div>
               )}
@@ -1025,10 +1059,7 @@ export default function FreelanceSimulatorCard() {
                   <span className="text-red-600">{valTaxes}</span>
                 </div>
                 <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                  <div
-                    className="bg-red-500 h-2.5 rounded-full transition-all duration-700"
-                    style={{ width: `${barTaxesWidth}%` }}
-                  />
+                  <div className="bg-red-500 h-2.5 rounded-full transition-all duration-700" style={{ width: `${barTaxesWidth}%` }} />
                 </div>
               </div>
               {showNonDeductible && (
@@ -1038,76 +1069,53 @@ export default function FreelanceSimulatorCard() {
                     <span className="text-orange-600">{valNonDeductible}</span>
                   </div>
                   <div className="w-full bg-gray-100 rounded-full h-2.5 overflow-hidden">
-                    <div
-                      className="bg-orange-600 h-2.5 rounded-full transition-all duration-700"
-                      style={{ width: `${barNonDeductibleWidth}%` }}
-                    />
+                    <div className="bg-orange-600 h-2.5 rounded-full transition-all duration-700" style={{ width: `${barNonDeductibleWidth}%` }} />
                   </div>
                 </div>
               )}
             </div>
           </div>
 
-          {/* VERDICT SECTION */}
           <div className="bg-indigo-900 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden transition-all duration-500">
             <div className="relative z-10">
               <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
                 <span>🏆</span> Bilan & Recommandation
               </h3>
 
-              {/* PODIUM VISUEL */}
               <div className="flex items-end justify-center gap-4 mb-8 h-40">
-                {/* 2nd Place */}
                 <div className="flex flex-col items-center w-1/4 group transition-all duration-500">
                   <div className="text-xs text-indigo-300 font-bold mb-1">{podium2.name}</div>
                   <div className="text-[10px] text-indigo-400 mb-1">{podium2.val}</div>
-                  <div
-                    className="w-full bg-indigo-500/50 rounded-t-lg relative podium-bar group-hover:bg-indigo-500/70 transition-all duration-500"
-                    style={{ height: `${podium2Height}%` }}
-                  >
+                  <div className="w-full bg-indigo-500/50 rounded-t-lg relative podium-bar group-hover:bg-indigo-500/70 transition-all duration-500" style={{ height: `${podium2Height}%` }}>
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 text-xl">🥈</div>
                   </div>
                 </div>
-                {/* 1st Place */}
-                <div
-                  className={`flex flex-col items-center w-1/3 group transition-all duration-500 ${podium1.penalty ? 'blur-locked' : ''}`}
-                >
+                <div className={`flex flex-col items-center w-1/3 group transition-all duration-500 ${podium1.penalty ? 'blur-locked' : ''}`}>
                   <div className="text-sm text-yellow-300 font-bold mb-1">{podium1.name}</div>
                   <div className="text-xs text-white font-bold mb-1">{podium1.val}</div>
-                  <div
-                    className="w-full bg-gradient-to-t from-yellow-600 to-yellow-400 rounded-t-lg relative podium-bar shadow-[0_0_15px_rgba(250,204,21,0.4)] transition-all duration-500"
-                    style={{ height: `${podium1Height}%` }}
-                  >
+                  <div className="w-full bg-gradient-to-t from-yellow-600 to-yellow-400 rounded-t-lg relative podium-bar shadow-[0_0_15px_rgba(250,204,21,0.4)] transition-all duration-500" style={{ height: `${podium1Height}%` }}>
                     <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 text-2xl">🥇</div>
                   </div>
                 </div>
-                {/* 3rd Place */}
                 <div className="flex flex-col items-center w-1/4 group transition-all duration-500">
                   <div className="text-xs text-indigo-300 font-bold mb-1">{podium3.name}</div>
                   <div className="text-[10px] text-indigo-400 mb-1">{podium3.val}</div>
-                  <div
-                    className="w-full bg-indigo-700/50 rounded-t-lg relative podium-bar group-hover:bg-indigo-700/70 transition-all duration-500"
-                    style={{ height: `${podium3Height}%` }}
-                  >
+                  <div className="w-full bg-indigo-700/50 rounded-t-lg relative podium-bar group-hover:bg-indigo-700/70 transition-all duration-500" style={{ height: `${podium3Height}%` }}>
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 text-xl">🥉</div>
                   </div>
                 </div>
               </div>
 
-              {/* TEXTE DE CONCLUSION */}
               <div className="bg-white/10 backdrop-blur-sm rounded-xl p-5 border border-white/10">
                 <h4 className="text-lg font-bold text-yellow-300 mb-2" dangerouslySetInnerHTML={{ __html: verdictTitle }} />
                 <p className="text-sm text-indigo-100 leading-relaxed" dangerouslySetInnerHTML={{ __html: verdictText }} />
               </div>
             </div>
-
-            {/* Background Decoration */}
             <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-indigo-600 rounded-full blur-3xl opacity-30 no-print" />
           </div>
         </div>
       </div>
 
-      {/* Save Status Indicator */}
       {saving && (
         <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
           Sauvegarde en cours...

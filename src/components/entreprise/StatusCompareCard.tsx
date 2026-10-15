@@ -11,27 +11,58 @@ export default function StatusCompareCard() {
     loading: dataLoading,
     error: dataError,
     saving,
-    updateField,
+    saveField,
   } = useStatusCompareData();
 
   // Use saved data or defaults
   const revenue = savedData?.revenue || 60000;
   const expense = savedData?.expense || 500;
 
-  // Handlers with auto-save
+  // Local state for inputs (not auto-saved)
+  const [localRevenue, setLocalRevenue] = useState<number>(revenue);
+  const [localExpense, setLocalExpense] = useState<number>(expense);
+
+  // Sync local state with saved data when it changes
+  useEffect(() => {
+    if (savedData) {
+      setLocalRevenue(savedData.revenue || 60000);
+      setLocalExpense(savedData.expense || 500);
+    }
+  }, [savedData]);
+
+  // Generic save handler
+  const handleSave = useCallback(async <K extends keyof Omit<typeof savedData, 'updatedAt' | 'userId'>>(
+    field: K,
+    value: any
+  ) => {
+    await saveField(field, value);
+  }, [saveField, savedData]);
+
+  // Generic key down handler
+  const handleKeyDown = useCallback(<K extends keyof Omit<typeof savedData, 'updatedAt' | 'userId'>>(
+    field: K,
+    value: any,
+    e: React.KeyboardEvent
+  ) => {
+    if (e.key === "Enter") {
+      handleSave(field, value);
+    }
+  }, [handleSave]);
+
+  // Change handlers for local state
   const handleRevenueChange = useCallback((value: number) => {
-    updateField('revenue', value);
-  }, [updateField]);
+    setLocalRevenue(value);
+  }, []);
 
   const handleExpenseChange = useCallback((value: number) => {
-    updateField('expense', value);
-  }, [updateField]);
+    setLocalExpense(value);
+  }, []);
 
   const results = simulateYear({
     status: "micro",
     services: [],
-    annualRevenue: revenue,
-    monthlyBusinessExpense: expense,
+    annualRevenue: localRevenue,
+    monthlyBusinessExpense: localExpense,
   });
   const { best } = bestStatus(results);
 
@@ -41,7 +72,7 @@ export default function StatusCompareCard() {
         <div className="flex items-center justify-center p-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2" />
-            <p className="text-slate-500">Chargement des données...</p>
+            <p className="text-slate-500">Chargement des donn\u00e9es...</p>
           </div>
         </div>
       </section>
@@ -67,12 +98,14 @@ export default function StatusCompareCard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Revenu annuel envisagé (€)
+            Revenu annuel envisag\u00e9 (\u20ac)
           </label>
           <input
             type="number"
-            value={revenue || ""}
+            value={localRevenue || ""}
             onChange={(e) => handleRevenueChange(parseFloat(e.target.value) || 0)}
+            onBlur={() => handleSave('revenue', localRevenue)}
+            onKeyDown={(e) => handleKeyDown('revenue', localRevenue, e)}
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
           <input
@@ -80,19 +113,23 @@ export default function StatusCompareCard() {
             min={10000}
             max={300000}
             step={5000}
-            value={revenue}
+            value={localRevenue}
             onChange={(e) => handleRevenueChange(parseInt(e.target.value))}
+            onBlur={() => handleSave('revenue', localRevenue)}
+            onKeyDown={(e) => handleKeyDown('revenue', localRevenue, e)}
             className="w-full mt-2"
           />
         </div>
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Charges mensuelles (€)
+            Charges mensuelles (\u20ac)
           </label>
           <input
             type="number"
-            value={expense || ""}
+            value={localExpense || ""}
             onChange={(e) => handleExpenseChange(parseFloat(e.target.value) || 0)}
+            onBlur={() => handleSave('expense', localExpense)}
+            onKeyDown={(e) => handleKeyDown('expense', localExpense, e)}
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
         </div>
@@ -102,7 +139,7 @@ export default function StatusCompareCard() {
         <div className="text-sm font-bold text-emerald-900">Recommandation</div>
         <div className="text-xl font-bold text-emerald-800">{best.label}</div>
         <div className="text-sm text-emerald-700">
-          Revenu net annuel estimé : {formatEUR(best.totalTakeHome)} — taux
+          Revenu net annuel estim\u00e9 : {formatEUR(best.totalTakeHome)} \u2014 taux
           effectif {(best.effectiveRate * 100).toFixed(1)} %
         </div>
       </div>
@@ -113,10 +150,10 @@ export default function StatusCompareCard() {
             <tr className="border-b-2 border-slate-200 text-left text-xs uppercase text-slate-500">
               <th className="py-2 px-2">Statut</th>
               <th className="py-2 px-2">Cotisations</th>
-              <th className="py-2 px-2">Impôts</th>
+              <th className="py-2 px-2">Imp\u00f4ts</th>
               <th className="py-2 px-2">Net annuel</th>
               <th className="py-2 px-2">Taux effectif</th>
-              <th className="py-2 px-2">Éligible</th>
+              <th className="py-2 px-2">\u00c9ligible</th>
             </tr>
           </thead>
           <tbody>
@@ -147,13 +184,13 @@ export default function StatusCompareCard() {
         </table>
       </div>
 
-      <h3 className="font-bold text-sm mb-2">Plafonds de revenu à connaître</h3>
+      <h3 className="font-bold text-sm mb-2">Plafonds de revenu \u00e0 conna\u00eetre</h3>
       <ul className="text-sm space-y-1">
         {plafonds().map((p) => (
           <li key={p.label} className="flex gap-2">
             <span className="font-semibold min-w-56">{p.label}</span>
             <span>
-              {p.limit === Infinity ? "illimité" : formatEUR(p.limit)} —{" "}
+              {p.limit === Infinity ? "illimit\u00e9" : formatEUR(p.limit)} \u2014{" "}
               <span className="text-slate-500">{p.note}</span>
             </span>
           </li>
@@ -161,7 +198,7 @@ export default function StatusCompareCard() {
       </ul>
 
       <p className="text-xs text-slate-500 mt-4">
-        Estimations simplifiées (taux 2025, barème indicatif) — validez avec un
+        Estimations simplifi\u00e9es (taux 2025, bar\u00e8me indicatif) \u2014 validez avec un
         expert-comptable avant de choisir votre statut.
       </p>
 

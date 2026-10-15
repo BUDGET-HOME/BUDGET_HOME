@@ -109,6 +109,7 @@ export function useRevenueData() {
     fetchData();
   }, [isClient]);
 
+  // Sauvegarde manuelle - à appeler explicitement
   const saveData = useCallback(async (updates: Partial<Omit<RevenueSimulatorData, 'updatedAt' | 'userId'>>) => {
     if (!isClient) return false;
     
@@ -177,7 +178,8 @@ export function useRevenueData() {
     }
   }, [data, isClient]);
 
-  const updateField = useCallback(async <K extends keyof Omit<RevenueSimulatorData, 'updatedAt' | 'userId'>>(
+  // Sauvegarde un champ spécifique
+  const saveField = useCallback(async <K extends keyof Omit<RevenueSimulatorData, 'updatedAt' | 'userId'>>(
     field: K,
     value: RevenueSimulatorData[K]
   ) => {
@@ -190,6 +192,6 @@ export function useRevenueData() {
     error,
     saving,
     saveData,
-    updateField,
+    saveField,
   };
 }

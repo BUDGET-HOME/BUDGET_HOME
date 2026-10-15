@@ -98,6 +98,7 @@ export function useGanttData() {
     fetchData();
   }, [isClient]);
 
+  // Sauvegarde manuelle - à appeler explicitement
   const saveData = useCallback(async (updates: Partial<Omit<GanttSimulatorData, 'updatedAt' | 'userId'>>) => {
     if (!isClient) return false;
     
@@ -164,7 +165,8 @@ export function useGanttData() {
     }
   }, [data, isClient]);
 
-  const updateField = useCallback(async <K extends keyof Omit<GanttSimulatorData, 'updatedAt' | 'userId'>>(
+  // Sauvegarde un champ spécifique
+  const saveField = useCallback(async <K extends keyof Omit<GanttSimulatorData, 'updatedAt' | 'userId'>>(
     field: K,
     value: GanttSimulatorData[K]
   ) => {
@@ -177,6 +179,6 @@ export function useGanttData() {
     error,
     saving,
     saveData,
-    updateField,
+    saveField,
   };
 }

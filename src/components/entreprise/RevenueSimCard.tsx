@@ -12,7 +12,8 @@ export default function RevenueSimCard() {
     loading: dataLoading,
     error: dataError,
     saving,
-    updateField,
+    saveField,
+    saveData,
   } = useRevenueData();
 
   // Use saved data or defaults
@@ -20,18 +21,51 @@ export default function RevenueSimCard() {
   const services = savedData?.services || [{ id: 1, name: "Prestation A", unitPrice: 500, unitsPerMonth: 4 }];
   const expense = savedData?.expense || 300;
 
-  // Handlers with auto-save
+  // Local state for inputs (not auto-saved)
+  const [localStatus, setLocalStatus] = useState<CompanyStatus>(status);
+  const [localServices, setLocalServices] = useState<ServiceLine[]>(services);
+  const [localExpense, setLocalExpense] = useState<number>(expense);
+
+  // Sync local state with saved data when it changes
+  useEffect(() => {
+    if (savedData) {
+      setLocalStatus(savedData.status || "micro");
+      setLocalServices(savedData.services || [{ id: 1, name: "Prestation A", unitPrice: 500, unitsPerMonth: 4 }]);
+      setLocalExpense(savedData.expense || 300);
+    }
+  }, [savedData]);
+
+  // Generic save handler
+  const handleSave = useCallback(async <K extends keyof Omit<typeof savedData, 'updatedAt' | 'userId'>>(
+    field: K,
+    value: any
+  ) => {
+    await saveField(field, value);
+  }, [saveField, savedData]);
+
+  // Generic key down handler
+  const handleKeyDown = useCallback(<K extends keyof Omit<typeof savedData, 'updatedAt' | 'userId'>>(
+    field: K,
+    value: any,
+    e: React.KeyboardEvent
+  ) => {
+    if (e.key === "Enter") {
+      handleSave(field, value);
+    }
+  }, [handleSave]);
+
+  // Change handlers for local state
   const handleStatusChange = useCallback((value: CompanyStatus) => {
-    updateField('status', value);
-  }, [updateField]);
+    setLocalStatus(value);
+  }, []);
 
   const handleExpenseChange = useCallback((value: number) => {
-    updateField('expense', value);
-  }, [updateField]);
+    setLocalExpense(value);
+  }, []);
 
   const handleServicesChange = useCallback((newServices: ServiceLine[]) => {
-    updateField('services', newServices);
-  }, [updateField]);
+    setLocalServices(newServices);
+  }, []);
 
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
@@ -42,28 +76,32 @@ export default function RevenueSimCard() {
     const u = parseFloat(units);
     if (!name.trim() || isNaN(p) || p <= 0 || isNaN(u) || u <= 0) return;
     const newService: ServiceLine = { id: Date.now(), name: name.trim(), unitPrice: p, unitsPerMonth: u };
-    handleServicesChange([...services, newService]);
+    const newServices = [...localServices, newService];
+    handleServicesChange(newServices);
     setName("");
     setPrice("");
     setUnits("");
-  }, [name, price, units, services, handleServicesChange]);
+    saveData({ services: newServices });
+  }, [name, price, units, localServices, handleServicesChange, saveData]);
 
   const removeService = useCallback((id: number) => {
-    handleServicesChange(services.filter((svc) => svc.id !== id));
-  }, [services, handleServicesChange]);
+    const newServices = localServices.filter((svc) => svc.id !== id);
+    handleServicesChange(newServices);
+    saveData({ services: newServices });
+  }, [localServices, handleServicesChange, saveData]);
 
-  const annualRevenue = services.reduce(
+  const annualRevenue = localServices.reduce(
     (a, s) => a + s.unitPrice * s.unitsPerMonth * 12,
     0
   );
 
   const results = simulateYear({
-    status,
-    services,
+    status: localStatus,
+    services: localServices,
     annualRevenue,
-    monthlyBusinessExpense: expense,
+    monthlyBusinessExpense: localExpense,
   });
-  const current = results.find((r) => r.status === status)!;
+  const current = results.find((r) => r.status === localStatus)!;
 
   if (dataLoading) {
     return (
@@ -71,7 +109,7 @@ export default function RevenueSimCard() {
         <div className="flex items-center justify-center p-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2" />
-            <p className="text-slate-500">Chargement des données...</p>
+            <p className="text-slate-500">Chargement des donn\u00e9es...</p>
           </div>
         </div>
       </section>
@@ -106,7 +144,7 @@ export default function RevenueSimCard() {
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1">Prix unitaire (€)</label>
+          <label className="block text-xs font-semibold text-slate-500 mb-1">Prix unitaire (\u20ac)</label>
           <input
             type="number"
             value={price}
@@ -131,7 +169,7 @@ export default function RevenueSimCard() {
         </button>
       </div>
 
-      {services.length > 0 && (
+      {localServices.length > 0 && (
         <table className="w-full text-sm mb-5">
           <thead>
             <tr className="border-b-2 border-slate-200 text-left text-xs uppercase text-slate-500">
@@ -143,7 +181,7 @@ export default function RevenueSimCard() {
             </tr>
           </thead>
           <tbody>
-            {services.map((s) => (
+            {localServices.map((s) => (
               <tr key={s.id} className="border-b border-slate-100">
                 <td className="py-2 px-2 font-semibold">{s.name}</td>
                 <td className="py-2 px-2">{formatEUR(s.unitPrice)}</td>
@@ -154,7 +192,7 @@ export default function RevenueSimCard() {
                     onClick={() => removeService(s.id)}
                     className="rounded bg-red-100 text-red-500 px-2 py-1 hover:bg-red-200"
                   >
-                    ×
+                    \u00d7
                   </button>
                 </td>
               </tr>
@@ -169,24 +207,28 @@ export default function RevenueSimCard() {
             Statut fiscal / social
           </label>
           <select
-            value={status}
+            value={localStatus}
             onChange={(e) => handleStatusChange(e.target.value as CompanyStatus)}
+            onBlur={() => handleSave('status', localStatus)}
+            onKeyDown={(e) => handleKeyDown('status', localStatus, e)}
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           >
             <option value="micro">Micro-entreprise</option>
-            <option value="ei">EI (réel)</option>
+            <option value="ei">EI (r\u00e9el)</option>
             <option value="eurl">EURL</option>
             <option value="sasu">SASU</option>
           </select>
         </div>
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Charges mensuelles (€)
+            Charges mensuelles (\u20ac)
           </label>
           <input
             type="number"
-            value={expense || ""}
+            value={localExpense || ""}
             onChange={(e) => handleExpenseChange(parseFloat(e.target.value) || 0)}
+            onBlur={() => handleSave('expense', localExpense)}
+            onKeyDown={(e) => handleKeyDown('expense', localExpense, e)}
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
         </div>
@@ -221,7 +263,7 @@ export default function RevenueSimCard() {
 
       {!current.eligible && (
         <p className="mt-3 text-sm text-amber-700 font-semibold">
-          ⚠ {current.eligibilityNote}
+          \u26a0 {current.eligibilityNote}
         </p>
       )}
 
