@@ -274,7 +274,7 @@ export default function StatusCompareCard() {
                 key={r.status}
                 className={`border-b border-slate-100 ${
                   r.status === best.status ? "bg-emerald-50 font-semibold" : ""
-                }`}
+                } ${!r.eligible ? "line-through text-red-400 opacity-60" : ""}`}
               >
                 <td className="py-2 px-2">{r.label}</td>
                 <td className="py-2 px-2">{formatEUR(r.socialContributions)}</td>
