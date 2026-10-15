@@ -2,12 +2,26 @@
 
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import type { SyncStatus } from "@/lib/budget-service";
+import { exportJSON } from "@/lib/budget-service";
+import type { BudgetState } from "@/lib/types";
 
 interface EntrepriseHeaderProps {
   user: { email?: string } | null;
+  syncStatus: SyncStatus;
+  state: BudgetState;
+  onImport: (file: File) => void;
 }
 
-export default function EntrepriseHeader({ user }: EntrepriseHeaderProps) {
+const SYNC_LABEL: Record<SyncStatus, string> = {
+  idle: "",
+  saving: "💾 Sauvegarde…",
+  saved: "✓ Sauvegardé",
+  error: "⚠️ Erreur de sauvegarde",
+  offline: "Mode local",
+};
+
+export default function EntrepriseHeader({ user, syncStatus, state, onImport }: EntrepriseHeaderProps) {
   const router = useRouter();
   const supabase = createClient();
 
@@ -20,9 +34,14 @@ export default function EntrepriseHeader({ user }: EntrepriseHeaderProps) {
     <header className="flex flex-wrap items-center justify-between gap-3 mb-5 no-print">
       <h1 className="text-2xl font-bold text-slate-900">Gestion Entreprise</h1>
       <div className="flex flex-wrap items-center gap-2">
+        {user && (
+          <span className="text-sm text-slate-600">
+            {SYNC_LABEL[syncStatus] || ""}
+          </span>
+        )}
         <button
           className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-600 hover:bg-slate-50"
-          onClick={() => alert("Export JSON - Fonctionnalité à implémenter")}
+          onClick={() => exportJSON(state)}
         >
           💾 Export JSON
         </button>
@@ -34,7 +53,7 @@ export default function EntrepriseHeader({ user }: EntrepriseHeaderProps) {
             className="hidden"
             onChange={(e) => {
               const f = e.target.files?.[0];
-              if (f) alert("Import - Fonctionnalité à implémenter");
+              if (f) onImport(f);
               e.target.value = "";
             }}
           />

@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
+import type { SyncStatus } from "@/lib/budget-service";
+import type { BudgetState } from "@/lib/types";
 import LaunchSimCard from "./LaunchSimCard";
 import GanttCard from "./GanttCard";
 import RevenueSimCard from "./RevenueSimCard";
@@ -22,6 +24,7 @@ type ToolId = (typeof TOOLS)[number]["id"];
 export default function EntrepriseApp() {
   const [activeTool, setActiveTool] = useState<ToolId>("lancement");
   const [user, setUser] = useState<{ email?: string } | null>(null);
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
@@ -34,6 +37,42 @@ export default function EntrepriseApp() {
     fetchUser();
   }, []);
 
+  const handleImport = useCallback(async (file: File) => {
+    alert("Import - Fonctionnalité à implémenter pour Entreprise");
+  }, []);
+
+  // Dummy state for header - Entreprise doesn't use BudgetState
+  const dummyState: BudgetState = {
+    name1: "",
+    name2: "",
+    salary1: "",
+    salary2: "",
+    force5050: false,
+    mode: "separe",
+    expenses: [],
+    immo: {
+      immoApport: 0,
+      immoRate: 0,
+      immoInsurance: 0,
+      immoDuration: 0,
+      immoType: "ancien",
+    },
+    loan: {
+      capital: 0,
+      rate: 0,
+      durationMonths: 0,
+      monthlyPayment: 0,
+      offeredTaeg: 0,
+      startDate: "",
+      insuranceMode: "capital",
+      insuranceRate: 0,
+      insuranceAvgMonthly: 0,
+      guaranteeFees: 0,
+      brokerFees: 0,
+      fileFees: 0,
+    },
+  };
+
   if (!loaded) {
     return (
       <div className="mx-auto max-w-5xl">
@@ -44,7 +83,12 @@ export default function EntrepriseApp() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <EntrepriseHeader user={user} />
+      <EntrepriseHeader 
+        user={user} 
+        syncStatus={syncStatus} 
+        state={dummyState} 
+        onImport={handleImport} 
+      />
       
       <div className="flex flex-wrap gap-2 mb-5 no-print">
         {TOOLS.map((tool) => (
