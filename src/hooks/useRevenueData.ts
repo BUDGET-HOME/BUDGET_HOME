@@ -23,6 +23,24 @@ const DEFAULT_DATA: Omit<RevenueSimulatorData, 'updatedAt' | 'userId'> = {
 
 const TABLE_NAME = "revenue_simulator";
 
+// Mapper les noms de colonnes snake_case vers camelCase
+const mapFromDb = (dbData: any): RevenueSimulatorData => ({
+  status: dbData.status as CompanyStatus,
+  services: dbData.services || DEFAULT_DATA.services,
+  expense: dbData.expense,
+  updatedAt: dbData.updated_at,
+  userId: dbData.user_id,
+});
+
+// Mapper les noms de colonnes camelCase vers snake_case pour l'insert/update
+const mapToDb = (data: Partial<Omit<RevenueSimulatorData, 'updatedAt' | 'userId'>> & { user_id?: string; updated_at?: string }): any => ({
+  status: data.status,
+  services: data.services,
+  expense: data.expense,
+  user_id: data.user_id,
+  updated_at: data.updated_at,
+});
+
 export function useRevenueData() {
   const [data, setData] = useState<RevenueSimulatorData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -30,12 +48,10 @@ export function useRevenueData() {
   const [saving, setSaving] = useState<boolean>(false);
   const [isClient, setIsClient] = useState<boolean>(false);
 
-  // Attendre d'être côté client
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Charger les données depuis Supabase
   useEffect(() => {
     if (!isClient) return;
     
@@ -66,18 +82,12 @@ export function useRevenueData() {
         }
 
         if (existingData) {
-          setData({
-            ...existingData,
-            userId: user.id,
-            status: existingData.status as CompanyStatus,
-            services: existingData.services || DEFAULT_DATA.services,
-            expense: existingData.expense || DEFAULT_DATA.expense,
-          });
+          setData(mapFromDb(existingData));
         } else {
-          const newData = { 
-            ...DEFAULT_DATA, 
-            user_id: user.id, 
-            updated_at: new Date().toISOString() 
+          const newData = {
+            ...mapToDb(DEFAULT_DATA),
+            user_id: user.id,
+            updated_at: new Date().toISOString(),
           };
           const { error: insertError } = await supabase
             .from(TABLE_NAME)
@@ -99,7 +109,6 @@ export function useRevenueData() {
     fetchData();
   }, [isClient]);
 
-  // Sauvegarder les données
   const saveData = useCallback(async (updates: Partial<Omit<RevenueSimulatorData, 'updatedAt' | 'userId'>>) => {
     if (!isClient) return false;
     
@@ -116,18 +125,18 @@ export function useRevenueData() {
         return false;
       }
 
-      const newData = {
-        ...data,
-        ...updates,
+      const currentData = data || { ...DEFAULT_DATA, userId: user.id, updatedAt: new Date().toISOString() };
+      const mergedData = { ...currentData, ...updates };
+      const dbData = mapToDb({
+        ...mergedData,
         user_id: user.id,
         updated_at: new Date().toISOString(),
-      };
+      });
 
-      // Vérifier si on a déjà un enregistrement
       if (data?.userId === user.id) {
         const { error: updateError } = await supabase
           .from(TABLE_NAME)
-          .update(newData as any)
+          .update(dbData)
           .eq("user_id", user.id);
         
         if (updateError) {
@@ -139,7 +148,7 @@ export function useRevenueData() {
       } else {
         const { error: insertError } = await supabase
           .from(TABLE_NAME)
-          .insert([newData as any]);
+          .insert([dbData]);
         
         if (insertError) {
           console.error("Error inserting revenue data:", insertError);
@@ -150,12 +159,12 @@ export function useRevenueData() {
       }
 
       setData({
-        ...newData,
+        ...mergedData,
         userId: user.id,
-        status: (newData.status || DEFAULT_DATA.status) as CompanyStatus,
-        services: newData.services || DEFAULT_DATA.services,
-        expense: newData.expense || DEFAULT_DATA.expense,
-        updatedAt: newData.updated_at || new Date().toISOString(),
+        status: (mergedData.status || DEFAULT_DATA.status) as CompanyStatus,
+        services: mergedData.services || DEFAULT_DATA.services,
+        expense: mergedData.expense ?? DEFAULT_DATA.expense,
+        updatedAt: new Date().toISOString(),
       } as RevenueSimulatorData);
       return true;
     } catch (err) {
@@ -168,7 +177,6 @@ export function useRevenueData() {
     }
   }, [data, isClient]);
 
-  // Mettre à jour un champ spécifique
   const updateField = useCallback(async <K extends keyof Omit<RevenueSimulatorData, 'updatedAt' | 'userId'>>(
     field: K,
     value: RevenueSimulatorData[K]

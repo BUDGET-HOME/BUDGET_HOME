@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { DEFAULT_TASKS, type GanttTask, CATEGORY_COLORS } from "@/lib/gantt";
+import { DEFAULT_TASKS, type GanttTask } from "@/lib/gantt";
 
 export interface GanttSimulatorData {
   tasks: GanttTask[];
@@ -16,6 +16,20 @@ const DEFAULT_DATA: Omit<GanttSimulatorData, 'updatedAt' | 'userId'> = {
 
 const TABLE_NAME = "gantt_simulator";
 
+// Mapper les noms de colonnes snake_case vers camelCase
+const mapFromDb = (dbData: any): GanttSimulatorData => ({
+  tasks: dbData.tasks || DEFAULT_DATA.tasks,
+  updatedAt: dbData.updated_at,
+  userId: dbData.user_id,
+});
+
+// Mapper les noms de colonnes camelCase vers snake_case pour l'insert/update
+const mapToDb = (data: Partial<Omit<GanttSimulatorData, 'updatedAt' | 'userId'>> & { user_id?: string; updated_at?: string }): any => ({
+  tasks: data.tasks,
+  user_id: data.user_id,
+  updated_at: data.updated_at,
+});
+
 export function useGanttData() {
   const [data, setData] = useState<GanttSimulatorData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -23,12 +37,10 @@ export function useGanttData() {
   const [saving, setSaving] = useState<boolean>(false);
   const [isClient, setIsClient] = useState<boolean>(false);
 
-  // Attendre d'être côté client
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Charger les données depuis Supabase
   useEffect(() => {
     if (!isClient) return;
     
@@ -59,16 +71,12 @@ export function useGanttData() {
         }
 
         if (existingData) {
-          setData({
-            ...existingData,
-            userId: user.id,
-            tasks: existingData.tasks || DEFAULT_DATA.tasks,
-          });
+          setData(mapFromDb(existingData));
         } else {
-          const newData = { 
-            ...DEFAULT_DATA, 
-            user_id: user.id, 
-            updated_at: new Date().toISOString() 
+          const newData = {
+            ...mapToDb(DEFAULT_DATA),
+            user_id: user.id,
+            updated_at: new Date().toISOString(),
           };
           const { error: insertError } = await supabase
             .from(TABLE_NAME)
@@ -90,7 +98,6 @@ export function useGanttData() {
     fetchData();
   }, [isClient]);
 
-  // Sauvegarder les données
   const saveData = useCallback(async (updates: Partial<Omit<GanttSimulatorData, 'updatedAt' | 'userId'>>) => {
     if (!isClient) return false;
     
@@ -107,18 +114,18 @@ export function useGanttData() {
         return false;
       }
 
-      const newData = {
-        ...data,
-        ...updates,
+      const currentData = data || { ...DEFAULT_DATA, userId: user.id, updatedAt: new Date().toISOString() };
+      const mergedData = { ...currentData, ...updates };
+      const dbData = mapToDb({
+        ...mergedData,
         user_id: user.id,
         updated_at: new Date().toISOString(),
-      };
+      });
 
-      // Vérifier si on a déjà un enregistrement
       if (data?.userId === user.id) {
         const { error: updateError } = await supabase
           .from(TABLE_NAME)
-          .update(newData as any)
+          .update(dbData)
           .eq("user_id", user.id);
         
         if (updateError) {
@@ -130,7 +137,7 @@ export function useGanttData() {
       } else {
         const { error: insertError } = await supabase
           .from(TABLE_NAME)
-          .insert([newData as any]);
+          .insert([dbData]);
         
         if (insertError) {
           console.error("Error inserting gantt data:", insertError);
@@ -141,10 +148,10 @@ export function useGanttData() {
       }
 
       setData({
-        ...newData,
+        ...mergedData,
         userId: user.id,
-        tasks: newData.tasks || DEFAULT_DATA.tasks,
-        updatedAt: newData.updated_at || new Date().toISOString(),
+        tasks: mergedData.tasks || DEFAULT_DATA.tasks,
+        updatedAt: new Date().toISOString(),
       });
       return true;
     } catch (err) {
@@ -157,7 +164,6 @@ export function useGanttData() {
     }
   }, [data, isClient]);
 
-  // Mettre à jour un champ spécifique
   const updateField = useCallback(async <K extends keyof Omit<GanttSimulatorData, 'updatedAt' | 'userId'>>(
     field: K,
     value: GanttSimulatorData[K]

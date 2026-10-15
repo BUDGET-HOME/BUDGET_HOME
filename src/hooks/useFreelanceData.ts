@@ -60,6 +60,58 @@ const DEFAULT_DATA: Omit<FreelanceSimulatorData, 'updatedAt' | 'userId'> = {
 
 const TABLE_NAME = "freelance_simulator";
 
+// Mapper les noms de colonnes snake_case vers camelCase
+const mapFromDb = (dbData: any): FreelanceSimulatorData => ({
+  status: dbData.status || DEFAULT_DATA.status,
+  tjm: dbData.tjm || DEFAULT_DATA.tjm,
+  days: dbData.days || DEFAULT_DATA.days,
+  costRetirement: dbData.cost_retirement || DEFAULT_DATA.costRetirement,
+  costLld: dbData.cost_lld || DEFAULT_DATA.costLld,
+  costFuel: dbData.cost_fuel || DEFAULT_DATA.costFuel,
+  costMutuelle: dbData.cost_mutuelle || DEFAULT_DATA.costMutuelle,
+  costBankIns: dbData.cost_bank_ins || DEFAULT_DATA.costBankIns,
+  costAccountant: dbData.cost_accountant || DEFAULT_DATA.costAccountant,
+  pctPortage: dbData.pct_portage || DEFAULT_DATA.pctPortage,
+  costMeals: dbData.cost_meals || DEFAULT_DATA.costMeals,
+  costTelecom: dbData.cost_telecom || DEFAULT_DATA.costTelecom,
+  costTech: dbData.cost_tech || DEFAULT_DATA.costTech,
+  acre: dbData.acre ?? DEFAULT_DATA.acre,
+  fiscalParts: dbData.fiscal_parts || DEFAULT_DATA.fiscalParts,
+  areToggle: dbData.are_toggle ?? DEFAULT_DATA.areToggle,
+  salaryGross: dbData.salary_gross || DEFAULT_DATA.salaryGross,
+  salaryBonus: dbData.salary_bonus || DEFAULT_DATA.salaryBonus,
+  salaryMonths: dbData.salary_months || DEFAULT_DATA.salaryMonths,
+  userAge: dbData.user_age || DEFAULT_DATA.userAge,
+  updatedAt: dbData.updated_at || new Date().toISOString(),
+  userId: dbData.user_id,
+});
+
+// Mapper les noms de colonnes camelCase vers snake_case pour l'insert/update
+const mapToDb = (data: Partial<FreelanceSimulatorData> & { user_id?: string; updated_at?: string }): any => ({
+  status: data.status,
+  tjm: data.tjm,
+  days: data.days,
+  cost_retirement: data.costRetirement,
+  cost_lld: data.costLld,
+  cost_fuel: data.costFuel,
+  cost_mutuelle: data.costMutuelle,
+  cost_bank_ins: data.costBankIns,
+  cost_accountant: data.costAccountant,
+  pct_portage: data.pctPortage,
+  cost_meals: data.costMeals,
+  cost_telecom: data.costTelecom,
+  cost_tech: data.costTech,
+  acre: data.acre,
+  fiscal_parts: data.fiscalParts,
+  are_toggle: data.areToggle,
+  salary_gross: data.salaryGross,
+  salary_bonus: data.salaryBonus,
+  salary_months: data.salaryMonths,
+  user_age: data.userAge,
+  user_id: data.user_id,
+  updated_at: data.updated_at,
+});
+
 export function useFreelanceData() {
   const [data, setData] = useState<FreelanceSimulatorData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -67,12 +119,10 @@ export function useFreelanceData() {
   const [saving, setSaving] = useState<boolean>(false);
   const [isClient, setIsClient] = useState<boolean>(false);
 
-  // Attendre d'être côté client
   useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Charger les données depuis Supabase
   useEffect(() => {
     if (!isClient) return;
     
@@ -103,36 +153,12 @@ export function useFreelanceData() {
         }
 
         if (existingData) {
-          setData({
-            ...existingData,
-            userId: user.id,
-            status: existingData.status || DEFAULT_DATA.status,
-            tjm: existingData.tjm || DEFAULT_DATA.tjm,
-            days: existingData.days || DEFAULT_DATA.days,
-            costRetirement: existingData.costRetirement || DEFAULT_DATA.costRetirement,
-            costLld: existingData.costLld || DEFAULT_DATA.costLld,
-            costFuel: existingData.costFuel || DEFAULT_DATA.costFuel,
-            costMutuelle: existingData.costMutuelle || DEFAULT_DATA.costMutuelle,
-            costBankIns: existingData.costBankIns || DEFAULT_DATA.costBankIns,
-            costAccountant: existingData.costAccountant || DEFAULT_DATA.costAccountant,
-            pctPortage: existingData.pctPortage || DEFAULT_DATA.pctPortage,
-            costMeals: existingData.costMeals || DEFAULT_DATA.costMeals,
-            costTelecom: existingData.costTelecom || DEFAULT_DATA.costTelecom,
-            costTech: existingData.costTech || DEFAULT_DATA.costTech,
-            acre: existingData.acre ?? DEFAULT_DATA.acre,
-            fiscalParts: existingData.fiscalParts || DEFAULT_DATA.fiscalParts,
-            areToggle: existingData.areToggle ?? DEFAULT_DATA.areToggle,
-            salaryGross: existingData.salaryGross || DEFAULT_DATA.salaryGross,
-            salaryBonus: existingData.salaryBonus || DEFAULT_DATA.salaryBonus,
-            salaryMonths: existingData.salaryMonths || DEFAULT_DATA.salaryMonths,
-            userAge: existingData.userAge || DEFAULT_DATA.userAge,
-            updatedAt: existingData.updatedAt || new Date().toISOString(),
-          });
+          setData(mapFromDb(existingData));
         } else {
-          const newData = { 
-            ...DEFAULT_DATA, 
-            user_id: user.id, 
-            updated_at: new Date().toISOString() 
+          const newData = {
+            ...mapToDb(DEFAULT_DATA),
+            user_id: user.id,
+            updated_at: new Date().toISOString(),
           };
           const { error: insertError } = await supabase
             .from(TABLE_NAME)
@@ -154,7 +180,6 @@ export function useFreelanceData() {
     fetchData();
   }, [isClient]);
 
-  // Sauvegarder les données
   const saveData = useCallback(async (updates: Partial<Omit<FreelanceSimulatorData, 'updatedAt' | 'userId'>>) => {
     if (!isClient) return false;
     
@@ -171,18 +196,18 @@ export function useFreelanceData() {
         return false;
       }
 
-      const newData = {
-        ...data,
-        ...updates,
+      const currentData = data || { ...DEFAULT_DATA, userId: user.id, updatedAt: new Date().toISOString() };
+      const mergedData = { ...currentData, ...updates };
+      const dbData = mapToDb({
+        ...mergedData,
         user_id: user.id,
         updated_at: new Date().toISOString(),
-      };
+      });
 
-      // Vérifier si on a déjà un enregistrement
       if (data?.userId === user.id) {
         const { error: updateError } = await supabase
           .from(TABLE_NAME)
-          .update(newData as any)
+          .update(dbData)
           .eq("user_id", user.id);
         
         if (updateError) {
@@ -194,7 +219,7 @@ export function useFreelanceData() {
       } else {
         const { error: insertError } = await supabase
           .from(TABLE_NAME)
-          .insert([newData as any]);
+          .insert([dbData]);
         
         if (insertError) {
           console.error("Error inserting freelance data:", insertError);
@@ -204,31 +229,7 @@ export function useFreelanceData() {
         }
       }
 
-      setData({
-        ...newData,
-        userId: user.id,
-        status: newData.status || DEFAULT_DATA.status,
-        tjm: newData.tjm || DEFAULT_DATA.tjm,
-        days: newData.days || DEFAULT_DATA.days,
-        costRetirement: newData.costRetirement || DEFAULT_DATA.costRetirement,
-        costLld: newData.costLld || DEFAULT_DATA.costLld,
-        costFuel: newData.costFuel || DEFAULT_DATA.costFuel,
-        costMutuelle: newData.costMutuelle || DEFAULT_DATA.costMutuelle,
-        costBankIns: newData.costBankIns || DEFAULT_DATA.costBankIns,
-        costAccountant: newData.costAccountant || DEFAULT_DATA.costAccountant,
-        pctPortage: newData.pctPortage || DEFAULT_DATA.pctPortage,
-        costMeals: newData.costMeals || DEFAULT_DATA.costMeals,
-        costTelecom: newData.costTelecom || DEFAULT_DATA.costTelecom,
-        costTech: newData.costTech || DEFAULT_DATA.costTech,
-        acre: newData.acre ?? DEFAULT_DATA.acre,
-        fiscalParts: newData.fiscalParts || DEFAULT_DATA.fiscalParts,
-        areToggle: newData.areToggle ?? DEFAULT_DATA.areToggle,
-        salaryGross: newData.salaryGross || DEFAULT_DATA.salaryGross,
-        salaryBonus: newData.salaryBonus || DEFAULT_DATA.salaryBonus,
-        salaryMonths: newData.salaryMonths || DEFAULT_DATA.salaryMonths,
-        userAge: newData.userAge || DEFAULT_DATA.userAge,
-        updatedAt: newData.updated_at || new Date().toISOString(),
-      } as FreelanceSimulatorData);
+      setData(mapFromDb(dbData));
       return true;
     } catch (err) {
       console.error("Unexpected error saving:", err);
@@ -240,7 +241,6 @@ export function useFreelanceData() {
     }
   }, [data, isClient]);
 
-  // Mettre à jour un champ spécifique
   const updateField = useCallback(async <K extends keyof Omit<FreelanceSimulatorData, 'updatedAt' | 'userId'>>(
     field: K,
     value: FreelanceSimulatorData[K]
