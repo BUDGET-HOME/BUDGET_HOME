@@ -89,10 +89,14 @@ export default function StatusCompareCard() {
     );
   }
 
+  // Get EURL and SASU results for comparison
+  const eurlResult = results.find(r => r.status === "eurl");
+  const sasuResult = results.find(r => r.status === "sasu");
+
   return (
     <section className="budget-card">
       <h2 className="text-xl font-bold border-b-2 border-slate-100 pb-2 mb-5">
-        Meilleur statut selon le revenu annuel
+        Choix du statut
       </h2>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
@@ -144,6 +148,112 @@ export default function StatusCompareCard() {
         </div>
       </div>
 
+      {/* EURL vs SASU Comparison Section */}
+      {eurlResult && sasuResult && (
+        <div className="bg-blue-50 rounded-lg border border-blue-100 p-4 mb-5">
+          <h3 className="text-lg font-bold text-blue-900 mb-4">EURL vs SASU : Comment choisir ?</h3>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+            {/* EURL Column */}
+            <div className="bg-white rounded-lg p-3 border border-blue-200">
+              <h4 className="font-bold text-blue-800 mb-2 flex items-center gap-2">
+                <span className="text-blue-600">🏢</span> EURL
+              </h4>
+              <p className="text-sm text-slate-600 mb-3">
+                <strong>Pour qui ?</strong> Entrepreneur seul qui veut limiter sa responsabilité.
+              </p>
+              <ul className="text-sm space-y-1">
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 mt-0.5">✓</span>
+                  <span>Régime <strong>TNS</strong> (Travailleur Non Salarié)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 mt-0.5">✓</span>
+                  <span>Cotisations sociales ~<strong>45%</strong> sur la rémunération</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 mt-0.5">✓</span>
+                  <span>Pas de cotisations sociales sur les dividendes</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 mt-0.5">ℹ️</span>
+                  <span>Impôt sur le revenu sur la rémunération + dividendes</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 mt-0.5">ℹ️</span>
+                  <span>Responsabilité limitée aux apports</span>
+                </li>
+              </ul>
+              <div className="mt-3 pt-2 border-t border-blue-100">
+                <div className="text-xs text-slate-500">Net estimé : {formatEUR(eurlResult.totalTakeHome)}</div>
+                <div className="text-xs text-slate-500">Taux effectif : {(eurlResult.effectiveRate * 100).toFixed(1)}%</div>
+              </div>
+            </div>
+            
+            {/* SASU Column */}
+            <div className="bg-white rounded-lg p-3 border border-indigo-200">
+              <h4 className="font-bold text-indigo-800 mb-2 flex items-center gap-2">
+                <span className="text-indigo-600">🏢</span> SASU
+              </h4>
+              <p className="text-sm text-slate-600 mb-3">
+                <strong>Pour qui ?</strong> Entrepreneur seul qui veut optimiser sa protection sociale.
+              </p>
+              <ul className="text-sm space-y-1">
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 mt-0.5">✓</span>
+                  <span>Régime <strong>Salarié</strong> (meilleure protection sociale)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 mt-0.5">✓</span>
+                  <span>Cotisations sociales ~<strong>82%</strong> sur la rémunération</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-green-600 mt-0.5">✓</span>
+                  <span>Cotisations sociales sur les dividendes (~17%)</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 mt-0.5">ℹ️</span>
+                  <span>Impôt sur le revenu sur la rémunération + flat tax 30% sur dividendes</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <span className="text-blue-600 mt-0.5">ℹ️</span>
+                  <span>Responsabilité limitée aux apports</span>
+                </li>
+              </ul>
+              <div className="mt-3 pt-2 border-t border-indigo-100">
+                <div className="text-xs text-slate-500">Net estimé : {formatEUR(sasuResult.totalTakeHome)}</div>
+                <div className="text-xs text-slate-500">Taux effectif : {(sasuResult.effectiveRate * 100).toFixed(1)}%</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Decision Guide */}
+          <div className="bg-white rounded-lg p-3 border border-amber-200">
+            <h4 className="font-bold text-amber-800 mb-2 flex items-center gap-2">
+              <span className="text-amber-600">⚖️</span> Quand choisir quoi ?
+            </h4>
+            <ul className="text-sm space-y-2">
+              <li className="flex items-start gap-2">
+                <span className="text-green-600 mt-0.5">→</span>
+                <span><strong>Choisissez EURL si :</strong> vous voulez payer moins de charges sociales et que la protection sociale TNS vous suffit.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-green-600 mt-0.5">→</span>
+                <span><strong>Choisissez SASU si :</strong> vous préférez la protection sociale des salariés (chômage, retraite) et acceptez des charges plus élevées.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-blue-600 mt-0.5">ℹ️</span>
+                <span><strong>À savoir :</strong> La SASU permet de mieux préparer sa retraite grâce aux cotisations plus élevées.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="text-blue-600 mt-0.5">ℹ️</span>
+                <span><strong>Fiscalement :</strong> Les deux permettent la déduction des frais réels. La différence majeure est le régime social.</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+      )}
+
       <div className="overflow-x-auto">
         <table className="w-full text-sm mb-5">
           <thead>
@@ -190,7 +300,7 @@ export default function StatusCompareCard() {
           <li key={p.label} className="flex gap-2">
             <span className="font-semibold min-w-56">{p.label}</span>
             <span>
-              {p.limit === Infinity ? "illimité" : formatEUR(p.limit)} —{" "}
+              {p.limit === Infinity ? "illimité" : formatEUR(p.limit)} — {" "}
               <span className="text-slate-500">{p.note}</span>
             </span>
           </li>
