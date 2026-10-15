@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { formatEUR } from "@/lib/budget";
+import { useFreelanceData } from "@/hooks/useFreelanceData";
 
 type StatusType = "auto" | "eurl" | "sasu" | "portage";
 
@@ -30,29 +31,119 @@ interface AREData {
 }
 
 export default function FreelanceSimulatorCard() {
-  // State for inputs
-  const [status, setStatus] = useState<StatusType>("auto");
-  const [tjm, setTjm] = useState<number>(480);
-  const [days, setDays] = useState<number>(18);
-  const [costRetirement, setCostRetirement] = useState<number>(300);
-  const [costLld, setCostLld] = useState<number>(450);
-  const [costFuel, setCostFuel] = useState<number>(150);
-  const [costMutuelle, setCostMutuelle] = useState<number>(80);
-  const [costBankIns, setCostBankIns] = useState<number>(45);
-  const [costAccountant, setCostAccountant] = useState<number>(150);
-  const [pctPortage, setPctPortage] = useState<number>(7);
-  const [costMeals, setCostMeals] = useState<number>(200);
-  const [costTelecom, setCostTelecom] = useState<number>(50);
-  const [costTech, setCostTech] = useState<number>(50);
-  const [acre, setAcre] = useState<boolean>(true);
-  const [fiscalParts, setFiscalParts] = useState<number>(1);
-  const [areToggle, setAreToggle] = useState<boolean>(false);
-  const [salaryGross, setSalaryGross] = useState<number>(3500);
-  const [salaryBonus, setSalaryBonus] = useState<number>(0);
-  const [salaryMonths, setSalaryMonths] = useState<number>(12);
-  const [userAge, setUserAge] = useState<number>(35);
+  const {
+    data: savedData,
+    loading: dataLoading,
+    error: dataError,
+    saving,
+    updateField,
+    debouncedSave,
+  } = useFreelanceData();
 
-  // State for outputs
+  // Use saved data or defaults
+  const status = savedData?.status || "auto";
+  const tjm = savedData?.tjm || 480;
+  const days = savedData?.days || 18;
+  const costRetirement = savedData?.costRetirement || 300;
+  const costLld = savedData?.costLld || 450;
+  const costFuel = savedData?.costFuel || 150;
+  const costMutuelle = savedData?.costMutuelle || 80;
+  const costBankIns = savedData?.costBankIns || 45;
+  const costAccountant = savedData?.costAccountant || 150;
+  const pctPortage = savedData?.pctPortage || 7;
+  const costMeals = savedData?.costMeals || 200;
+  const costTelecom = savedData?.costTelecom || 50;
+  const costTech = savedData?.costTech || 50;
+  const acre = savedData?.acre ?? true;
+  const fiscalParts = savedData?.fiscalParts || 1;
+  const areToggle = savedData?.areToggle || false;
+  const salaryGross = savedData?.salaryGross || 3500;
+  const salaryBonus = savedData?.salaryBonus || 0;
+  const salaryMonths = savedData?.salaryMonths || 12;
+  const userAge = savedData?.userAge || 35;
+
+  // Handlers for input changes with auto-save
+  const handleStatusChange = useCallback((value: StatusType) => {
+    updateField('status', value);
+  }, [updateField]);
+
+  const handleTjmChange = useCallback((value: number) => {
+    updateField('tjm', value);
+  }, [updateField]);
+
+  const handleDaysChange = useCallback((value: number) => {
+    updateField('days', value);
+  }, [updateField]);
+
+  const handleCostRetirementChange = useCallback((value: number) => {
+    updateField('costRetirement', value);
+  }, [updateField]);
+
+  const handleCostLldChange = useCallback((value: number) => {
+    updateField('costLld', value);
+  }, [updateField]);
+
+  const handleCostFuelChange = useCallback((value: number) => {
+    updateField('costFuel', value);
+  }, [updateField]);
+
+  const handleCostMutuelleChange = useCallback((value: number) => {
+    updateField('costMutuelle', value);
+  }, [updateField]);
+
+  const handleCostBankInsChange = useCallback((value: number) => {
+    updateField('costBankIns', value);
+  }, [updateField]);
+
+  const handleCostAccountantChange = useCallback((value: number) => {
+    updateField('costAccountant', value);
+  }, [updateField]);
+
+  const handlePctPortageChange = useCallback((value: number) => {
+    updateField('pctPortage', value);
+  }, [updateField]);
+
+  const handleCostMealsChange = useCallback((value: number) => {
+    updateField('costMeals', value);
+  }, [updateField]);
+
+  const handleCostTelecomChange = useCallback((value: number) => {
+    updateField('costTelecom', value);
+  }, [updateField]);
+
+  const handleCostTechChange = useCallback((value: number) => {
+    updateField('costTech', value);
+  }, [updateField]);
+
+  const handleAcreChange = useCallback((value: boolean) => {
+    updateField('acre', value);
+  }, [updateField]);
+
+  const handleFiscalPartsChange = useCallback((value: number) => {
+    updateField('fiscalParts', value);
+  }, [updateField]);
+
+  const handleAreToggleChange = useCallback((value: boolean) => {
+    updateField('areToggle', value);
+  }, [updateField]);
+
+  const handleSalaryGrossChange = useCallback((value: number) => {
+    updateField('salaryGross', value);
+  }, [updateField]);
+
+  const handleSalaryBonusChange = useCallback((value: number) => {
+    updateField('salaryBonus', value);
+  }, [updateField]);
+
+  const handleSalaryMonthsChange = useCallback((value: number) => {
+    updateField('salaryMonths', value);
+  }, [updateField]);
+
+  const handleUserAgeChange = useCallback((value: number) => {
+    updateField('userAge', value);
+  }, [updateField]);
+
+  // State for outputs (calculated values)
   const [headerCA, setHeaderCA] = useState<string>("0 €");
   const [caMensuel, setCaMensuel] = useState<string>("0 €");
   const [tvaBadge, setTvaBadge] = useState<{ text: string; className: string }>({
@@ -182,7 +273,7 @@ export default function FreelanceSimulatorCard() {
     return { net, taxes, ir, deductible, nonDeductible };
   };
 
-  const calculate = () => {
+  const calculate = useCallback(() => {
     const caMois = tjm * days;
     const caAnnuel = caMois * 12;
     const parts = fiscalParts;
@@ -215,7 +306,7 @@ export default function FreelanceSimulatorCard() {
     const params = { caMois, costs, pctPortage: pctPortageVal, isAcre: isAcreVal, parts };
 
     // Selected Status UI
-    const currentSim = simulateStatus(status, params);
+    const currentSim = simulateStatus(status as StatusType, params);
 
     setHeaderCA(money(caAnnuel));
     setCaMensuel(money(caMois));
@@ -236,7 +327,7 @@ export default function FreelanceSimulatorCard() {
 
     setShowDeductible(currentSim.deductible > 0);
     setShowNonDeductible(currentSim.nonDeductible > 0);
-    setChartMode(status.toUpperCase());
+    setChartMode((status as string).toUpperCase());
 
     if (status === 'auto') {
       setRetirementNote("Payé de votre poche (après impôts et charges)");
@@ -328,15 +419,16 @@ export default function FreelanceSimulatorCard() {
 
     setVerdictTitle(verdictTitle);
     setVerdictText(verdictBody);
-  };
-
-  useEffect(() => {
-    calculate();
   }, [
     status, tjm, days, costRetirement, costLld, costFuel, costMutuelle, costBankIns,
     costAccountant, pctPortage, costMeals, costTelecom, costTech, acre, fiscalParts,
     areToggle, salaryGross, salaryBonus, salaryMonths, userAge
   ]);
+
+  // Recalculate when data changes
+  useEffect(() => {
+    calculate();
+  }, [calculate]);
 
   const downloadPDF = async () => {
     const btn = document.getElementById('btnDownload');
@@ -388,6 +480,29 @@ export default function FreelanceSimulatorCard() {
       btn.classList.remove('opacity-75', 'cursor-not-allowed');
     }
   };
+
+  if (dataLoading) {
+    return (
+      <section className="budget-card">
+        <div className="flex items-center justify-center p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2" />
+            <p className="text-slate-500">Chargement des données...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (dataError) {
+    return (
+      <section className="budget-card">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          {dataError}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="budget-card">
@@ -443,7 +558,7 @@ export default function FreelanceSimulatorCard() {
                 </div>
                 <select
                   value={status}
-                  onChange={(e) => setStatus(e.target.value as StatusType)}
+                  onChange={(e) => handleStatusChange(e.target.value as StatusType)}
                   className="w-full p-2.5 border border-indigo-200 rounded-lg bg-white font-bold text-indigo-900 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
                 >
                   <option value="auto">Auto-Entrepreneur (Micro-BNC)</option>
@@ -465,7 +580,7 @@ export default function FreelanceSimulatorCard() {
                     <input
                       type="number"
                       value={tjm}
-                      onChange={(e) => setTjm(parseFloat(e.target.value) || 0)}
+                      onChange={(e) => handleTjmChange(parseFloat(e.target.value) || 0)}
                       className="w-full pl-3 pr-8 py-2 border border-gray-200 bg-white rounded-lg outline-none text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-500"
                     />
                     <span className="absolute right-3 top-2 text-gray-400 text-xs pointer-events-none">€</span>
@@ -483,7 +598,7 @@ export default function FreelanceSimulatorCard() {
                     <input
                       type="number"
                       value={days}
-                      onChange={(e) => setDays(parseFloat(e.target.value) || 0)}
+                      onChange={(e) => handleDaysChange(parseFloat(e.target.value) || 0)}
                       max={25}
                       className="w-full pl-3 pr-8 py-2 border border-gray-200 bg-white rounded-lg outline-none text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-500"
                     />
@@ -511,7 +626,7 @@ export default function FreelanceSimulatorCard() {
                   <input
                     type="number"
                     value={costRetirement}
-                    onChange={(e) => setCostRetirement(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleCostRetirementChange(parseFloat(e.target.value) || 0)}
                     className="w-full p-2 pr-16 text-sm border border-emerald-200 rounded text-right font-bold text-emerald-800 focus:ring-2 focus:ring-emerald-500 outline-none"
                   />
                   <span className="absolute right-4 top-2.5 text-emerald-600 text-xs font-bold pointer-events-none">€/mois</span>
@@ -532,7 +647,7 @@ export default function FreelanceSimulatorCard() {
                   <input
                     type="number"
                     value={costLld}
-                    onChange={(e) => setCostLld(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleCostLldChange(parseFloat(e.target.value) || 0)}
                     className="w-full p-2 text-sm border border-gray-200 rounded text-right"
                   />
                 </div>
@@ -547,7 +662,7 @@ export default function FreelanceSimulatorCard() {
                   <input
                     type="number"
                     value={costFuel}
-                    onChange={(e) => setCostFuel(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleCostFuelChange(parseFloat(e.target.value) || 0)}
                     className="w-full p-2 text-sm border border-gray-200 rounded text-right"
                   />
                 </div>
@@ -566,7 +681,7 @@ export default function FreelanceSimulatorCard() {
                   <input
                     type="number"
                     value={costMutuelle}
-                    onChange={(e) => setCostMutuelle(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleCostMutuelleChange(parseFloat(e.target.value) || 0)}
                     className="w-full p-2 text-sm border border-gray-200 rounded text-right"
                   />
                 </div>
@@ -581,7 +696,7 @@ export default function FreelanceSimulatorCard() {
                   <input
                     type="number"
                     value={costBankIns}
-                    onChange={(e) => setCostBankIns(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleCostBankInsChange(parseFloat(e.target.value) || 0)}
                     className="w-full p-2 text-sm border border-gray-200 rounded text-right"
                   />
                 </div>
@@ -600,7 +715,7 @@ export default function FreelanceSimulatorCard() {
                   <input
                     type="number"
                     value={costAccountant}
-                    onChange={(e) => setCostAccountant(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleCostAccountantChange(parseFloat(e.target.value) || 0)}
                     className="w-full p-2 text-sm border border-gray-200 rounded bg-white text-right"
                   />
                 </div>
@@ -615,7 +730,7 @@ export default function FreelanceSimulatorCard() {
                   <input
                     type="number"
                     value={pctPortage}
-                    onChange={(e) => setPctPortage(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handlePctPortageChange(parseFloat(e.target.value) || 0)}
                     className="w-full p-2 text-sm border border-gray-200 rounded bg-white text-right"
                   />
                 </div>
@@ -634,7 +749,7 @@ export default function FreelanceSimulatorCard() {
                   <input
                     type="number"
                     value={costMeals}
-                    onChange={(e) => setCostMeals(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleCostMealsChange(parseFloat(e.target.value) || 0)}
                     className="w-full p-2 text-sm border border-gray-200 rounded text-right"
                   />
                 </div>
@@ -649,7 +764,7 @@ export default function FreelanceSimulatorCard() {
                   <input
                     type="number"
                     value={costTelecom}
-                    onChange={(e) => setCostTelecom(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleCostTelecomChange(parseFloat(e.target.value) || 0)}
                     className="w-full p-2 text-sm border border-gray-200 rounded text-right"
                   />
                 </div>
@@ -664,7 +779,7 @@ export default function FreelanceSimulatorCard() {
                   <input
                     type="number"
                     value={costTech}
-                    onChange={(e) => setCostTech(parseFloat(e.target.value) || 0)}
+                    onChange={(e) => handleCostTechChange(parseFloat(e.target.value) || 0)}
                     className="w-full p-2 text-sm border border-gray-200 rounded text-right"
                   />
                 </div>
@@ -695,7 +810,7 @@ export default function FreelanceSimulatorCard() {
                     <input
                       type="checkbox"
                       checked={acre}
-                      onChange={(e) => setAcre(e.target.checked)}
+                      onChange={(e) => handleAcreChange(e.target.checked)}
                       className="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300"
                     />
                     <label htmlFor="acreToggle" className="toggle-label block overflow-hidden h-4 rounded-full bg-gray-300 cursor-pointer" />
@@ -714,7 +829,7 @@ export default function FreelanceSimulatorCard() {
                 </div>
                 <select
                   value={fiscalParts}
-                  onChange={(e) => setFiscalParts(parseFloat(e.target.value) || 1)}
+                  onChange={(e) => handleFiscalPartsChange(parseFloat(e.target.value) || 1)}
                   className="w-full p-1 text-sm bg-white border border-blue-200 rounded text-blue-900 font-bold outline-none"
                 >
                   <option value="1">1 Part (Célib)</option>
@@ -740,7 +855,7 @@ export default function FreelanceSimulatorCard() {
                 <input
                   type="checkbox"
                   checked={areToggle}
-                  onChange={(e) => setAreToggle(e.target.checked)}
+                  onChange={(e) => handleAreToggleChange(e.target.checked)}
                   className="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300"
                 />
                 <label htmlFor="areToggle" className="toggle-label block overflow-hidden h-4 rounded-full bg-gray-300 cursor-pointer" />
@@ -762,7 +877,7 @@ export default function FreelanceSimulatorCard() {
                     <input
                       type="number"
                       value={salaryGross}
-                      onChange={(e) => setSalaryGross(parseFloat(e.target.value) || 0)}
+                      onChange={(e) => handleSalaryGrossChange(parseFloat(e.target.value) || 0)}
                       className="w-full p-2 text-sm border border-gray-200 rounded text-right"
                     />
                   </div>
@@ -776,7 +891,7 @@ export default function FreelanceSimulatorCard() {
                     </div>
                     <select
                       value={salaryMonths}
-                      onChange={(e) => setSalaryMonths(parseFloat(e.target.value) || 12)}
+                      onChange={(e) => handleSalaryMonthsChange(parseFloat(e.target.value) || 12)}
                       className="w-full p-2 text-sm border border-gray-200 rounded text-right bg-white"
                     >
                       <option value="12">12 mois</option>
@@ -798,7 +913,7 @@ export default function FreelanceSimulatorCard() {
                     <input
                       type="number"
                       value={salaryBonus}
-                      onChange={(e) => setSalaryBonus(parseFloat(e.target.value) || 0)}
+                      onChange={(e) => handleSalaryBonusChange(parseFloat(e.target.value) || 0)}
                       className="w-full p-2 text-sm border border-gray-200 rounded text-right"
                     />
                   </div>
@@ -813,7 +928,7 @@ export default function FreelanceSimulatorCard() {
                     <input
                       type="number"
                       value={userAge}
-                      onChange={(e) => setUserAge(parseFloat(e.target.value) || 0)}
+                      onChange={(e) => handleUserAgeChange(parseFloat(e.target.value) || 0)}
                       className="w-full p-2 text-sm border border-gray-200 rounded text-right"
                     />
                   </div>
@@ -992,6 +1107,13 @@ export default function FreelanceSimulatorCard() {
           </div>
         </div>
       </div>
+
+      {/* Save Status Indicator */}
+      {saving && (
+        <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
+          Sauvegarde en cours...
+        </div>
+      )}
 
       <style jsx>{`
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }

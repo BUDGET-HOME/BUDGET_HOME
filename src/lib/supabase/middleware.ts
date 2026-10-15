@@ -28,20 +28,22 @@ export async function updateSession(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   const { pathname } = request.nextUrl;
-  const isProtected = pathname === "/profile" || pathname === "/settings";
   const isAuthPage =
     pathname === "/login" || pathname === "/signup" || pathname === "/reset";
+  const isApiRoute = pathname.startsWith("/api/");
 
-  if (!user && isProtected) {
+  // Toutes les pages sont protégées sauf les pages d'authentification et les routes API
+  if (!user && !isAuthPage && !isApiRoute) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
-    return Response.redirect(url);
+    return NextResponse.redirect(url);
   }
 
+  // Rediriger les utilisateurs connectés depuis les pages d'authentification
   if (user && isAuthPage) {
     const url = request.nextUrl.clone();
     url.pathname = "/";
-    return Response.redirect(url);
+    return NextResponse.redirect(url);
   }
 
   return supabaseResponse;
