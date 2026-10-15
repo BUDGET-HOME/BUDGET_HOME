@@ -72,7 +72,7 @@ export default function StatusCompareCard() {
         <div className="flex items-center justify-center p-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2" />
-            <p className="text-slate-500">Chargement des donn\u00e9es...</p>
+            <p className="text-slate-500">Chargement des données...</p>
           </div>
         </div>
       </section>
@@ -98,7 +98,7 @@ export default function StatusCompareCard() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Revenu annuel envisag\u00e9 (\u20ac)
+            Revenu annuel envisagé (€)
           </label>
           <input
             type="number"
@@ -122,7 +122,7 @@ export default function StatusCompareCard() {
         </div>
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Charges mensuelles (\u20ac)
+            Charges mensuelles (€)
           </label>
           <input
             type="number"
@@ -139,7 +139,7 @@ export default function StatusCompareCard() {
         <div className="text-sm font-bold text-emerald-900">Recommandation</div>
         <div className="text-xl font-bold text-emerald-800">{best.label}</div>
         <div className="text-sm text-emerald-700">
-          Revenu net annuel estim\u00e9 : {formatEUR(best.totalTakeHome)} \u2014 taux
+          Revenu net annuel estimé : {formatEUR(best.totalTakeHome)} — taux
           effectif {(best.effectiveRate * 100).toFixed(1)} %
         </div>
       </div>
@@ -150,10 +150,10 @@ export default function StatusCompareCard() {
             <tr className="border-b-2 border-slate-200 text-left text-xs uppercase text-slate-500">
               <th className="py-2 px-2">Statut</th>
               <th className="py-2 px-2">Cotisations</th>
-              <th className="py-2 px-2">Imp\u00f4ts</th>
+              <th className="py-2 px-2">Impôts</th>
               <th className="py-2 px-2">Net annuel</th>
               <th className="py-2 px-2">Taux effectif</th>
-              <th className="py-2 px-2">\u00c9ligible</th>
+              <th className="py-2 px-2">Éligible</th>
             </tr>
           </thead>
           <tbody>
@@ -184,13 +184,13 @@ export default function StatusCompareCard() {
         </table>
       </div>
 
-      <h3 className="font-bold text-sm mb-2">Plafonds de revenu \u00e0 conna\u00eetre</h3>
+      <h3 className="font-bold text-sm mb-2">Plafonds de revenu à connaître</h3>
       <ul className="text-sm space-y-1">
         {plafonds().map((p) => (
           <li key={p.label} className="flex gap-2">
             <span className="font-semibold min-w-56">{p.label}</span>
             <span>
-              {p.limit === Infinity ? "illimit\u00e9" : formatEUR(p.limit)} \u2014{" "}
+              {p.limit === Infinity ? "illimité" : formatEUR(p.limit)} —{" "}
               <span className="text-slate-500">{p.note}</span>
             </span>
           </li>
@@ -198,7 +198,7 @@ export default function StatusCompareCard() {
       </ul>
 
       <p className="text-xs text-slate-500 mt-4">
-        Estimations simplifi\u00e9es (taux 2025, bar\u00e8me indicatif) \u2014 validez avec un
+        Estimations simplifiées (taux 2025, barème indicatif) — validez avec un
         expert-comptable avant de choisir votre statut.
       </p>
 

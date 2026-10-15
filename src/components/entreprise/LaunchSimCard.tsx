@@ -112,7 +112,7 @@ export default function LaunchSimCard() {
         <div className="flex items-center justify-center p-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2" />
-            <p className="text-slate-500">Chargement des donn\u00e9es...</p>
+            <p className="text-slate-500">Chargement des données...</p>
           </div>
         </div>
       </section>
@@ -138,7 +138,7 @@ export default function LaunchSimCard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Statut envisag\u00e9
+            Statut envisagé
           </label>
           <select
             value={localStatus}
@@ -148,7 +148,7 @@ export default function LaunchSimCard() {
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           >
             <option value="micro">Micro-entreprise</option>
-            <option value="ei">EI (r\u00e9el)</option>
+            <option value="ei">EI (réel)</option>
             <option value="eurl">EURL</option>
             <option value="sasu">SASU</option>
           </select>
@@ -160,7 +160,7 @@ export default function LaunchSimCard() {
         </div>
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Aide r\u00e9gion / mois (\u20ac)
+            Aide région / mois (€)
           </label>
           <input
             type="number"
@@ -173,7 +173,7 @@ export default function LaunchSimCard() {
         </div>
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Dur\u00e9e de l'aide (mois)
+            Durée de l'aide (mois)
           </label>
           <input
             type="number"
@@ -189,7 +189,7 @@ export default function LaunchSimCard() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Apport personnel (\u20ac)
+            Apport personnel (€)
           </label>
           <input
             type="number"
@@ -202,7 +202,7 @@ export default function LaunchSimCard() {
         </div>
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Besoin mensuel mini (\u20ac)
+            Besoin mensuel mini (€)
           </label>
           <input
             type="number"
@@ -215,7 +215,7 @@ export default function LaunchSimCard() {
         </div>
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Besoin mensuel maxi (\u20ac)
+            Besoin mensuel maxi (€)
           </label>
           <input
             type="number"
@@ -235,7 +235,7 @@ export default function LaunchSimCard() {
               onBlur={() => handleSave('acre', localAcre)}
               onKeyDown={(e) => handleKeyDown('acre', localAcre, e)}
             />
-            B\u00e9n\u00e9ficie de l'ACRE
+            Bénéficie de l'ACRE
           </label>
         </div>
       </div>
@@ -243,7 +243,7 @@ export default function LaunchSimCard() {
       <div className="rounded-lg border-l-4 border-emerald-600 bg-emerald-50 p-4 grid grid-cols-2 md:grid-cols-4 gap-4">
         <div>
           <div className="text-xs uppercase font-bold text-emerald-900">
-            Aides r\u00e9gionales
+            Aides régionales
           </div>
           <div className="text-xl font-bold text-emerald-800">
             {formatEUR(result.totalGrants)}
@@ -251,7 +251,7 @@ export default function LaunchSimCard() {
         </div>
         <div>
           <div className="text-xs uppercase font-bold text-emerald-900">
-            Exon\u00e9ration ACRE
+            Exonération ACRE
           </div>
           <div className="text-xl font-bold text-emerald-800">
             {formatEUR(result.totalAcreExemption)}
@@ -259,7 +259,7 @@ export default function LaunchSimCard() {
         </div>
         <div>
           <div className="text-xs uppercase font-bold text-emerald-900">
-            Tr\u00e9sorerie tenable
+            Trésorerie tenable
           </div>
           <div className="text-xl font-bold text-emerald-800">
             {result.runwayMonths} mois
@@ -276,9 +276,9 @@ export default function LaunchSimCard() {
       </div>
 
       <p className="text-xs text-slate-500 mt-3">
-        Estimation indicative. V\u00e9rifiez les dispositifs exacts de votre r\u00e9gion
-        (aides \u00e0 la cr\u00e9ation, pr\u00eats d'honneur, Bourse French Tech\u2026) et les
-        conditions ACRE aupr\u00e8s de votre CFE.
+        Estimation indicative. Vérifiez les dispositifs exacts de votre région
+        (aides à la création, prêts d'honneur, Bourse French Tech…) et les
+        conditions ACRE auprès de votre CFE.
       </p>
 
       {saving && (

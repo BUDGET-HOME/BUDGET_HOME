@@ -109,7 +109,7 @@ export default function RevenueSimCard() {
         <div className="flex items-center justify-center p-8">
           <div className="text-center">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2" />
-            <p className="text-slate-500">Chargement des donn\u00e9es...</p>
+            <p className="text-slate-500">Chargement des données...</p>
           </div>
         </div>
       </section>
@@ -144,7 +144,7 @@ export default function RevenueSimCard() {
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1">Prix unitaire (\u20ac)</label>
+          <label className="block text-xs font-semibold text-slate-500 mb-1">Prix unitaire (€)</label>
           <input
             type="number"
             value={price}
@@ -192,7 +192,7 @@ export default function RevenueSimCard() {
                     onClick={() => removeService(s.id)}
                     className="rounded bg-red-100 text-red-500 px-2 py-1 hover:bg-red-200"
                   >
-                    \u00d7
+                    ×
                   </button>
                 </td>
               </tr>
@@ -214,14 +214,14 @@ export default function RevenueSimCard() {
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           >
             <option value="micro">Micro-entreprise</option>
-            <option value="ei">EI (r\u00e9el)</option>
+            <option value="ei">EI (réel)</option>
             <option value="eurl">EURL</option>
             <option value="sasu">SASU</option>
           </select>
         </div>
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Charges mensuelles (\u20ac)
+            Charges mensuelles (€)
           </label>
           <input
             type="number"
@@ -263,7 +263,7 @@ export default function RevenueSimCard() {
 
       {!current.eligible && (
         <p className="mt-3 text-sm text-amber-700 font-semibold">
-          \u26a0 {current.eligibilityNote}
+          ⚠️ {current.eligibilityNote}
         </p>
       )}
 
