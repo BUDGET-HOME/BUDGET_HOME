@@ -153,9 +153,9 @@ export default function LaunchSimCard() {
             <option value="sasu">SASU</option>
           </select>
           <p className="text-xs text-slate-500 mt-1">
-            Exon\u00e9ration ACRE : \u2212{(acreRate(localStatus) * 100).toFixed(0)} % de cotisations
-            la 1\u02b3\u1d49 ann\u00e9e (maintien du droit \u00e0 l'exon\u00e9ration debut
-            d'activit\u00e9).
+            Exonération ACRE : −{(acreRate(localStatus) * 100).toFixed(0)} % de cotisations
+            la 1ʳᵉ année (maintien du droit à l'exonération début
+            d'activité).
           </p>
         </div>
         <div>
