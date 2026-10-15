@@ -61,6 +61,7 @@ export default function FreelanceSimulatorCard() {
   const salaryBonus = savedData?.salaryBonus || 0;
   const salaryMonths = savedData?.salaryMonths || 12;
   const userAge = savedData?.userAge || 35;
+  const useSpouseMutuelle = savedData?.useSpouseMutuelle || false;
 
   // Local state for inputs (not auto-saved)
   const [localStatus, setLocalStatus] = useState<StatusType>(status as StatusType);
@@ -83,6 +84,7 @@ export default function FreelanceSimulatorCard() {
   const [localSalaryBonus, setLocalSalaryBonus] = useState<number>(salaryBonus);
   const [localSalaryMonths, setLocalSalaryMonths] = useState<number>(salaryMonths);
   const [localUserAge, setLocalUserAge] = useState<number>(userAge);
+  const [localUseSpouseMutuelle, setLocalUseSpouseMutuelle] = useState<boolean>(useSpouseMutuelle);
 
   // Sync local state with saved data when it changes
   useEffect(() => {
@@ -107,6 +109,7 @@ export default function FreelanceSimulatorCard() {
       setLocalSalaryBonus(savedData.salaryBonus || 0);
       setLocalSalaryMonths(savedData.salaryMonths || 12);
       setLocalUserAge(savedData.userAge || 35);
+      setLocalUseSpouseMutuelle(savedData.useSpouseMutuelle || false);
     }
   }, [savedData]);
 
@@ -221,6 +224,7 @@ export default function FreelanceSimulatorCard() {
       case 'salaryBonus': setLocalSalaryBonus(value as number); break;
       case 'salaryMonths': setLocalSalaryMonths(value as number); break;
       case 'userAge': setLocalUserAge(value as number); break;
+      case 'useSpouseMutuelle': setLocalUseSpouseMutuelle(value as boolean); break;
     }
   }, []);
 
@@ -286,7 +290,7 @@ export default function FreelanceSimulatorCard() {
       ret: localCostRetirement,
       lld: localCostLld,
       fuel: localCostFuel,
-      mutuelle: localCostMutuelle,
+      mutuelle: localUseSpouseMutuelle ? 0 : localCostMutuelle,
       bank: localCostBankIns,
       acct: localCostAccountant,
       meals: localCostMeals,

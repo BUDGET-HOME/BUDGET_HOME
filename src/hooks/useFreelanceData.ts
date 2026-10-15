@@ -30,6 +30,9 @@ export interface FreelanceSimulatorData {
   salaryMonths: number;
   userAge: number;
   
+  // Options
+  useSpouseMutuelle: boolean;
+  
   // Metadata
   updatedAt: string;
   userId: string;
@@ -56,6 +59,7 @@ const DEFAULT_DATA: Omit<FreelanceSimulatorData, 'updatedAt' | 'userId'> = {
   salaryBonus: 0,
   salaryMonths: 12,
   userAge: 35,
+  useSpouseMutuelle: false,
 };
 
 const TABLE_NAME = "freelance_simulator";
@@ -82,6 +86,7 @@ const mapFromDb = (dbData: any): FreelanceSimulatorData => ({
   salaryBonus: dbData.salary_bonus || DEFAULT_DATA.salaryBonus,
   salaryMonths: dbData.salary_months || DEFAULT_DATA.salaryMonths,
   userAge: dbData.user_age || DEFAULT_DATA.userAge,
+  useSpouseMutuelle: dbData.use_spouse_mutuelle ?? DEFAULT_DATA.useSpouseMutuelle,
   updatedAt: dbData.updated_at || new Date().toISOString(),
   userId: dbData.user_id,
 });
@@ -108,6 +113,7 @@ const mapToDb = (data: Partial<FreelanceSimulatorData> & { user_id?: string; upd
   salary_bonus: data.salaryBonus,
   salary_months: data.salaryMonths,
   user_age: data.userAge,
+  use_spouse_mutuelle: data.useSpouseMutuelle,
   user_id: data.user_id,
   updated_at: data.updated_at,
 });
