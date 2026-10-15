@@ -149,7 +149,7 @@ export default function StatusCompareCard() {
       </div>
 
       {/* EURL vs SASU Comparison Section */}
-      {eurlResult && sasuResult && (
+      {eurlResult && sasuResult && (best.status === "eurl" || best.status === "sasu") && (
         <div className="bg-blue-50 rounded-lg border border-blue-100 p-4 mb-5">
           <h3 className="text-lg font-bold text-blue-900 mb-4">EURL vs SASU : Comment choisir ?</h3>
           
