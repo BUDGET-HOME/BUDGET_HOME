@@ -1,23 +1,92 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { acreRate, simulateLaunch, type CompanyStatus } from "@/lib/launch";
 import { formatEUR } from "@/lib/budget";
+import { useLaunchData } from "@/hooks/useLaunchData";
 
 export default function LaunchSimCard() {
-  const [status, setStatus] = useState<CompanyStatus>("micro");
-  const [grantMonthly, setGrantMonthly] = useState(1000);
-  const [grantMonths, setGrantMonths] = useState(6);
-  const [acre, setAcre] = useState(true);
-  const [contribution, setContribution] = useState(15000);
-  const [needLow, setNeedLow] = useState(1500);
-  const [needHigh, setNeedHigh] = useState(2500);
+  const {
+    data: savedData,
+    loading: dataLoading,
+    error: dataError,
+    saving,
+    updateField,
+  } = useLaunchData();
+
+  // Use saved data or defaults
+  const status = savedData?.status || "micro";
+  const grantMonthly = savedData?.grantMonthly || 1000;
+  const grantMonths = savedData?.grantMonths || 6;
+  const acre = savedData?.acre ?? true;
+  const contribution = savedData?.contribution || 15000;
+  const needLow = savedData?.needLow || 1500;
+  const needHigh = savedData?.needHigh || 2500;
+
+  // Handlers with auto-save
+  const handleStatusChange = useCallback((value: CompanyStatus) => {
+    updateField('status', value);
+  }, [updateField]);
+
+  const handleGrantMonthlyChange = useCallback((value: number) => {
+    updateField('grantMonthly', value);
+  }, [updateField]);
+
+  const handleGrantMonthsChange = useCallback((value: number) => {
+    updateField('grantMonths', value);
+  }, [updateField]);
+
+  const handleAcreChange = useCallback((value: boolean) => {
+    updateField('acre', value);
+  }, [updateField]);
+
+  const handleContributionChange = useCallback((value: number) => {
+    updateField('contribution', value);
+  }, [updateField]);
+
+  const handleNeedLowChange = useCallback((value: number) => {
+    updateField('needLow', value);
+  }, [updateField]);
+
+  const handleNeedHighChange = useCallback((value: number) => {
+    updateField('needHigh', value);
+  }, [updateField]);
 
   const result = simulateLaunch(
-    { status, regionMonthlyGrant: grantMonthly, regionGrantMonths: grantMonths, acre, personalContribution: contribution, monthlyProvision: 0 },
+    { 
+      status, 
+      regionMonthlyGrant: grantMonthly, 
+      regionGrantMonths: grantMonths, 
+      acre, 
+      personalContribution: contribution, 
+      monthlyProvision: 0 
+    },
     needLow,
     needHigh
   );
+
+  if (dataLoading) {
+    return (
+      <section className="budget-card">
+        <div className="flex items-center justify-center p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2" />
+            <p className="text-slate-500">Chargement des données...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (dataError) {
+    return (
+      <section className="budget-card">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          {dataError}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="budget-card">
@@ -32,7 +101,7 @@ export default function LaunchSimCard() {
           </label>
           <select
             value={status}
-            onChange={(e) => setStatus(e.target.value as CompanyStatus)}
+            onChange={(e) => handleStatusChange(e.target.value as CompanyStatus)}
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           >
             <option value="micro">Micro-entreprise</option>
@@ -42,8 +111,8 @@ export default function LaunchSimCard() {
           </select>
           <p className="text-xs text-slate-500 mt-1">
             Exonération ACRE : −{(acreRate(status) * 100).toFixed(0)} % de cotisations
-            la 1ʳᵉ année (maintien du droit à l&apos;exonération debut
-            d&apos;activité).
+            la 1ʳᵉ année (maintien du droit à l'exonération debut
+            d'activité).
           </p>
         </div>
         <div>
@@ -53,18 +122,18 @@ export default function LaunchSimCard() {
           <input
             type="number"
             value={grantMonthly || ""}
-            onChange={(e) => setGrantMonthly(parseFloat(e.target.value) || 0)}
+            onChange={(e) => handleGrantMonthlyChange(parseFloat(e.target.value) || 0)}
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
         </div>
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Durée de l&apos;aide (mois)
+            Durée de l'aide (mois)
           </label>
           <input
             type="number"
             value={grantMonths || ""}
-            onChange={(e) => setGrantMonths(parseInt(e.target.value) || 0)}
+            onChange={(e) => handleGrantMonthsChange(parseInt(e.target.value) || 0)}
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
         </div>
@@ -78,7 +147,7 @@ export default function LaunchSimCard() {
           <input
             type="number"
             value={contribution || ""}
-            onChange={(e) => setContribution(parseFloat(e.target.value) || 0)}
+            onChange={(e) => handleContributionChange(parseFloat(e.target.value) || 0)}
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
         </div>
@@ -89,7 +158,7 @@ export default function LaunchSimCard() {
           <input
             type="number"
             value={needLow || ""}
-            onChange={(e) => setNeedLow(parseFloat(e.target.value) || 0)}
+            onChange={(e) => handleNeedLowChange(parseFloat(e.target.value) || 0)}
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
         </div>
@@ -100,14 +169,18 @@ export default function LaunchSimCard() {
           <input
             type="number"
             value={needHigh || ""}
-            onChange={(e) => setNeedHigh(parseFloat(e.target.value) || 0)}
+            onChange={(e) => handleNeedHighChange(parseFloat(e.target.value) || 0)}
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
         </div>
         <div>
           <label className="flex items-center gap-2 mt-6 rounded-md bg-slate-100 px-3 py-2 text-sm">
-            <input type="checkbox" checked={acre} onChange={(e) => setAcre(e.target.checked)} />
-            Bénéficie de l&apos;ACRE
+            <input 
+              type="checkbox" 
+              checked={acre} 
+              onChange={(e) => handleAcreChange(e.target.checked)} 
+            />
+            Bénéficie de l'ACRE
           </label>
         </div>
       </div>
@@ -149,9 +222,15 @@ export default function LaunchSimCard() {
 
       <p className="text-xs text-slate-500 mt-3">
         Estimation indicative. Vérifiez les dispositifs exacts de votre région
-        (aides à la création, prêts d&apos;honneur, Bourse French Tech…) et les
+        (aides à la création, prêts d'honneur, Bourse French Tech…) et les
         conditions ACRE auprès de votre CFE.
       </p>
+
+      {saving && (
+        <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
+          Sauvegarde en cours...
+        </div>
+      )}
     </section>
   );
 }

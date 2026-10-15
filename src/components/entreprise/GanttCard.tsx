@@ -1,34 +1,88 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { CATEGORY_COLORS, DEFAULT_TASKS, type GanttTask } from "@/lib/gantt";
+import { useGanttData } from "@/hooks/useGanttData";
 
 const MONTHS = 24;
 
 export default function GanttCard() {
+  const {
+    data: savedData,
+    loading: dataLoading,
+    error: dataError,
+    saving,
+    saveData,
+  } = useGanttData();
+
   const [tasks, setTasks] = useState<GanttTask[]>(DEFAULT_TASKS);
   const [name, setName] = useState("");
   const [startMonth, setStartMonth] = useState(1);
   const [duration, setDuration] = useState(2);
   const [category, setCategory] = useState<GanttTask["category"]>("admin");
 
-  const addTask = () => {
+  // Sync with saved data
+  useEffect(() => {
+    if (savedData?.tasks) {
+      setTasks(savedData.tasks);
+    }
+  }, [savedData?.tasks]);
+
+  const addTask = useCallback(() => {
     if (!name.trim()) return;
-    setTasks((t) => [
-      ...t,
-      { id: `t-${Date.now()}`, name: name.trim(), startMonth, durationMonths: duration, category, done: false },
-    ]);
+    const newTask: GanttTask = {
+      id: `t-${Date.now()}`,
+      name: name.trim(),
+      startMonth,
+      durationMonths: duration,
+      category,
+      done: false,
+    };
+    const newTasks = [...tasks, newTask];
+    setTasks(newTasks);
     setName("");
-  };
+    saveData({ tasks: newTasks });
+  }, [name, startMonth, duration, category, tasks, saveData]);
 
-  const toggleDone = (id: string) =>
-    setTasks((t) => t.map((task) => (task.id === id ? { ...task, done: !task.done } : task)));
+  const toggleDone = useCallback((id: string) => {
+    const newTasks = tasks.map((task) =>
+      task.id === id ? { ...task, done: !task.done } : task
+    );
+    setTasks(newTasks);
+    saveData({ tasks: newTasks });
+  }, [tasks, saveData]);
 
-  const removeTask = (id: string) =>
-    setTasks((t) => t.filter((task) => task.id !== id));
+  const removeTask = useCallback((id: string) => {
+    const newTasks = tasks.filter((task) => task.id !== id);
+    setTasks(newTasks);
+    saveData({ tasks: newTasks });
+  }, [tasks, saveData]);
 
   const yearLabel = (m: number) =>
     m <= 12 ? `A1-M${m}` : `A2-M${m - 12}`;
+
+  if (dataLoading) {
+    return (
+      <section className="budget-card">
+        <div className="flex items-center justify-center p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2" />
+            <p className="text-slate-500">Chargement des données...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (dataError) {
+    return (
+      <section className="budget-card">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          {dataError}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="budget-card">
@@ -156,6 +210,12 @@ export default function GanttCard() {
           </span>
         ))}
       </div>
+
+      {saving && (
+        <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
+          Sauvegarde en cours...
+        </div>
+      )}
     </section>
   );
 }

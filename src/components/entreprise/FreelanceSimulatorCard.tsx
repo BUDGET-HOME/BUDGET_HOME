@@ -37,7 +37,6 @@ export default function FreelanceSimulatorCard() {
     error: dataError,
     saving,
     updateField,
-    debouncedSave,
   } = useFreelanceData();
 
   // Use saved data or defaults

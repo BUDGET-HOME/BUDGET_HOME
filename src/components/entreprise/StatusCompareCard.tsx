@@ -1,12 +1,31 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { bestStatus, plafonds, simulateYear } from "@/lib/business";
 import { formatEUR } from "@/lib/budget";
+import { useStatusCompareData } from "@/hooks/useStatusCompareData";
 
 export default function StatusCompareCard() {
-  const [revenue, setRevenue] = useState(60000);
-  const [expense, setExpense] = useState(500);
+  const {
+    data: savedData,
+    loading: dataLoading,
+    error: dataError,
+    saving,
+    updateField,
+  } = useStatusCompareData();
+
+  // Use saved data or defaults
+  const revenue = savedData?.revenue || 60000;
+  const expense = savedData?.expense || 500;
+
+  // Handlers with auto-save
+  const handleRevenueChange = useCallback((value: number) => {
+    updateField('revenue', value);
+  }, [updateField]);
+
+  const handleExpenseChange = useCallback((value: number) => {
+    updateField('expense', value);
+  }, [updateField]);
 
   const results = simulateYear({
     status: "micro",
@@ -15,6 +34,29 @@ export default function StatusCompareCard() {
     monthlyBusinessExpense: expense,
   });
   const { best } = bestStatus(results);
+
+  if (dataLoading) {
+    return (
+      <section className="budget-card">
+        <div className="flex items-center justify-center p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2" />
+            <p className="text-slate-500">Chargement des données...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (dataError) {
+    return (
+      <section className="budget-card">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          {dataError}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="budget-card">
@@ -30,7 +72,7 @@ export default function StatusCompareCard() {
           <input
             type="number"
             value={revenue || ""}
-            onChange={(e) => setRevenue(parseFloat(e.target.value) || 0)}
+            onChange={(e) => handleRevenueChange(parseFloat(e.target.value) || 0)}
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
           <input
@@ -39,7 +81,7 @@ export default function StatusCompareCard() {
             max={300000}
             step={5000}
             value={revenue}
-            onChange={(e) => setRevenue(parseInt(e.target.value))}
+            onChange={(e) => handleRevenueChange(parseInt(e.target.value))}
             className="w-full mt-2"
           />
         </div>
@@ -50,7 +92,7 @@ export default function StatusCompareCard() {
           <input
             type="number"
             value={expense || ""}
-            onChange={(e) => setExpense(parseFloat(e.target.value) || 0)}
+            onChange={(e) => handleExpenseChange(parseFloat(e.target.value) || 0)}
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
         </div>
@@ -122,6 +164,12 @@ export default function StatusCompareCard() {
         Estimations simplifiées (taux 2025, barème indicatif) — validez avec un
         expert-comptable avant de choisir votre statut.
       </p>
+
+      {saving && (
+        <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
+          Sauvegarde en cours...
+        </div>
+      )}
     </section>
   );
 }

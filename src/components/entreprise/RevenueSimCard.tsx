@@ -1,32 +1,56 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { simulateYear, type ServiceLine } from "@/lib/business";
 import { formatEUR } from "@/lib/budget";
 import type { CompanyStatus } from "@/lib/launch";
+import { useRevenueData } from "@/hooks/useRevenueData";
 
 export default function RevenueSimCard() {
-  const [status, setStatus] = useState<CompanyStatus>("micro");
-  const [services, setServices] = useState<ServiceLine[]>([
-    { id: 1, name: "Prestation A", unitPrice: 500, unitsPerMonth: 4 },
-  ]);
-  const [expense, setExpense] = useState(300);
+  const {
+    data: savedData,
+    loading: dataLoading,
+    error: dataError,
+    saving,
+    updateField,
+  } = useRevenueData();
+
+  // Use saved data or defaults
+  const status = savedData?.status || "micro";
+  const services = savedData?.services || [{ id: 1, name: "Prestation A", unitPrice: 500, unitsPerMonth: 4 }];
+  const expense = savedData?.expense || 300;
+
+  // Handlers with auto-save
+  const handleStatusChange = useCallback((value: CompanyStatus) => {
+    updateField('status', value);
+  }, [updateField]);
+
+  const handleExpenseChange = useCallback((value: number) => {
+    updateField('expense', value);
+  }, [updateField]);
+
+  const handleServicesChange = useCallback((newServices: ServiceLine[]) => {
+    updateField('services', newServices);
+  }, [updateField]);
+
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [units, setUnits] = useState("");
 
-  const addService = () => {
+  const addService = useCallback(() => {
     const p = parseFloat(price);
     const u = parseFloat(units);
     if (!name.trim() || isNaN(p) || p <= 0 || isNaN(u) || u <= 0) return;
-    setServices((s) => [...s, { id: Date.now(), name: name.trim(), unitPrice: p, unitsPerMonth: u }]);
+    const newService: ServiceLine = { id: Date.now(), name: name.trim(), unitPrice: p, unitsPerMonth: u };
+    handleServicesChange([...services, newService]);
     setName("");
     setPrice("");
     setUnits("");
-  };
+  }, [name, price, units, services, handleServicesChange]);
 
-  const removeService = (id: number) =>
-    setServices((s) => s.filter((svc) => svc.id !== id));
+  const removeService = useCallback((id: number) => {
+    handleServicesChange(services.filter((svc) => svc.id !== id));
+  }, [services, handleServicesChange]);
 
   const annualRevenue = services.reduce(
     (a, s) => a + s.unitPrice * s.unitsPerMonth * 12,
@@ -40,6 +64,29 @@ export default function RevenueSimCard() {
     monthlyBusinessExpense: expense,
   });
   const current = results.find((r) => r.status === status)!;
+
+  if (dataLoading) {
+    return (
+      <section className="budget-card">
+        <div className="flex items-center justify-center p-8">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-2" />
+            <p className="text-slate-500">Chargement des données...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  if (dataError) {
+    return (
+      <section className="budget-card">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
+          {dataError}
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="budget-card">
@@ -123,7 +170,7 @@ export default function RevenueSimCard() {
           </label>
           <select
             value={status}
-            onChange={(e) => setStatus(e.target.value as CompanyStatus)}
+            onChange={(e) => handleStatusChange(e.target.value as CompanyStatus)}
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           >
             <option value="micro">Micro-entreprise</option>
@@ -139,7 +186,7 @@ export default function RevenueSimCard() {
           <input
             type="number"
             value={expense || ""}
-            onChange={(e) => setExpense(parseFloat(e.target.value) || 0)}
+            onChange={(e) => handleExpenseChange(parseFloat(e.target.value) || 0)}
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
         </div>
@@ -176,6 +223,12 @@ export default function RevenueSimCard() {
         <p className="mt-3 text-sm text-amber-700 font-semibold">
           ⚠ {current.eligibilityNote}
         </p>
+      )}
+
+      {saving && (
+        <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
+          Sauvegarde en cours...
+        </div>
       )}
     </section>
   );
