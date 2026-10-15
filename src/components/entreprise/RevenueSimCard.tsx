@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { simulateYear, type ServiceLine } from "@/lib/business";
 import { formatEUR } from "@/lib/budget";
 import type { CompanyStatus } from "@/lib/launch";
-import { useRevenueData } from "@/hooks/useRevenueData";
+import { useRevenueData, type RevenueSimulatorData } from "@/hooks/useRevenueData";
 
 export default function RevenueSimCard() {
   const {
@@ -36,17 +36,17 @@ export default function RevenueSimCard() {
   }, [savedData]);
 
   // Generic save handler
-  const handleSave = useCallback(async <K extends keyof Omit<typeof savedData, 'updatedAt' | 'userId'>>(
+  const handleSave = useCallback(async <K extends keyof Omit<RevenueSimulatorData, 'updatedAt' | 'userId'>>(
     field: K,
-    value: any
+    value: RevenueSimulatorData[K]
   ) => {
     await saveField(field, value);
-  }, [saveField, savedData]);
+  }, [saveField]);
 
   // Generic key down handler
-  const handleKeyDown = useCallback(<K extends keyof Omit<typeof savedData, 'updatedAt' | 'userId'>>(
+  const handleKeyDown = useCallback(<K extends keyof Omit<RevenueSimulatorData, 'updatedAt' | 'userId'>>(
     field: K,
-    value: any,
+    value: RevenueSimulatorData[K],
     e: React.KeyboardEvent
   ) => {
     if (e.key === "Enter") {

@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { bestStatus, plafonds, simulateYear } from "@/lib/business";
 import { formatEUR } from "@/lib/budget";
-import { useStatusCompareData } from "@/hooks/useStatusCompareData";
+import { useStatusCompareData, type StatusCompareData } from "@/hooks/useStatusCompareData";
 
 export default function StatusCompareCard() {
   const {
@@ -31,17 +31,17 @@ export default function StatusCompareCard() {
   }, [savedData]);
 
   // Generic save handler
-  const handleSave = useCallback(async <K extends keyof Omit<typeof savedData, 'updatedAt' | 'userId'>>(
+  const handleSave = useCallback(async <K extends keyof Omit<StatusCompareData, 'updatedAt' | 'userId'>>(
     field: K,
-    value: any
+    value: StatusCompareData[K]
   ) => {
     await saveField(field, value);
-  }, [saveField, savedData]);
+  }, [saveField]);
 
   // Generic key down handler
-  const handleKeyDown = useCallback(<K extends keyof Omit<typeof savedData, 'updatedAt' | 'userId'>>(
+  const handleKeyDown = useCallback(<K extends keyof Omit<StatusCompareData, 'updatedAt' | 'userId'>>(
     field: K,
-    value: any,
+    value: StatusCompareData[K],
     e: React.KeyboardEvent
   ) => {
     if (e.key === "Enter") {

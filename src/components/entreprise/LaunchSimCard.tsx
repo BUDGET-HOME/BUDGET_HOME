@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { acreRate, simulateLaunch, type CompanyStatus } from "@/lib/launch";
 import { formatEUR } from "@/lib/budget";
-import { useLaunchData } from "@/hooks/useLaunchData";
+import { useLaunchData, type LaunchSimulatorData } from "@/hooks/useLaunchData";
 
 export default function LaunchSimCard() {
   const {
@@ -46,17 +46,17 @@ export default function LaunchSimCard() {
   }, [savedData]);
 
   // Generic save handler
-  const handleSave = useCallback(async <K extends keyof Omit<typeof savedData, 'updatedAt' | 'userId'>>(
+  const handleSave = useCallback(async <K extends keyof Omit<LaunchSimulatorData, 'updatedAt' | 'userId'>>(
     field: K,
-    value: any
+    value: LaunchSimulatorData[K]
   ) => {
     await saveField(field, value);
-  }, [saveField, savedData]);
+  }, [saveField]);
 
   // Generic key down handler
-  const handleKeyDown = useCallback(<K extends keyof Omit<typeof savedData, 'updatedAt' | 'userId'>>(
+  const handleKeyDown = useCallback(<K extends keyof Omit<LaunchSimulatorData, 'updatedAt' | 'userId'>>(
     field: K,
-    value: any,
+    value: LaunchSimulatorData[K],
     e: React.KeyboardEvent
   ) => {
     if (e.key === "Enter") {

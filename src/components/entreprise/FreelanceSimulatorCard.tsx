@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { formatEUR } from "@/lib/budget";
-import { useFreelanceData } from "@/hooks/useFreelanceData";
+import { useFreelanceData, type FreelanceSimulatorData } from "@/hooks/useFreelanceData";
 
 type StatusType = "auto" | "eurl" | "sasu" | "portage";
 
@@ -198,41 +198,41 @@ export default function FreelanceSimulatorCard() {
   };
 
   // Handler for field changes with manual save on blur/enter
-  const handleChange = useCallback((field: keyof Omit<FreelanceSimulatorData, 'updatedAt' | 'userId'>, value: any) => {
+  const handleChange = useCallback((field: keyof Omit<FreelanceSimulatorData, 'updatedAt' | 'userId'>, value: FreelanceSimulatorData[typeof field]) => {
     // Update local state immediately for UI responsiveness
     switch (field) {
-      case 'status': setLocalStatus(value); break;
-      case 'tjm': setLocalTjm(value); break;
-      case 'days': setLocalDays(value); break;
-      case 'costRetirement': setLocalCostRetirement(value); break;
-      case 'costLld': setLocalCostLld(value); break;
-      case 'costFuel': setLocalCostFuel(value); break;
-      case 'costMutuelle': setLocalCostMutuelle(value); break;
-      case 'costBankIns': setLocalCostBankIns(value); break;
-      case 'costAccountant': setLocalCostAccountant(value); break;
-      case 'pctPortage': setLocalPctPortage(value); break;
-      case 'costMeals': setLocalCostMeals(value); break;
-      case 'costTelecom': setLocalCostTelecom(value); break;
-      case 'costTech': setLocalCostTech(value); break;
-      case 'acre': setLocalAcre(value); break;
-      case 'fiscalParts': setLocalFiscalParts(value); break;
-      case 'areToggle': setLocalAreToggle(value); break;
-      case 'salaryGross': setLocalSalaryGross(value); break;
-      case 'salaryBonus': setLocalSalaryBonus(value); break;
-      case 'salaryMonths': setLocalSalaryMonths(value); break;
-      case 'userAge': setLocalUserAge(value); break;
+      case 'status': setLocalStatus(value as StatusType); break;
+      case 'tjm': setLocalTjm(value as number); break;
+      case 'days': setLocalDays(value as number); break;
+      case 'costRetirement': setLocalCostRetirement(value as number); break;
+      case 'costLld': setLocalCostLld(value as number); break;
+      case 'costFuel': setLocalCostFuel(value as number); break;
+      case 'costMutuelle': setLocalCostMutuelle(value as number); break;
+      case 'costBankIns': setLocalCostBankIns(value as number); break;
+      case 'costAccountant': setLocalCostAccountant(value as number); break;
+      case 'pctPortage': setLocalPctPortage(value as number); break;
+      case 'costMeals': setLocalCostMeals(value as number); break;
+      case 'costTelecom': setLocalCostTelecom(value as number); break;
+      case 'costTech': setLocalCostTech(value as number); break;
+      case 'acre': setLocalAcre(value as boolean); break;
+      case 'fiscalParts': setLocalFiscalParts(value as number); break;
+      case 'areToggle': setLocalAreToggle(value as boolean); break;
+      case 'salaryGross': setLocalSalaryGross(value as number); break;
+      case 'salaryBonus': setLocalSalaryBonus(value as number); break;
+      case 'salaryMonths': setLocalSalaryMonths(value as number); break;
+      case 'userAge': setLocalUserAge(value as number); break;
     }
   }, []);
 
-  const handleSave = useCallback((field: keyof Omit<FreelanceSimulatorData, 'updatedAt' | 'userId'>, value: any) => {
+  const handleSave = useCallback((field: keyof Omit<FreelanceSimulatorData, 'updatedAt' | 'userId'>, value: FreelanceSimulatorData[typeof field]) => {
     saveField(field, value);
   }, [saveField]);
 
-  const handleBlur = useCallback((field: keyof Omit<FreelanceSimulatorData, 'updatedAt' | 'userId'>, value: any) => {
+  const handleBlur = useCallback((field: keyof Omit<FreelanceSimulatorData, 'updatedAt' | 'userId'>, value: FreelanceSimulatorData[typeof field]) => {
     handleSave(field, value);
   }, [handleSave]);
 
-  const handleKeyDown = useCallback((field: keyof Omit<FreelanceSimulatorData, 'updatedAt' | 'userId'>, value: any, e: React.KeyboardEvent) => {
+  const handleKeyDown = useCallback((field: keyof Omit<FreelanceSimulatorData, 'updatedAt' | 'userId'>, value: FreelanceSimulatorData[typeof field], e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       handleSave(field, value);
     }
