@@ -7,12 +7,14 @@ import type { BudgetState } from "@/lib/types";
 import GanttCard from "./GanttCard";
 import StatusCompareCard from "./StatusCompareCard";
 import FreelanceSimulatorCard from "./FreelanceSimulatorCard";
+import CashFlowPlannerCard from "./CashFlowPlannerCard";
 import EntrepriseHeader from "./EntrepriseHeader";
 
 const TOOLS = [
   { id: "freelance", label: "Simulateur Freelance" },
   { id: "statuts", label: "Choix du statut" },
   { id: "gantt", label: "Planning de lancement" },
+  { id: "cashflow", label: "Trésorerie" },
 ] as const;
 
 type ToolId = (typeof TOOLS)[number]["id"];
@@ -105,6 +107,7 @@ export default function EntrepriseApp() {
       {activeTool === "freelance" && <FreelanceSimulatorCard />}
       {activeTool === "statuts" && <StatusCompareCard />}
       {activeTool === "gantt" && <GanttCard />}
+      {activeTool === "cashflow" && <CashFlowPlannerCard />}
     </div>
   );
 }
