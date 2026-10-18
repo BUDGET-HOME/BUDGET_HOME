@@ -3,51 +3,58 @@
 import { useState, useEffect, useCallback } from "react";
 import { bestStatus, plafonds, simulateYear } from "@/lib/business";
 import { formatEUR } from "@/lib/budget";
-import { useStatusCompareData, type StatusCompareData } from "@/hooks/useStatusCompareData";
+import { useFreelanceData, type FreelanceSimulatorData } from "@/hooks/useFreelanceData";
 
 export default function StatusCompareCard() {
   const {
-    data: savedData,
-    loading: dataLoading,
-    error: dataError,
-    saving,
-    saveField,
-  } = useStatusCompareData();
+    data: freelanceData,
+    loading: freelanceLoading,
+    error: freelanceError,
+  } = useFreelanceData();
 
-  // Use saved data or defaults
-  const revenue = savedData?.revenue || 60000;
-  const expense = savedData?.expense || 500;
+  // Calculate revenue and expenses from freelance data
+  // Revenue = TJM * days worked per month * 12 months
+  // Business expenses = sum of all monthly costs from freelance
+  const tjm = freelanceData?.tjm || 480;
+  const days = freelanceData?.days || 18;
+  const costRetirement = freelanceData?.costRetirement || 300;
+  const costLld = freelanceData?.costLld || 450;
+  const costFuel = freelanceData?.costFuel || 150;
+  const costMutuelle = freelanceData?.costMutuelle || 80;
+  const costBankIns = freelanceData?.costBankIns || 45;
+  const costAccountant = freelanceData?.costAccountant || 150;
+  const costMeals = freelanceData?.costMeals || 200;
+  const costTelecom = freelanceData?.costTelecom || 50;
+  const costTech = freelanceData?.costTech || 50;
 
-  // Local state for inputs (not auto-saved)
-  const [localRevenue, setLocalRevenue] = useState<number>(revenue);
-  const [localExpense, setLocalExpense] = useState<number>(expense);
+  // Calculate annual revenue: TJM * days * 12
+  const annualRevenue = tjm * days * 12;
+  
+  // Calculate total monthly business expenses
+  const totalMonthlyExpenses = costRetirement + costLld + costFuel + costMutuelle + 
+                               costBankIns + costAccountant + costMeals + costTelecom + costTech;
 
-  // Sync local state with saved data when it changes
+  // Local state for inputs (override from freelance data)
+  const [localRevenue, setLocalRevenue] = useState<number>(annualRevenue);
+  const [localExpense, setLocalExpense] = useState<number>(totalMonthlyExpenses);
+
+  // Sync local state with freelance data when it changes
   useEffect(() => {
-    if (savedData) {
-      setLocalRevenue(savedData.revenue || 60000);
-      setLocalExpense(savedData.expense || 500);
+    if (freelanceData) {
+      const newRevenue = (freelanceData.tjm || 480) * (freelanceData.days || 18) * 12;
+      const newExpenses = (freelanceData.costRetirement || 300) + 
+                          (freelanceData.costLld || 450) + 
+                          (freelanceData.costFuel || 150) + 
+                          (freelanceData.costMutuelle || 80) + 
+                          (freelanceData.costBankIns || 45) + 
+                          (freelanceData.costAccountant || 150) + 
+                          (freelanceData.costMeals || 200) + 
+                          (freelanceData.costTelecom || 50) + 
+                          (freelanceData.costTech || 50);
+      setLocalRevenue(newRevenue);
+      setLocalExpense(newExpenses);
     }
-  }, [savedData]);
-
-  // Generic save handler
-  const handleSave = useCallback(async <K extends keyof Omit<StatusCompareData, 'updatedAt' | 'userId'>>(
-    field: K,
-    value: StatusCompareData[K]
-  ) => {
-    await saveField(field, value);
-  }, [saveField]);
-
-  // Generic key down handler
-  const handleKeyDown = useCallback(<K extends keyof Omit<StatusCompareData, 'updatedAt' | 'userId'>>(
-    field: K,
-    value: StatusCompareData[K],
-    e: React.KeyboardEvent
-  ) => {
-    if (e.key === "Enter") {
-      handleSave(field, value);
-    }
-  }, [handleSave]);
+  }, [freelanceData]);
 
   // Change handlers for local state
   const handleRevenueChange = useCallback((value: number) => {
@@ -66,7 +73,7 @@ export default function StatusCompareCard() {
   });
   const { best } = bestStatus(results);
 
-  if (dataLoading) {
+  if (freelanceLoading) {
     return (
       <section className="budget-card">
         <div className="flex items-center justify-center p-8">
@@ -79,11 +86,11 @@ export default function StatusCompareCard() {
     );
   }
 
-  if (dataError) {
+  if (freelanceError) {
     return (
       <section className="budget-card">
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-700">
-          {dataError}
+          {freelanceError}
         </div>
       </section>
     );
@@ -99,43 +106,31 @@ export default function StatusCompareCard() {
         Choix du statut
       </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-5">
-        <div>
-          <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Revenu annuel envisagé (€)
-          </label>
-          <input
-            type="number"
-            value={localRevenue || ""}
-            onChange={(e) => handleRevenueChange(parseFloat(e.target.value) || 0)}
-            onBlur={() => handleSave('revenue', localRevenue)}
-            onKeyDown={(e) => handleKeyDown('revenue', localRevenue, e)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2"
-          />
-          <input
-            type="range"
-            min={10000}
-            max={300000}
-            step={5000}
-            value={localRevenue}
-            onChange={(e) => handleRevenueChange(parseInt(e.target.value))}
-            onBlur={() => handleSave('revenue', localRevenue)}
-            onKeyDown={(e) => handleKeyDown('revenue', localRevenue, e)}
-            className="w-full mt-2"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-semibold text-slate-500 mb-1">
-            Charges mensuelles (€)
-          </label>
-          <input
-            type="number"
-            value={localExpense || ""}
-            onChange={(e) => handleExpenseChange(parseFloat(e.target.value) || 0)}
-            onBlur={() => handleSave('expense', localExpense)}
-            onKeyDown={(e) => handleKeyDown('expense', localExpense, e)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2"
-          />
+      <div className="bg-blue-50 rounded-lg border border-blue-100 p-4 mb-5">
+        <h3 className="text-lg font-bold text-blue-900 mb-3">Données récupérées du simulateur Freelance</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-semibold text-slate-500 mb-1">
+              Revenu annuel calculé (€)
+            </label>
+            <div className="bg-white rounded-md border border-slate-300 px-3 py-2 text-lg font-bold text-blue-800">
+              {formatEUR(localRevenue)}
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Basé sur : TJM {formatEUR(tjm)} × {days} jours/mois × 12 mois
+            </p>
+          </div>
+          <div>
+            <label className="block text-sm font-semibold text-slate-500 mb-1">
+              Charges mensuelles totales (€)
+            </label>
+            <div className="bg-white rounded-md border border-slate-300 px-3 py-2 text-lg font-bold text-blue-800">
+              {formatEUR(localExpense)}
+            </div>
+            <p className="text-xs text-slate-500 mt-1">
+              Total des coûts déclarés dans le simulateur Freelance
+            </p>
+          </div>
         </div>
       </div>
 
@@ -345,11 +340,7 @@ export default function StatusCompareCard() {
         expert-comptable avant de choisir votre statut.
       </p>
 
-      {saving && (
-        <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
-          Sauvegarde en cours...
-        </div>
-      )}
+
     </section>
   );
 }

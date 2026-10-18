@@ -4,25 +4,21 @@ import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { SyncStatus } from "@/lib/budget-service";
 import type { BudgetState } from "@/lib/types";
-import LaunchSimCard from "./LaunchSimCard";
 import GanttCard from "./GanttCard";
-import RevenueSimCard from "./RevenueSimCard";
 import StatusCompareCard from "./StatusCompareCard";
 import FreelanceSimulatorCard from "./FreelanceSimulatorCard";
 import EntrepriseHeader from "./EntrepriseHeader";
 
 const TOOLS = [
-  { id: "lancement", label: "Simulateur de lancement" },
-  { id: "gantt", label: "Planning de lancement" },
-  { id: "revenus", label: "Simulateur de revenus" },
-  { id: "statuts", label: "Choix du statut" },
   { id: "freelance", label: "Simulateur Freelance" },
+  { id: "statuts", label: "Choix du statut" },
+  { id: "gantt", label: "Planning de lancement" },
 ] as const;
 
 type ToolId = (typeof TOOLS)[number]["id"];
 
 export default function EntrepriseApp() {
-  const [activeTool, setActiveTool] = useState<ToolId>("lancement");
+  const [activeTool, setActiveTool] = useState<ToolId>("freelance");
   const [user, setUser] = useState<{ email?: string } | null>(null);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
   const [loaded, setLoaded] = useState(false);
@@ -106,11 +102,9 @@ export default function EntrepriseApp() {
         ))}
       </div>
 
-      {activeTool === "lancement" && <LaunchSimCard />}
-      {activeTool === "gantt" && <GanttCard />}
-      {activeTool === "revenus" && <RevenueSimCard />}
-      {activeTool === "statuts" && <StatusCompareCard />}
       {activeTool === "freelance" && <FreelanceSimulatorCard />}
+      {activeTool === "statuts" && <StatusCompareCard />}
+      {activeTool === "gantt" && <GanttCard />}
     </div>
   );
 }
