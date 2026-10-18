@@ -20,6 +20,8 @@ export interface CashFlowItem {
 export interface CashFlowData {
   items: CashFlowItem[];
   initialBalance: number;
+  enableARCE: boolean;
+  arceAmount: number;
   updatedAt: string;
   userId: string;
 }
@@ -27,6 +29,8 @@ export interface CashFlowData {
 const DEFAULT_DATA: Omit<CashFlowData, 'updatedAt' | 'userId'> = {
   items: [],
   initialBalance: 0,
+  enableARCE: false,
+  arceAmount: 0,
 };
 
 const TABLE_NAME = "cash_flow_planner";
@@ -34,6 +38,8 @@ const TABLE_NAME = "cash_flow_planner";
 const mapFromDb = (dbData: any): CashFlowData => ({
   items: dbData.items || DEFAULT_DATA.items,
   initialBalance: dbData.initial_balance || DEFAULT_DATA.initialBalance,
+  enableARCE: dbData.enable_arce ?? DEFAULT_DATA.enableARCE,
+  arceAmount: dbData.arce_amount || DEFAULT_DATA.arceAmount,
   updatedAt: dbData.updated_at,
   userId: dbData.user_id,
 });
@@ -41,6 +47,8 @@ const mapFromDb = (dbData: any): CashFlowData => ({
 const mapToDb = (data: Partial<Omit<CashFlowData, 'updatedAt' | 'userId'>> & { user_id?: string; updated_at?: string }): any => ({
   items: data.items,
   initial_balance: data.initialBalance,
+  enable_arce: data.enableARCE,
+  arce_amount: data.arceAmount,
   user_id: data.user_id,
   updated_at: data.updated_at,
 });
@@ -167,6 +175,8 @@ export function useCashFlowData() {
         userId: user.id,
         items: mergedData.items || DEFAULT_DATA.items,
         initialBalance: mergedData.initialBalance ?? DEFAULT_DATA.initialBalance,
+        enableARCE: mergedData.enableARCE ?? DEFAULT_DATA.enableARCE,
+        arceAmount: mergedData.arceAmount ?? DEFAULT_DATA.arceAmount,
         updatedAt: new Date().toISOString(),
       } as CashFlowData);
       return true;
