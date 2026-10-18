@@ -150,6 +150,37 @@ export default function StatusCompareCard() {
         </div>
       </div>
 
+      {/* Frais de création d'entreprise */}
+      <div className="bg-amber-50 rounded-lg border border-amber-100 p-4 mb-5">
+        <h3 className="text-lg font-bold text-amber-900 mb-3">Frais liés à la création de l'entreprise</h3>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="bg-white rounded-lg p-3 border border-amber-200 text-center">
+            <div className="font-bold text-amber-800 mb-1">Micro-entreprise</div>
+            <div className="text-2xl font-bold text-amber-700">0-50 €</div>
+            <div className="text-xs text-amber-600 mt-1">Gratuit en ligne (INPI)</div>
+          </div>
+          <div className="bg-white rounded-lg p-3 border border-amber-200 text-center">
+            <div className="font-bold text-amber-800 mb-1">EI</div>
+            <div className="text-2xl font-bold text-amber-700">0-100 €</div>
+            <div className="text-xs text-amber-600 mt-1">Déclaration en ligne</div>
+          </div>
+          <div className="bg-white rounded-lg p-3 border border-amber-200 text-center">
+            <div className="font-bold text-amber-800 mb-1">EURL</div>
+            <div className="text-2xl font-bold text-amber-700">200-300 €</div>
+            <div className="text-xs text-amber-600 mt-1">Frais greffe + publication</div>
+          </div>
+          <div className="bg-white rounded-lg p-3 border border-amber-200 text-center">
+            <div className="font-bold text-amber-800 mb-1">SASU</div>
+            <div className="text-2xl font-bold text-amber-700">200-500 €</div>
+            <div className="text-xs text-amber-600 mt-1">Frais greffe + publication</div>
+          </div>
+        </div>
+        <p className="text-xs text-amber-700 mt-3">
+          Ces frais incluent les coûts de dépôt des statuts, d'immatriculation et de publication légale. 
+          Des frais supplémentaires peuvent s'appliquer (expert-comptable, domiciliation, etc.).
+        </p>
+      </div>
+
       {/* EURL vs SASU Comparison Section */}
       {eurlResult && sasuResult && (best.status === "eurl" || best.status === "sasu") && (
         <div className="bg-blue-50 rounded-lg border border-blue-100 p-4 mb-5">
