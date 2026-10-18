@@ -66,13 +66,6 @@ export default function CashFlowPlannerCard() {
   const [viewMode, setViewMode] = useState<"table" | "gantt" | "chart">("table");
   const [timeRange, setTimeRange] = useState<"month" | "quarter" | "year">("month");
   const [showARCEForm, setShowARCEForm] = useState(false);
-  
-  // ARCE parameters from France Travail
-  const [arceParams, setArceParams] = useState({
-    areEligible: true,
-    areDailyAmount: 57.42,
-    areDuration: 365,
-  });
 
   // Form state
   const [formData, setFormData] = useState({
@@ -115,25 +108,24 @@ export default function CashFlowPlannerCard() {
 
   const items = savedData?.items || [];
   const initialBalance = savedData?.initialBalance || 0;
-  const enableARCE = savedData?.enableARCE || false;
-  const arceAmount = savedData?.arceAmount || 0;
+  
+  // ARCE state - managed locally only (not persisted to avoid table issues)
+  const [enableARCE, setEnableARCE] = useState(false);
+  const [arceParams, setArceParams] = useState({
+    areEligible: true,
+    areDailyAmount: 57.42,
+    areDuration: 365,
+  });
   
   // Calculate ARCE amount based on France Travail parameters
   // ARCE = 45% of remaining ARE rights
-  const calculatedARCE = useMemo(() => {
-    if (!arceParams.areEligible) return 0;
+  const arceAmount = useMemo(() => {
+    if (!enableARCE || !arceParams.areEligible) return 0;
     return Math.round(arceParams.areDailyAmount * arceParams.areDuration * 0.45);
-  }, [arceParams.areEligible, arceParams.areDailyAmount, arceParams.areDuration]);
+  }, [enableARCE, arceParams.areEligible, arceParams.areDailyAmount, arceParams.areDuration]);
   
   // Total initial balance with ARCE
-  const totalInitialBalance = initialBalance + (enableARCE ? arceAmount : 0);
-  
-  // Update ARCE amount when params change
-  useEffect(() => {
-    if (enableARCE) {
-      saveData({ arceAmount: calculatedARCE });
-    }
-  }, [enableARCE, calculatedARCE, saveData]);
+  const totalInitialBalance = initialBalance + arceAmount;
 
   // Calculate balance over time
   const { monthlyBalances, months, totalCredit, totalDebit } = useMemo(() => {
@@ -257,17 +249,13 @@ export default function CashFlowPlannerCard() {
     await saveField("initialBalance", value);
   }, [saveField]);
 
-  const handleToggleARCE = useCallback(async (enabled: boolean) => {
-    await saveData({ enableARCE: enabled });
-  }, [saveData]);
+  const handleToggleARCE = useCallback((enabled: boolean) => {
+    setEnableARCE(enabled);
+  }, []);
 
-  const handleUpdateARCEParams = useCallback(async (params: typeof arceParams) => {
+  const handleUpdateARCEParams = useCallback((params: typeof arceParams) => {
     setArceParams(params);
-    if (enableARCE) {
-      const newAmount = Math.round(params.areDailyAmount * params.areDuration * 0.45);
-      await saveData({ arceAmount: newAmount });
-    }
-  }, [enableARCE, saveData]);
+  }, []);
 
   // Chart data
   const chartData = useMemo(() => ({

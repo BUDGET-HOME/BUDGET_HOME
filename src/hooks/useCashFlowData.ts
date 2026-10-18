@@ -91,6 +91,9 @@ export function useCashFlowData() {
 
         if (fetchError && fetchError.code !== "PGRST116") {
           console.error("Error fetching cash flow data:", fetchError);
+          if (fetchError.code === "PGRST001" || fetchError.code === "404" || fetchError.message?.includes("relation")) {
+            console.log("Cash flow table does not exist yet, using default data");
+          }
         }
 
         if (existingData) {
@@ -107,6 +110,9 @@ export function useCashFlowData() {
           
           if (insertError) {
             console.error("Error creating cash flow data:", insertError);
+            if (!insertError.message?.includes("relation") && !insertError.code?.includes("404")) {
+              setError("Erreur lors de la création");
+            }
           }
           setData({ ...DEFAULT_DATA, userId: user.id, updatedAt: new Date().toISOString() });
         }
@@ -145,29 +151,36 @@ export function useCashFlowData() {
         updated_at: new Date().toISOString(),
       });
 
-      if (data?.userId === user.id) {
-        const { error: updateError } = await supabase
-          .from(TABLE_NAME)
-          .update(dbData)
-          .eq("user_id", user.id);
-        
-        if (updateError) {
-          console.error("Error updating cash flow data:", updateError);
-          setError("Erreur lors de la sauvegarde");
-          setSaving(false);
-          return false;
+      try {
+        if (data?.userId === user.id) {
+          const { error: updateError } = await supabase
+            .from(TABLE_NAME)
+            .update(dbData)
+            .eq("user_id", user.id);
+          
+          if (updateError && !updateError.message?.includes("relation") && !updateError.code?.includes("404")) {
+            console.error("Error updating cash flow data:", updateError);
+            setError("Erreur lors de la sauvegarde");
+            setSaving(false);
+            return false;
+          }
+        } else {
+          const { error: insertError } = await supabase
+            .from(TABLE_NAME)
+            .insert([dbData]);
+          
+          if (insertError && !insertError.message?.includes("relation") && !insertError.code?.includes("404")) {
+            console.error("Error inserting cash flow data:", insertError);
+            setError("Erreur lors de la sauvegarde");
+            setSaving(false);
+            return false;
+          }
         }
-      } else {
-        const { error: insertError } = await supabase
-          .from(TABLE_NAME)
-          .insert([dbData]);
-        
-        if (insertError) {
-          console.error("Error inserting cash flow data:", insertError);
-          setError("Erreur lors de la sauvegarde");
-          setSaving(false);
-          return false;
-        }
+      } catch (dbErr) {
+        console.error("Database error:", dbErr);
+        setError("Erreur lors de la sauvegarde");
+        setSaving(false);
+        return false;
       }
 
       setData({
