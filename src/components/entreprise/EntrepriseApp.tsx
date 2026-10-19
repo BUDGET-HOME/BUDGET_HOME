@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { getOptionalUser } from "@/lib/supabase/client";
 import type { SyncStatus } from "@/lib/budget-service";
 import type { BudgetState } from "@/lib/types";
 import GanttCard from "./GanttCard";
@@ -26,13 +26,15 @@ export default function EntrepriseApp() {
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const supabase = createClient();
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      setUser(currentUser || null);
+    let cancelled = false;
+    getOptionalUser().then((currentUser) => {
+      if (cancelled) return;
+      setUser(currentUser);
       setLoaded(true);
+    });
+    return () => {
+      cancelled = true;
     };
-    fetchUser();
   }, []);
 
   const handleImport = useCallback(async (file: File) => {
