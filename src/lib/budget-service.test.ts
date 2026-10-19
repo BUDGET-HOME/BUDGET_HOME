@@ -44,6 +44,18 @@ describe("normalizeState (validation JSON import)", () => {
     expect(s.expenses[0].desc).toBe("Valide");
   });
 
+  it("conserve les salaires numériques de l'ancien JSON", () => {
+    const s = normalizeState({ salary1: 2300, salary2: 0 });
+    expect(s.salary1).toBe("2300");
+    expect(s.salary2).toBe("0");
+  });
+
+  it("laisse un salaire absent vide", () => {
+    const s = normalizeState({ salary1: "1800" });
+    expect(s.salary1).toBe("1800");
+    expect(s.salary2).toBe("");
+  });
+
   it("applique des valeurs par défaut sûres sur champs manquants", () => {
     const s = normalizeState({});
     expect(s.name1).toBe(DEFAULT_STATE.name1);

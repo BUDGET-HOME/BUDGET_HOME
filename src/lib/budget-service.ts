@@ -46,8 +46,8 @@ export function normalizeState(raw: unknown): BudgetState {
   return {
     name1: str(o.name1, DEFAULT_STATE.name1),
     name2: str(o.name2, DEFAULT_STATE.name2),
-    salary1: str(o.salary1, ""),
-    salary2: str(o.salary2, ""),
+    salary1: salary(o.salary1),
+    salary2: salary(o.salary2),
     force5050: o.force5050 === true,
     mode,
     expenses,
@@ -63,6 +63,12 @@ function num(v: unknown, fallback: number): number {
 
 function str(v: unknown, fallback: string): string {
   return typeof v === "string" && v ? v : fallback;
+}
+
+function salary(v: unknown): string {
+  if (typeof v === "number" && Number.isFinite(v)) return String(v);
+  if (typeof v === "string") return v;
+  return "";
 }
 
 export function loadLocal(): BudgetState {
