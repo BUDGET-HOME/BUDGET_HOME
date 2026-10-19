@@ -41,27 +41,27 @@ export default function FreelanceSimulatorCard() {
   } = useFreelanceData();
 
   // Use saved data or defaults
-  const status = savedData?.status || "auto";
-  const tjm = savedData?.tjm || 480;
-  const days = savedData?.days || 18;
-  const costRetirement = savedData?.costRetirement || 300;
-  const costLld = savedData?.costLld || 450;
-  const costFuel = savedData?.costFuel || 150;
-  const costMutuelle = savedData?.costMutuelle || 80;
-  const costBankIns = savedData?.costBankIns || 45;
-  const costAccountant = savedData?.costAccountant || 150;
-  const pctPortage = savedData?.pctPortage || 7;
-  const costMeals = savedData?.costMeals || 200;
-  const costTelecom = savedData?.costTelecom || 50;
-  const costTech = savedData?.costTech || 50;
+  const status = savedData?.status ?? "auto";
+  const tjm = savedData?.tjm ?? 480;
+  const days = savedData?.days ?? 18;
+  const costRetirement = savedData?.costRetirement ?? 300;
+  const costLld = savedData?.costLld ?? 450;
+  const costFuel = savedData?.costFuel ?? 150;
+  const costMutuelle = savedData?.costMutuelle ?? 80;
+  const costBankIns = savedData?.costBankIns ?? 45;
+  const costAccountant = savedData?.costAccountant ?? 150;
+  const pctPortage = savedData?.pctPortage ?? 7;
+  const costMeals = savedData?.costMeals ?? 200;
+  const costTelecom = savedData?.costTelecom ?? 50;
+  const costTech = savedData?.costTech ?? 50;
   const acre = savedData?.acre ?? true;
-  const fiscalParts = savedData?.fiscalParts || 1;
-  const areToggle = savedData?.areToggle || false;
-  const salaryGross = savedData?.salaryGross || 3500;
-  const salaryBonus = savedData?.salaryBonus || 0;
-  const salaryMonths = savedData?.salaryMonths || 12;
-  const userAge = savedData?.userAge || 35;
-  const useSpouseMutuelle = savedData?.useSpouseMutuelle || false;
+  const fiscalParts = savedData?.fiscalParts ?? 1;
+  const areToggle = savedData?.areToggle ?? false;
+  const salaryGross = savedData?.salaryGross ?? 3500;
+  const salaryBonus = savedData?.salaryBonus ?? 0;
+  const salaryMonths = savedData?.salaryMonths ?? 12;
+  const userAge = savedData?.userAge ?? 35;
+  const useSpouseMutuelle = savedData?.useSpouseMutuelle ?? false;
 
   // Local state for inputs (not auto-saved)
   const [localStatus, setLocalStatus] = useState<StatusType>(status as StatusType);
@@ -90,26 +90,26 @@ export default function FreelanceSimulatorCard() {
   useEffect(() => {
     if (savedData) {
       setLocalStatus((savedData.status as StatusType) || "auto");
-      setLocalTjm(savedData.tjm || 480);
-      setLocalDays(savedData.days || 18);
-      setLocalCostRetirement(savedData.costRetirement || 300);
-      setLocalCostLld(savedData.costLld || 450);
-      setLocalCostFuel(savedData.costFuel || 150);
-      setLocalCostMutuelle(savedData.costMutuelle || 80);
-      setLocalCostBankIns(savedData.costBankIns || 45);
-      setLocalCostAccountant(savedData.costAccountant || 150);
-      setLocalPctPortage(savedData.pctPortage || 7);
-      setLocalCostMeals(savedData.costMeals || 200);
-      setLocalCostTelecom(savedData.costTelecom || 50);
-      setLocalCostTech(savedData.costTech || 50);
+      setLocalTjm(savedData.tjm ?? 480);
+      setLocalDays(savedData.days ?? 18);
+      setLocalCostRetirement(savedData.costRetirement ?? 300);
+      setLocalCostLld(savedData.costLld ?? 450);
+      setLocalCostFuel(savedData.costFuel ?? 150);
+      setLocalCostMutuelle(savedData.costMutuelle ?? 80);
+      setLocalCostBankIns(savedData.costBankIns ?? 45);
+      setLocalCostAccountant(savedData.costAccountant ?? 150);
+      setLocalPctPortage(savedData.pctPortage ?? 7);
+      setLocalCostMeals(savedData.costMeals ?? 200);
+      setLocalCostTelecom(savedData.costTelecom ?? 50);
+      setLocalCostTech(savedData.costTech ?? 50);
       setLocalAcre(savedData.acre ?? true);
-      setLocalFiscalParts(savedData.fiscalParts || 1);
-      setLocalAreToggle(savedData.areToggle || false);
-      setLocalSalaryGross(savedData.salaryGross || 3500);
-      setLocalSalaryBonus(savedData.salaryBonus || 0);
-      setLocalSalaryMonths(savedData.salaryMonths || 12);
-      setLocalUserAge(savedData.userAge || 35);
-      setLocalUseSpouseMutuelle(savedData.useSpouseMutuelle || false);
+      setLocalFiscalParts(savedData.fiscalParts ?? 1);
+      setLocalAreToggle(savedData.areToggle ?? false);
+      setLocalSalaryGross(savedData.salaryGross ?? 3500);
+      setLocalSalaryBonus(savedData.salaryBonus ?? 0);
+      setLocalSalaryMonths(savedData.salaryMonths ?? 12);
+      setLocalUserAge(savedData.userAge ?? 35);
+      setLocalUseSpouseMutuelle(savedData.useSpouseMutuelle ?? false);
     }
   }, [savedData]);
 

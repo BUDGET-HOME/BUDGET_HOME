@@ -82,8 +82,8 @@ export default function CashFlowPlannerCard() {
   const syncFromFreelance = useCallback(async () => {
     if (!freelanceData) return;
 
-    const tjm = freelanceData.tjm || 480;
-    const days = freelanceData.days || 18;
+    const tjm = freelanceData.tjm ?? 480;
+    const days = freelanceData.days ?? 18;
     const startDate = new Date().toISOString().split("T")[0];
 
     // Calculate annual revenue
@@ -91,15 +91,15 @@ export default function CashFlowPlannerCard() {
 
     // Costs from freelance data
     const costs = {
-      retirement: freelanceData.costRetirement || 300,
-      lld: freelanceData.costLld || 450,
-      fuel: freelanceData.costFuel || 150,
-      mutuelle: freelanceData.costMutuelle || 80,
-      bankIns: freelanceData.costBankIns || 45,
-      accountant: freelanceData.costAccountant || 150,
-      meals: freelanceData.costMeals || 200,
-      telecom: freelanceData.costTelecom || 50,
-      tech: freelanceData.costTech || 50,
+      retirement: freelanceData.costRetirement ?? 300,
+      lld: freelanceData.costLld ?? 450,
+      fuel: freelanceData.costFuel ?? 150,
+      mutuelle: freelanceData.costMutuelle ?? 80,
+      bankIns: freelanceData.costBankIns ?? 45,
+      accountant: freelanceData.costAccountant ?? 150,
+      meals: freelanceData.costMeals ?? 200,
+      telecom: freelanceData.costTelecom ?? 50,
+      tech: freelanceData.costTech ?? 50,
     };
 
     // Build cash flow items from freelance data
@@ -217,7 +217,7 @@ export default function CashFlowPlannerCard() {
     ];
 
     // Update initial balance from freelance if available
-    const newInitialBalance = monthlyRevenue || 0;
+    const newInitialBalance = monthlyRevenue;
 
     await saveData({
       items: newItems,
@@ -275,7 +275,7 @@ export default function CashFlowPlannerCard() {
     }
   }, [editingItem]);
 
-  const items = savedData?.items || [];
+  const items = savedData?.items ?? [];
 
   // Calculate KPIs from items
   const monthlyRevenueFromItems = useMemo(() => {
@@ -293,7 +293,7 @@ export default function CashFlowPlannerCard() {
   const netMonthly = useMemo(() => {
     return monthlyRevenueFromItems - monthlyExpensesFromItems;
   }, [monthlyRevenueFromItems, monthlyExpensesFromItems]);
-  const initialBalance = savedData?.initialBalance || 0;
+  const initialBalance = savedData?.initialBalance ?? 0;
   
   // ARCE state - managed locally only (not persisted to avoid table issues)
   const [enableARCE, setEnableARCE] = useState(false);

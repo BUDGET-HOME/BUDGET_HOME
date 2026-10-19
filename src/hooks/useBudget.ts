@@ -24,6 +24,7 @@ export function useBudget() {
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const stateRef = useRef(state);
   const userRef = useRef(user);
+  const canSyncRef = useRef(false);
 
   useEffect(() => {
     stateRef.current = state;
@@ -55,13 +56,26 @@ export function useBudget() {
       if (user) {
         try {
           const serverState = await loadFromServer();
-          if (!cancelled) {
-            setState(serverState ?? loadLocal());
+          if (cancelled) return;
+          if (serverState) {
+            setState(serverState);
+            saveLocal(serverState);
+          } else {
+            const local = loadLocal();
+            setState(local);
+            await saveToServer(local);
           }
+          if (cancelled) return;
+          canSyncRef.current = true;
+          setSyncStatus("saved");
         } catch {
-          if (!cancelled) setSyncStatus("error");
+          if (cancelled) return;
+          canSyncRef.current = false;
+          setState(loadLocal());
+          setSyncStatus("error");
         }
       } else {
+        canSyncRef.current = false;
         setState(loadLocal());
       }
       if (!cancelled) setLoaded(true);
@@ -71,12 +85,16 @@ export function useBudget() {
     };
   }, [authReady, user]);
 
-  const saveNow = useCallback(() => {
+  const saveNow = useCallback((force = false) => {
     if (timerRef.current) clearTimeout(timerRef.current);
     if (!userRef.current) return;
+    if (!force && !canSyncRef.current) return;
     setSyncStatus("saving");
     saveToServer(stateRef.current)
-      .then(() => setSyncStatus("saved"))
+      .then(() => {
+        canSyncRef.current = true;
+        setSyncStatus("saved");
+      })
       .catch(() => setSyncStatus("error"));
   }, []);
 
@@ -88,7 +106,7 @@ export function useBudget() {
         return next;
       });
       if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(saveNow, DEBOUNCE_MS);
+      timerRef.current = setTimeout(() => saveNow(false), DEBOUNCE_MS);
     },
     [saveNow]
   );
@@ -98,7 +116,7 @@ export function useBudget() {
       stateRef.current = next;
       setState(next);
       saveLocal(next);
-      saveNow();
+      saveNow(true);
     },
     [saveNow]
   );

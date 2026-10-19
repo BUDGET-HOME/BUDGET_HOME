@@ -123,7 +123,7 @@ export async function saveToServer(state: BudgetState): Promise<void> {
 
 export async function loadFromServer(): Promise<BudgetState | null> {
   const res = await fetch("/api/budget");
-  if (res.status === 401) return null;
+  if (res.status === 401) throw new Error("unauthorized");
   if (!res.ok) throw new Error(`load_failed_${res.status}`);
   const json = (await res.json()) as { budget?: { data?: unknown } | null };
   if (!json.budget?.data) return null;

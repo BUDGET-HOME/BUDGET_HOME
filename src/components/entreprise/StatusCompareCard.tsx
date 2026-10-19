@@ -15,17 +15,17 @@ export default function StatusCompareCard() {
   // Calculate revenue and expenses from freelance data
   // Revenue = TJM * days worked per month * 12 months
   // Business expenses = sum of all monthly costs from freelance
-  const tjm = freelanceData?.tjm || 480;
-  const days = freelanceData?.days || 18;
-  const costRetirement = freelanceData?.costRetirement || 300;
-  const costLld = freelanceData?.costLld || 450;
-  const costFuel = freelanceData?.costFuel || 150;
-  const costMutuelle = freelanceData?.costMutuelle || 80;
-  const costBankIns = freelanceData?.costBankIns || 45;
-  const costAccountant = freelanceData?.costAccountant || 150;
-  const costMeals = freelanceData?.costMeals || 200;
-  const costTelecom = freelanceData?.costTelecom || 50;
-  const costTech = freelanceData?.costTech || 50;
+  const tjm = freelanceData?.tjm ?? 480;
+  const days = freelanceData?.days ?? 18;
+  const costRetirement = freelanceData?.costRetirement ?? 300;
+  const costLld = freelanceData?.costLld ?? 450;
+  const costFuel = freelanceData?.costFuel ?? 150;
+  const costMutuelle = freelanceData?.costMutuelle ?? 80;
+  const costBankIns = freelanceData?.costBankIns ?? 45;
+  const costAccountant = freelanceData?.costAccountant ?? 150;
+  const costMeals = freelanceData?.costMeals ?? 200;
+  const costTelecom = freelanceData?.costTelecom ?? 50;
+  const costTech = freelanceData?.costTech ?? 50;
 
   // Calculate annual revenue: TJM * days * 12
   const annualRevenue = tjm * days * 12;
@@ -41,16 +41,16 @@ export default function StatusCompareCard() {
   // Sync local state with freelance data when it changes
   useEffect(() => {
     if (freelanceData) {
-      const newRevenue = (freelanceData.tjm || 480) * (freelanceData.days || 18) * 12;
-      const newExpenses = (freelanceData.costRetirement || 300) + 
-                          (freelanceData.costLld || 450) + 
-                          (freelanceData.costFuel || 150) + 
-                          (freelanceData.costMutuelle || 80) + 
-                          (freelanceData.costBankIns || 45) + 
-                          (freelanceData.costAccountant || 150) + 
-                          (freelanceData.costMeals || 200) + 
-                          (freelanceData.costTelecom || 50) + 
-                          (freelanceData.costTech || 50);
+      const newRevenue = (freelanceData.tjm ?? 480) * (freelanceData.days ?? 18) * 12;
+      const newExpenses = (freelanceData.costRetirement ?? 300) +
+                          (freelanceData.costLld ?? 450) +
+                          (freelanceData.costFuel ?? 150) +
+                          (freelanceData.costMutuelle ?? 80) +
+                          (freelanceData.costBankIns ?? 45) +
+                          (freelanceData.costAccountant ?? 150) +
+                          (freelanceData.costMeals ?? 200) +
+                          (freelanceData.costTelecom ?? 50) +
+                          (freelanceData.costTech ?? 50);
       setLocalRevenue(newRevenue);
       setLocalExpense(newExpenses);
     }
