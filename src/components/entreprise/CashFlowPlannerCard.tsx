@@ -84,7 +84,7 @@ export default function CashFlowPlannerCard() {
     const startDate = new Date().toISOString().split("T")[0];
 
     // Calculate annual revenue
-    const annualRevenue = tjm * days * 12;
+    const monthlyRevenue = tjm * days;
 
     // Costs from freelance data
     const costs = {
@@ -104,13 +104,13 @@ export default function CashFlowPlannerCard() {
       {
         id: "freelance_revenue",
         label: "Revenu Freelance (CA)",
-        amount: annualRevenue,
+        amount: monthlyRevenue,
         type: "credit",
         frequency: "mensuel",
         startDate,
         endDate: null,
         category: "Chiffre d'affaires",
-        notes: `TJM: ${tjm}€ × ${days} jours/mois × 12 mois`,
+        notes: `TJM: ${tjm}€ × ${days} jours/mois`,
       },
       {
         id: "freelance_retirement",
@@ -214,7 +214,7 @@ export default function CashFlowPlannerCard() {
     ];
 
     // Update initial balance from freelance if available
-    const newInitialBalance = freelanceData.salaryGross || 0;
+    const newInitialBalance = monthlyRevenue || 0;
 
     await saveData({
       items: newItems,
@@ -269,6 +269,23 @@ export default function CashFlowPlannerCard() {
   }, [editingItem]);
 
   const items = savedData?.items || [];
+
+  // Calculate KPIs from items
+  const monthlyRevenueFromItems = useMemo(() => {
+    return items
+      .filter(i => i.type === "credit" && i.frequency === "mensuel")
+      .reduce((sum, i) => sum + i.amount, 0);
+  }, [items]);
+
+  const monthlyExpensesFromItems = useMemo(() => {
+    return items
+      .filter(i => i.type === "debit" && i.frequency === "mensuel")
+      .reduce((sum, i) => sum + i.amount, 0);
+  }, [items]);
+
+  const netMonthly = useMemo(() => {
+    return monthlyRevenueFromItems - monthlyExpensesFromItems;
+  }, [monthlyRevenueFromItems, monthlyExpensesFromItems]);
   const initialBalance = savedData?.initialBalance || 0;
   
   // ARCE state - managed locally only (not persisted to avoid table issues)
