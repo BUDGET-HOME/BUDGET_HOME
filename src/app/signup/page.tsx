@@ -4,6 +4,7 @@ import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
+import { passwordChangeError } from "@/lib/password";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -17,12 +18,9 @@ export default function SignupPage() {
   const handleSignup = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
-    if (password.length < 8) {
-      setError("Le mot de passe doit contenir au moins 8 caractères.");
-      return;
-    }
-    if (password !== confirm) {
-      setError("Les mots de passe ne correspondent pas.");
+    const passwordError = passwordChangeError(password, confirm);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
     setLoading(true);

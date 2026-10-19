@@ -1,6 +1,16 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 import { isSupabaseConfigured, supabaseAnonKey, supabaseUrl } from "./env";
+import { UPDATE_PASSWORD_PATH } from "../password";
+
+const AUTH_PAGES = new Set(["/login", "/signup", "/reset"]);
+
+export function authRedirectPath(pathname: string, hasUser: boolean): string | null {
+  if (pathname === UPDATE_PASSWORD_PATH || pathname.startsWith("/api/")) return null;
+  if (!hasUser && !AUTH_PAGES.has(pathname)) return "/login";
+  if (hasUser && AUTH_PAGES.has(pathname)) return "/";
+  return null;
+}
 
 export async function updateSession(request: NextRequest) {
   if (!isSupabaseConfigured()) {
@@ -27,22 +37,10 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const { pathname } = request.nextUrl;
-  const isAuthPage =
-    pathname === "/login" || pathname === "/signup" || pathname === "/reset";
-  const isApiRoute = pathname.startsWith("/api/");
-
-  // Toutes les pages sont protégées sauf les pages d'authentification et les routes API
-  if (!user && !isAuthPage && !isApiRoute) {
+  const redirectTo = authRedirectPath(request.nextUrl.pathname, Boolean(user));
+  if (redirectTo) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
-  }
-
-  // Rediriger les utilisateurs connectés depuis les pages d'authentification
-  if (user && isAuthPage) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = redirectTo;
     return NextResponse.redirect(url);
   }
 
