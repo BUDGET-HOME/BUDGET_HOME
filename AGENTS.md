@@ -18,3 +18,9 @@ S'appuyer sur la CI (`.github/workflows/ci.yml`), qui exécute :
 - `npm run typecheck`
 
 Lancer ces deux commandes localement avant de conclure. Ne pas ajouter `npm run lint` au pipeline tant que `eslint` n'est pas vert sur la base.
+
+## Git
+
+Pousser les commits directement sur `main`. Ne pas créer de branche et ne pas ouvrir de pull request.
+
+Avant le push, lancer `npm test` et `npm run typecheck`. Après le push, vérifier que le workflow CI sur `main` est vert. S'il échoue, corriger et pousser à nouveau jusqu'à ce qu'il le soit.
