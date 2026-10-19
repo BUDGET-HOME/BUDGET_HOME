@@ -2,27 +2,35 @@
 
 import { useState } from "react";
 import { useBudget } from "@/hooks/useBudget";
-import Header from "./Header";
+import PageHeader from "./PageHeader";
 import RevenusCard from "./RevenusCard";
 import DepensesForm from "./DepensesForm";
 import AnalyseCard from "./AnalyseCard";
 import LoanCard from "./LoanCard";
 import ChargesTable from "./ChargesTable";
 import ChartsCard from "./ChartsCard";
-import { normalizeState } from "@/lib/budget-service";
+import { exportJSON, normalizeState } from "@/lib/budget-service";
+import { isEntrepriseBackup } from "@/lib/entreprise-backup";
 
 export default function BudgetApp() {
   const { state, update, replaceState, user, authReady, loaded, syncStatus } = useBudget();
   const [viewMode, setViewMode] = useState<"monthly" | "annual">("monthly");
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const handleImport = async (file: File) => {
     try {
-      const text = await file.text();
-      const parsed = normalizeState(JSON.parse(text));
-      replaceState(parsed);
+      const raw = JSON.parse(await file.text()) as unknown;
+      if (isEntrepriseBackup(raw)) {
+        setNotice(null);
+        setError("Ce fichier vient de Gestion Entreprise. Importez-le depuis cette page.");
+        return;
+      }
+      replaceState(normalizeState(raw));
       setError(null);
+      setNotice("Budget importé.");
     } catch {
+      setNotice(null);
       setError("Fichier invalide : format JSON attendu.");
     }
   };
@@ -37,10 +45,21 @@ export default function BudgetApp() {
 
   return (
     <div className="mx-auto max-w-4xl">
-      <Header user={user} syncStatus={syncStatus} state={state} onImport={handleImport} />
+      <PageHeader
+        title="Budget du foyer"
+        user={user}
+        syncStatus={syncStatus}
+        onExport={() => exportJSON(state)}
+        onImport={handleImport}
+      />
       {error && (
         <div className="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-700">
           {error}
+        </div>
+      )}
+      {notice && (
+        <div className="mb-4 rounded-md border border-green-300 bg-green-50 px-4 py-2 text-sm text-green-800">
+          {notice}
         </div>
       )}
       {!user && (

@@ -81,17 +81,23 @@ export function saveLocal(state: BudgetState): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
-export function exportJSON(state: BudgetState): void {
-  const dataStr = JSON.stringify(state, null, 2);
-  const blob = new Blob([dataStr], { type: "application/json" });
+export function downloadJSON(filename: string, data: unknown): void {
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = `budget_projet_immo_v9_${new Date().toISOString().slice(0, 10)}.json`;
+  a.download = filename;
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+export function exportJSON(state: BudgetState): void {
+  downloadJSON(
+    `budget_projet_immo_v9_${new Date().toISOString().slice(0, 10)}.json`,
+    state
+  );
 }
 
 export type SyncStatus = "idle" | "saving" | "saved" | "error" | "offline";

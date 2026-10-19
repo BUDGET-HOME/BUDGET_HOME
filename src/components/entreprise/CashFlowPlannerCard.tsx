@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { formatEUR } from "@/lib/budget";
 import { useCashFlowData, type CashFlowItem, type CashFlowFrequency } from "@/hooks/useCashFlowData";
+import { CASH_FLOW_AUTOSYNC_KEY } from "@/lib/entreprise-backup";
 import { useFreelanceData } from "@/hooks/useFreelanceData";
 import {
   Chart as ChartJS,
@@ -73,7 +74,9 @@ export default function CashFlowPlannerCard() {
   const [viewMode, setViewMode] = useState<"table" | "gantt" | "chart">("table");
   const [timeRange, setTimeRange] = useState<"month" | "quarter" | "year">("month");
   const [showARCEForm, setShowARCEForm] = useState(false);
-  const [autoSync, setAutoSync] = useState(true);
+  const [autoSync, setAutoSync] = useState(
+    () => typeof window === "undefined" || localStorage.getItem(CASH_FLOW_AUTOSYNC_KEY) !== "0"
+  );
 
   // Sync with Freelance data
   const syncFromFreelance = useCallback(async () => {
@@ -222,8 +225,12 @@ export default function CashFlowPlannerCard() {
     });
   }, [freelanceData, saveData]);
 
-  // Auto-sync when freelance data changes
+  // Auto-sync when freelance data changes. An import turns this off
+  // (cashFlowAutoSync = "0") so the loaded lines are not replaced.
   useEffect(() => {
+    if (typeof window !== "undefined" && localStorage.getItem(CASH_FLOW_AUTOSYNC_KEY) === "0") {
+      return;
+    }
     if (autoSync && freelanceData && !freelanceLoading) {
       syncFromFreelance();
     }
@@ -537,7 +544,11 @@ export default function CashFlowPlannerCard() {
             🔄 Sync Freelance
           </button>
           <button
-            onClick={() => setAutoSync(!autoSync)}
+            onClick={() => {
+              const next = !autoSync;
+              setAutoSync(next);
+              localStorage.setItem(CASH_FLOW_AUTOSYNC_KEY, next ? "1" : "0");
+            }}
             className={`px-3 py-1 rounded text-sm font-medium ${autoSync ? "bg-emerald-600 text-white" : "bg-white border border-slate-200 text-slate-600"}`}
             title={autoSync ? "Synchronisation automatique activée" : "Synchronisation automatique désactivée"}
           >

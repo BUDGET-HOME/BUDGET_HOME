@@ -2,13 +2,18 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
-import type { SyncStatus } from "@/lib/budget-service";
-import type { BudgetState } from "@/lib/types";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
+import { downloadJSON, type SyncStatus } from "@/lib/budget-service";
+import {
+  exportEntrepriseBackup,
+  importEntrepriseBackup,
+  isEntrepriseBackup,
+} from "@/lib/entreprise-backup";
+import PageHeader from "../PageHeader";
 import GanttCard from "./GanttCard";
 import StatusCompareCard from "./StatusCompareCard";
 import FreelanceSimulatorCard from "./FreelanceSimulatorCard";
 import CashFlowPlannerCard from "./CashFlowPlannerCard";
-import EntrepriseHeader from "./EntrepriseHeader";
 
 const TOOLS = [
   { id: "freelance", label: "Simulateur Freelance" },
@@ -22,54 +27,58 @@ type ToolId = (typeof TOOLS)[number]["id"];
 export default function EntrepriseApp() {
   const [activeTool, setActiveTool] = useState<ToolId>("freelance");
   const [user, setUser] = useState<{ email?: string } | null>(null);
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
-  const [loaded, setLoaded] = useState(false);
+  const syncStatus: SyncStatus = "idle";
+  const [loaded, setLoaded] = useState(() => !isSupabaseConfigured());
+  const [revision, setRevision] = useState(0);
+  const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!isSupabaseConfigured()) return;
     const fetchUser = async () => {
-      const supabase = createClient();
-      const { data: { user: currentUser } } = await supabase.auth.getUser();
-      setUser(currentUser || null);
-      setLoaded(true);
+      try {
+        const supabase = createClient();
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
+        setUser(currentUser || null);
+      } finally {
+        setLoaded(true);
+      }
     };
-    fetchUser();
+    void fetchUser();
+  }, []);
+
+  const handleExport = useCallback(async () => {
+    const { backup, warnings } = await exportEntrepriseBackup();
+    downloadJSON(`gestion_entreprise_${backup.exportedAt.slice(0, 10)}.json`, backup);
+    setError(warnings.length > 0 ? warnings.join(" ") : null);
+    setNotice("Export téléchargé.");
   }, []);
 
   const handleImport = useCallback(async (file: File) => {
-    alert("Import - Fonctionnalité à implémenter pour Entreprise");
+    try {
+      const raw = JSON.parse(await file.text()) as unknown;
+      if (!isEntrepriseBackup(raw)) {
+        setNotice(null);
+        setError(
+          "Ce fichier n'est pas une sauvegarde Entreprise. Pour un budget du foyer, ouvrez Budget du foyer."
+        );
+        return;
+      }
+      const { warnings } = await importEntrepriseBackup(raw);
+      setRevision((current) => current + 1);
+      setError(warnings.length > 0 ? warnings.join(" ") : null);
+      setNotice("Données entreprise importées.");
+    } catch (err) {
+      setNotice(null);
+      setError(
+        err instanceof SyntaxError
+          ? "Fichier invalide : format JSON attendu."
+          : err instanceof Error
+            ? err.message
+            : "Import impossible."
+      );
+    }
   }, []);
-
-  // Dummy state for header - Entreprise doesn't use BudgetState
-  const dummyState: BudgetState = {
-    name1: "",
-    name2: "",
-    salary1: "",
-    salary2: "",
-    force5050: false,
-    mode: "separe",
-    expenses: [],
-    immo: {
-      immoApport: 0,
-      immoRate: 0,
-      immoInsurance: 0,
-      immoDuration: 0,
-      immoType: "ancien",
-    },
-    loan: {
-      capital: 0,
-      rate: 0,
-      durationMonths: 0,
-      monthlyPayment: 0,
-      offeredTaeg: 0,
-      startDate: "",
-      insuranceMode: "capital",
-      insuranceRate: 0,
-      insuranceAvgMonthly: 0,
-      guaranteeFees: 0,
-      brokerFees: 0,
-      fileFees: 0,
-    },
-  };
 
   if (!loaded) {
     return (
@@ -81,12 +90,23 @@ export default function EntrepriseApp() {
 
   return (
     <div className="mx-auto max-w-5xl">
-      <EntrepriseHeader 
-        user={user} 
-        syncStatus={syncStatus} 
-        state={dummyState} 
-        onImport={handleImport} 
+      <PageHeader
+        title="Gestion Entreprise"
+        user={user}
+        syncStatus={syncStatus}
+        onExport={handleExport}
+        onImport={handleImport}
       />
+      {error && (
+        <div className="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+      {notice && (
+        <div className="mb-4 rounded-md border border-green-300 bg-green-50 px-4 py-2 text-sm text-green-800">
+          {notice}
+        </div>
+      )}
       
       <div className="flex flex-wrap gap-2 mb-5 no-print">
         {TOOLS.map((tool) => (
@@ -104,10 +124,10 @@ export default function EntrepriseApp() {
         ))}
       </div>
 
-      {activeTool === "freelance" && <FreelanceSimulatorCard />}
-      {activeTool === "statuts" && <StatusCompareCard />}
-      {activeTool === "gantt" && <GanttCard />}
-      {activeTool === "cashflow" && <CashFlowPlannerCard />}
+      {activeTool === "freelance" && <FreelanceSimulatorCard key={`freelance-${revision}`} />}
+      {activeTool === "statuts" && <StatusCompareCard key={`statuts-${revision}`} />}
+      {activeTool === "gantt" && <GanttCard key={`gantt-${revision}`} />}
+      {activeTool === "cashflow" && <CashFlowPlannerCard key={`cashflow-${revision}`} />}
     </div>
   );
 }

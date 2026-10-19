@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 
 export interface FreelanceSimulatorData {
   // Status & Facturation
@@ -136,7 +137,12 @@ export function useFreelanceData() {
       try {
         setLoading(true);
         setError(null);
-        
+
+        if (!isSupabaseConfigured()) {
+          setData({ ...DEFAULT_DATA, userId: "", updatedAt: new Date().toISOString() });
+          return;
+        }
+
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
         

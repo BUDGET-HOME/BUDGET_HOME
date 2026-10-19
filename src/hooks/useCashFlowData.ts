@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { CASH_FLOW_STORAGE_KEY } from "@/lib/entreprise-backup";
 
 export type CashFlowFrequency = "ponctuel" | "mensuel" | "trimestriel" | "annuel";
 
@@ -32,28 +33,25 @@ export function useCashFlowData() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState<boolean>(false);
 
-  // Initialize with default data
   useEffect(() => {
-    setLoading(true);
-    // Load from localStorage if available
-    try {
-      const saved = localStorage.getItem("cashFlowData");
-      if (saved) {
-        setData(JSON.parse(saved));
-      } else {
+    // Après le premier rendu : localStorage n'est pas lisible pendant le SSR.
+    const id = window.setTimeout(() => {
+      try {
+        const saved = localStorage.getItem(CASH_FLOW_STORAGE_KEY);
+        setData(saved ? (JSON.parse(saved) as CashFlowData) : DEFAULT_DATA);
+      } catch {
         setData(DEFAULT_DATA);
+      } finally {
+        setLoading(false);
       }
-    } catch {
-      setData(DEFAULT_DATA);
-    } finally {
-      setLoading(false);
-    }
+    }, 0);
+    return () => window.clearTimeout(id);
   }, []);
 
   // Save to localStorage
   const saveToLocalStorage = useCallback((newData: CashFlowData) => {
     try {
-      localStorage.setItem("cashFlowData", JSON.stringify(newData));
+      localStorage.setItem(CASH_FLOW_STORAGE_KEY, JSON.stringify(newData));
     } catch (err) {
       console.error("Error saving to localStorage:", err);
     }

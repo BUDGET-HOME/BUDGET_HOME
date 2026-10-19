@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 import {
   loadFromServer,
   loadLocal,
@@ -17,7 +18,7 @@ const DEBOUNCE_MS = 2000;
 export function useBudget() {
   const [state, setState] = useState<BudgetState>({ ...DEFAULT_STATE });
   const [user, setUser] = useState<User | null>(null);
-  const [authReady, setAuthReady] = useState(false);
+  const [authReady, setAuthReady] = useState(() => !isSupabaseConfigured());
   const [loaded, setLoaded] = useState(false);
   const [syncStatus, setSyncStatus] = useState<SyncStatus>("idle");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -33,11 +34,12 @@ export function useBudget() {
   }, [user]);
 
   useEffect(() => {
+    if (!isSupabaseConfigured()) return;
     const supabase = createClient();
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
       setAuthReady(true);
-    });
+    }).catch(() => setAuthReady(true));
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -91,10 +93,15 @@ export function useBudget() {
     [saveNow]
   );
 
-  const replaceState = useCallback((next: BudgetState) => {
-    setState(next);
-    saveLocal(next);
-  }, []);
+  const replaceState = useCallback(
+    (next: BudgetState) => {
+      stateRef.current = next;
+      setState(next);
+      saveLocal(next);
+      saveNow();
+    },
+    [saveNow]
+  );
 
   return { state, update, replaceState, user, authReady, loaded, syncStatus, saveNow };
 }
