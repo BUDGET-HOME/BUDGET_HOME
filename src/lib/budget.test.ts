@@ -3,6 +3,7 @@ import {
   computeBalance,
   computeRatio,
   computeVerdict,
+  loanPeriodAmount,
   summarizeExpenses,
 } from "./budget";
 import type { Expense } from "./types";
@@ -129,6 +130,46 @@ describe("computeBalance avec crédit maison", () => {
     expect(withLoan.displayTotal).toBeCloseTo(1518.88, 1);
     expect(withLoan.savingsCapacity).toBeCloseTo(3000 - 1518.88, 1);
     expect(withLoan.displayTotal).toBeGreaterThan(without.displayTotal);
+  });
+
+  it("crédite chaque personne de la moitié quand le crédit est commun", () => {
+    const b = computeBalance(2000, 1000, [], "monthly", false, "separe", {
+      ...loan,
+      loanPayer: "shared",
+    });
+    expect(b.displayPaid1).toBeCloseTo(b.displayTotal / 2, 1);
+    expect(b.displayPaid2).toBeCloseTo(b.displayTotal / 2, 1);
+    expect(b.balance1).toBeCloseTo(b.displayPaid1 - b.displayTotal * (2 / 3), 1);
+  });
+
+  it("attribue le crédit au payeur choisi", () => {
+    const b = computeBalance(2000, 1000, [], "monthly", false, "separe", {
+      ...loan,
+      loanPayer: "1",
+    });
+    expect(b.displayPaid1).toBeCloseTo(b.displayTotal, 1);
+    expect(b.displayPaid2).toBeCloseTo(0, 1);
+  });
+
+  it("somme les douze prochaines échéances au lieu d'extrapoler la première", () => {
+    const declining = {
+      capital: 12000,
+      rate: 0,
+      durationMonths: 12,
+      monthlyPayment: 0,
+      offeredTaeg: 0,
+      startDate: "",
+      insuranceMode: "remaining" as const,
+      insuranceRate: 12,
+      insuranceAvgMonthly: 0,
+      guaranteeFees: 0,
+      brokerFees: 0,
+      fileFees: 0,
+    };
+    const first = loanPeriodAmount(declining, "monthly");
+    const year = loanPeriodAmount(declining, "annual");
+    expect(year).toBeLessThan(first * 12);
+    expect(year).toBeCloseTo(12780, 0);
   });
 
   it("sans prêt, le total ne change pas", () => {

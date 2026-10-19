@@ -61,5 +61,10 @@ describe("normalizeState (validation JSON import)", () => {
     expect(s.name1).toBe(DEFAULT_STATE.name1);
     expect(s.expenses).toEqual([]);
     expect(s.immo.immoDuration).toBe(20);
+    expect(s.loan.loanPayer).toBe("shared");
+  });
+
+  it("retient le payeur du crédit", () => {
+    expect(normalizeState({ loan: { loanPayer: "2" } }).loan.loanPayer).toBe("2");
   });
 });

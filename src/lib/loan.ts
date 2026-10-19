@@ -1,3 +1,5 @@
+export type LoanPayer = "1" | "2" | "shared";
+
 export interface LoanSettings {
   capital: number;
   rate: number;
@@ -11,6 +13,7 @@ export interface LoanSettings {
   guaranteeFees: number;
   brokerFees: number;
   fileFees: number;
+  loanPayer?: LoanPayer;
 }
 
 export interface MonthDetail {

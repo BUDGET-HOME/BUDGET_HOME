@@ -1,8 +1,8 @@
 "use client";
 
-import { computeBalance, computeVerdict, formatEUR } from "@/lib/budget";
+import { computeBalance, computeVerdict, formatEUR, loanPeriodAmount } from "@/lib/budget";
 import type { ViewMode } from "@/lib/budget";
-import type { BudgetState } from "@/lib/types";
+import { LOAN_CATEGORY, type BudgetState } from "@/lib/types";
 
 interface Props {
   state: BudgetState;
@@ -28,13 +28,14 @@ export default function AnalyseCard({ state, viewMode, setViewMode }: Props) {
   const paid1 = balance.displayPaid1;
   const paid2 = balance.displayPaid2;
   const maxPaid = Math.max(paid1, paid2, 1);
-  const categories = Object.entries(
-    state.expenses.reduce<Record<string, number>>((acc, e) => {
-      const v = e.freq === "monthly" ? e.amount * 12 : e.amount;
-      acc[e.category] = (acc[e.category] ?? 0) + v / (viewMode === "monthly" ? 12 : 1);
-      return acc;
-    }, {})
-  )
+  const categoryTotals = state.expenses.reduce<Record<string, number>>((acc, e) => {
+    const v = e.freq === "monthly" ? e.amount * 12 : e.amount;
+    acc[e.category] = (acc[e.category] ?? 0) + v / (viewMode === "monthly" ? 12 : 1);
+    return acc;
+  }, {});
+  const loanAmount = loanPeriodAmount(state.loan, viewMode);
+  if (loanAmount > 0) categoryTotals[LOAN_CATEGORY] = loanAmount;
+  const categories = Object.entries(categoryTotals)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 

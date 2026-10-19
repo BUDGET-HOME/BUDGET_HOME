@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { CATEGORIES, type BudgetState, type Frequency } from "@/lib/types";
 import { computeLoanSummary } from "@/lib/loan";
-import { formatEUR } from "@/lib/budget";
+import { formatEUR, loanPeriodAmount } from "@/lib/budget";
 
 interface Props {
   state: BudgetState;
@@ -78,8 +78,13 @@ export default function ChargesTable({ state, update }: Props) {
   const loanSummary = computeLoanSummary(state.loan);
   const loanActive =
     state.loan.capital > 0 && loanSummary.remainingMonths > 0;
-  const loanMonthly =
-    loanSummary.firstMonth.payment + loanSummary.firstMonth.insurance;
+  const loanMonthly = loanPeriodAmount(state.loan, "monthly");
+  const loanPayerLabel =
+    state.loan.loanPayer === "1"
+      ? state.name1
+      : state.loan.loanPayer === "2"
+        ? state.name2
+        : "Commun";
   const expensesMonthly = state.expenses.reduce(
     (a, e) => a + (e.freq === "monthly" ? e.amount : e.amount / 12),
     0
@@ -134,7 +139,7 @@ export default function ChargesTable({ state, update }: Props) {
                 <td className="py-3 px-3">Mois</td>
                 <td className="py-3 px-3">
                   <span className="rounded-md bg-purple-600 px-2 py-0.5 text-xs font-semibold text-white">
-                    Commun
+                    {loanPayerLabel}
                   </span>
                 </td>
                 <td className="py-3 px-3 text-right no-print">

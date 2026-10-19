@@ -62,6 +62,7 @@ export const DEFAULT_STATE: BudgetState = {
     guaranteeFees: 3192,
     brokerFees: 2500,
     fileFees: 1300,
+    loanPayer: "shared",
   } satisfies LoanSettings,
 };
 

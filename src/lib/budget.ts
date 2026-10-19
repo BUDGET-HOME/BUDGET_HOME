@@ -1,5 +1,5 @@
 import { RENT_CATEGORY, type BudgetMode, type Expense } from "./types";
-import { computeLoanSummary, type LoanSettings } from "./loan";
+import { buildSchedule, computeLoanSummary, type LoanPayer, type LoanSettings } from "./loan";
 
 export interface RatioResult {
   ratio1: number;
@@ -63,6 +63,28 @@ export interface BalanceResult {
   balance1: number;
 }
 
+export function loanPeriodAmount(
+  loan: LoanSettings,
+  viewMode: ViewMode,
+  today: Date = new Date()
+): number {
+  if (loan.capital <= 0) return 0;
+  const summary = computeLoanSummary(loan, today);
+  if (summary.remainingMonths <= 0) return 0;
+  const upcoming = buildSchedule(loan).slice(summary.elapsedMonths);
+  const months = viewMode === "monthly" ? upcoming.slice(0, 1) : upcoming.slice(0, 12);
+  return months.reduce((sum, month) => sum + month.payment + month.insurance, 0);
+}
+
+export function splitLoanPayment(
+  amount: number,
+  payer: LoanPayer = "shared"
+): { paid1: number; paid2: number } {
+  if (payer === "1") return { paid1: amount, paid2: 0 };
+  if (payer === "2") return { paid1: 0, paid2: amount };
+  return { paid1: amount / 2, paid2: amount / 2 };
+}
+
 export function computeBalance(
   salary1: number,
   salary2: number,
@@ -75,15 +97,12 @@ export function computeBalance(
   const { ratio1 } = computeRatio(salary1, salary2, force5050, mode);
   const s = summarizeExpenses(expenses);
   const factor = viewMode === "monthly" ? 12 : 1;
-  const summary = loan ? computeLoanSummary(loan) : null;
-  const loanFirst = summary
-    ? summary.firstMonth.payment + summary.firstMonth.insurance
-    : 0;
-  const loanPeriodTotal = viewMode === "monthly" ? loanFirst : loanFirst * 12;
-  const displayTotal = s.totalAnnual / factor + loanPeriodTotal;
+  const loanAmount = loan ? loanPeriodAmount(loan, viewMode) : 0;
+  const loanPaid = splitLoanPayment(loanAmount, loan?.loanPayer);
+  const displayTotal = s.totalAnnual / factor + loanAmount;
   const displayIncome = ((salary1 + salary2) * 12) / factor;
-  const displayPaid1 = s.paidAnnual1 / factor;
-  const displayPaid2 = s.paidAnnual2 / factor;
+  const displayPaid1 = s.paidAnnual1 / factor + loanPaid.paid1;
+  const displayPaid2 = s.paidAnnual2 / factor + loanPaid.paid2;
   const shouldPay1 = displayTotal * ratio1;
   return {
     displayTotal,

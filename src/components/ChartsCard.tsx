@@ -14,8 +14,7 @@ import {
   Legend,
   type ChartConfiguration,
 } from "chart.js";
-import { summarizeExpenses, formatEUR, type ViewMode } from "@/lib/budget";
-import { computeLoanSummary } from "@/lib/loan";
+import { summarizeExpenses, formatEUR, loanPeriodAmount, type ViewMode } from "@/lib/budget";
 import { LOAN_CATEGORY, type BudgetState } from "@/lib/types";
 
 Chart.register(
@@ -58,23 +57,22 @@ export default function ChartsCard({ state }: Props) {
     () => summarizeExpenses(state.expenses),
     [state.expenses]
   );
-  const loanSummary = useMemo(() => computeLoanSummary(state.loan), [state.loan]);
-  const loanActive =
-    state.loan.capital > 0 && loanSummary.remainingMonths > 0;
-  const loanMonthly =
-    loanSummary.firstMonth.payment + loanSummary.firstMonth.insurance;
+  const loanAmount = useMemo(
+    () => loanPeriodAmount(state.loan, mode),
+    [state.loan, mode]
+  );
+  const loanActive = loanAmount > 0;
 
   const pieRef = useRef<HTMLCanvasElement>(null);
   const barRef = useRef<HTMLCanvasElement>(null);
   const payerRef = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const div = mode === "monthly" ? 12 : 1;
-    const loanFactor = mode === "monthly" ? 1 : 12;
     const entries = Object.entries(summary.categoryTotals)
       .map(([k, v]) => [k, v / div] as [string, number])
       .sort((a, b) => b[1] - a[1]);
-    if (loanActive) {
-      entries.push([LOAN_CATEGORY, loanMonthly * loanFactor]);
+    if (loanAmount > 0) {
+      entries.push([LOAN_CATEGORY, loanAmount]);
       entries.sort((a, b) => b[1] - a[1]);
     }
 
@@ -177,7 +175,7 @@ export default function ChartsCard({ state }: Props) {
     return () => {
       created.forEach((c) => c.destroy());
     };
-  }, [summary, mode, state.mode, state.name1, state.name2, loanActive, loanMonthly]);
+  }, [summary, mode, state.mode, state.name1, state.name2, loanAmount]);
 
   return (
     <section className="budget-card">

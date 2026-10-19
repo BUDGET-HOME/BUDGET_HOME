@@ -148,6 +148,24 @@ export default function LoanCard({ state, update }: Props) {
             <option value="capital">Prime fixe (moyenne mensuelle)</option>
           </select>
         </div>
+        <div>
+          <label className="block text-sm font-semibold text-slate-500 mb-1">
+            Qui paie le crédit ?
+          </label>
+          <select
+            value={loan.loanPayer ?? "shared"}
+            onChange={(e) =>
+              setLoan({
+                loanPayer: e.target.value as "1" | "2" | "shared",
+              })
+            }
+            className="w-full rounded-md border border-slate-300 px-3 py-2"
+          >
+            <option value="shared">Commun (50/50)</option>
+            <option value="1">{state.name1}</option>
+            <option value="2">{state.name2}</option>
+          </select>
+        </div>
       </div>
 
       {loan.insuranceMode === "remaining" ? (

@@ -28,6 +28,8 @@ export function normalizeState(raw: unknown): BudgetState {
     guaranteeFees: num(loanRaw.guaranteeFees, 0),
     brokerFees: num(loanRaw.brokerFees, 0),
     fileFees: num(loanRaw.fileFees, 0),
+    loanPayer:
+      loanRaw.loanPayer === "1" || loanRaw.loanPayer === "2" ? loanRaw.loanPayer : "shared",
   };
   const mode = o.mode === "commun" ? "commun" : "separe";
   const expenses: Expense[] = Array.isArray(o.expenses)
