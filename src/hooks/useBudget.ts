@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, getOptionalUser } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 import {
   loadFromServer,
   loadLocal,
@@ -33,8 +34,16 @@ export function useBudget() {
   }, [user]);
 
   useEffect(() => {
+    if (!isSupabaseConfigured()) {
+      setUser(null);
+      setAuthReady(true);
+      return;
+    }
+
+    let cancelled = false;
     const supabase = createClient();
-    supabase.auth.getUser().then(({ data: { user } }) => {
+    getOptionalUser().then((user) => {
+      if (cancelled) return;
       setUser(user);
       setAuthReady(true);
     });
@@ -43,7 +52,10 @@ export function useBudget() {
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, []);
 
   useEffect(() => {

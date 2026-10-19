@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { isSupabaseConfigured } from "@/lib/supabase/env";
 import type { SyncStatus } from "@/lib/budget-service";
 import { exportJSON } from "@/lib/budget-service";
 import type { BudgetState } from "@/lib/types";
@@ -23,10 +24,10 @@ const SYNC_LABEL: Record<SyncStatus, string> = {
 
 export default function Header({ user, syncStatus, state, onImport }: HeaderProps) {
   const router = useRouter();
-  const supabase = createClient();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
+    if (!isSupabaseConfigured()) return;
+    await createClient().auth.signOut();
     router.refresh();
   };
 

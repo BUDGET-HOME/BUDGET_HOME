@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, getOptionalUser } from "@/lib/supabase/client";
 import type { CompanyStatus } from "@/lib/launch";
 import type { ServiceLine } from "@/lib/business";
 
@@ -60,8 +60,7 @@ export function useRevenueData() {
         setLoading(true);
         setError(null);
         
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = await getOptionalUser();
         
         if (!user) {
           setData({ ...DEFAULT_DATA, userId: "", updatedAt: new Date().toISOString() });
@@ -69,6 +68,7 @@ export function useRevenueData() {
           return;
         }
 
+        const supabase = createClient();
         const { data: existingData, error: fetchError } = await supabase
           .from(TABLE_NAME)
           .select("*")
@@ -117,8 +117,7 @@ export function useRevenueData() {
       setSaving(true);
       setError(null);
       
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getOptionalUser();
       
       if (!user) {
         setError("Vous devez être connecté pour sauvegarder");
@@ -126,6 +125,7 @@ export function useRevenueData() {
         return false;
       }
 
+      const supabase = createClient();
       const currentData = data || { ...DEFAULT_DATA, userId: user.id, updatedAt: new Date().toISOString() };
       const mergedData = { ...currentData, ...updates };
       const dbData = mapToDb({

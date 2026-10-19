@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { createClient, getOptionalUser } from "@/lib/supabase/client";
 import { DEFAULT_TASKS, type GanttTask } from "@/lib/gantt";
 
 export interface GanttSimulatorData {
@@ -49,8 +49,7 @@ export function useGanttData() {
         setLoading(true);
         setError(null);
         
-        const supabase = createClient();
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = await getOptionalUser();
         
         if (!user) {
           setData({ ...DEFAULT_DATA, userId: "", updatedAt: new Date().toISOString() });
@@ -58,6 +57,7 @@ export function useGanttData() {
           return;
         }
 
+        const supabase = createClient();
         const { data: existingData, error: fetchError } = await supabase
           .from(TABLE_NAME)
           .select("*")
@@ -106,8 +106,7 @@ export function useGanttData() {
       setSaving(true);
       setError(null);
       
-      const supabase = createClient();
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = await getOptionalUser();
       
       if (!user) {
         setError("Vous devez être connecté pour sauvegarder");
@@ -115,6 +114,7 @@ export function useGanttData() {
         return false;
       }
 
+      const supabase = createClient();
       const currentData = data || { ...DEFAULT_DATA, userId: user.id, updatedAt: new Date().toISOString() };
       const mergedData = { ...currentData, ...updates };
       const dbData = mapToDb({
