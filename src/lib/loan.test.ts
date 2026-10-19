@@ -10,10 +10,7 @@ import {
 } from "./loan";
 import type { LoanSettings } from "./loan";
 
-// Chiffres réels de l'offre n° 09116747 :
-// capital 266 000 €, 300 mois, taux débiteur 3,400 %, versement constant
-// 1 518,88 € assurance incluse (assurance sur capital restant dû,
-// 1re cotisation 294,09 €), frais d'entrée 6 992 €, TAEG annoncé 4,200 %.
+// Scénario chiffré réservé aux tests d'échéancier.
 const realOffer = (over: Partial<LoanSettings> = {}): LoanSettings => ({
   capital: 266000,
   rate: 3.4,

@@ -1,60 +1,60 @@
 {
-  "name1": "Raphael",
-  "name2": "Sarah",
-  "salary1": 2300,
-  "salary2": 1600,
+  "name1": "Personne 1",
+  "name2": "Personne 2",
+  "salary1": 2000,
+  "salary2": 1500,
   "force5050": false,
   "expenses": [
     {
-      "id": 1765811209766,
+      "id": 1,
       "desc": "Loyer",
-      "amount": 930,
+      "amount": 800,
       "freq": "monthly",
       "category": "🏠 Logement",
       "payer": "1"
     },
     {
-      "id": 1765811222062,
-      "desc": "Gaz Elec",
-      "amount": 274,
+      "id": 2,
+      "desc": "Énergie",
+      "amount": 100,
       "freq": "monthly",
       "category": "⚡ Énergie",
       "payer": "1"
     },
     {
-      "id": 1765811234237,
-      "desc": "Crèche bébé",
-      "amount": 450,
+      "id": 3,
+      "desc": "Garde",
+      "amount": 300,
       "freq": "monthly",
       "category": "👶 Enfants & Bébé",
       "payer": "2"
     },
     {
-      "id": 1765811247077,
-      "desc": "Free Mobile",
-      "amount": 54,
+      "id": 4,
+      "desc": "Téléphone",
+      "amount": 20,
       "freq": "monthly",
       "category": "📱 Mobile & Internet",
       "payer": "1"
     },
     {
-      "id": 1765811257941,
-      "desc": "Netflix",
-      "amount": 19,
+      "id": 5,
+      "desc": "Streaming",
+      "amount": 15,
       "freq": "monthly",
       "category": "📺 TV & Streaming",
       "payer": "1"
     },
     {
-      "id": 1765811301806,
-      "desc": "courses",
-      "amount": 800,
+      "id": 6,
+      "desc": "Courses",
+      "amount": 400,
       "freq": "monthly",
       "category": "🛒 Courses",
       "payer": "2"
     }
   ],
-  "immoApport": 40000,
-  "immoRate": 3.8,
-  "immoDuration": 25
+  "immoApport": 10000,
+  "immoRate": 3,
+  "immoDuration": 20
 }

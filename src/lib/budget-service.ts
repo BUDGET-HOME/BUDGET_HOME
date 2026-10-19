@@ -17,13 +17,13 @@ export function normalizeState(raw: unknown): BudgetState {
   const loanRaw = (o.loan ?? {}) as Record<string, unknown>;
   const loan: LoanSettings = {
     capital: num(loanRaw.capital, 0),
-    rate: num(loanRaw.rate, 3.4),
-    durationMonths: num(loanRaw.durationMonths, 300),
+    rate: num(loanRaw.rate, 0),
+    durationMonths: num(loanRaw.durationMonths, 0),
     monthlyPayment: num(loanRaw.monthlyPayment, 0),
     offeredTaeg: num(loanRaw.offeredTaeg, 0),
     startDate: typeof loanRaw.startDate === "string" ? loanRaw.startDate : "",
     insuranceMode: loanRaw.insuranceMode === "capital" ? "capital" : "remaining",
-    insuranceRate: num(loanRaw.insuranceRate, 1.1),
+    insuranceRate: num(loanRaw.insuranceRate, 0),
     insuranceAvgMonthly: num(loanRaw.insuranceAvgMonthly, 0),
     guaranteeFees: num(loanRaw.guaranteeFees, 0),
     brokerFees: num(loanRaw.brokerFees, 0),
