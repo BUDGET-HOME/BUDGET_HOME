@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { formatEUR } from "@/lib/budget";
 import { useCashFlowData, type CashFlowItem, type CashFlowFrequency } from "@/hooks/useCashFlowData";
+import { useFreelanceData } from "@/hooks/useFreelanceData";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -61,11 +62,172 @@ export default function CashFlowPlannerCard() {
     saveData,
   } = useCashFlowData();
 
+  // Get Freelance data
+  const {
+    data: freelanceData,
+    loading: freelanceLoading,
+  } = useFreelanceData();
+
   const [showForm, setShowForm] = useState(false);
   const [editingItem, setEditingItem] = useState<CashFlowItem | null>(null);
   const [viewMode, setViewMode] = useState<"table" | "gantt" | "chart">("table");
   const [timeRange, setTimeRange] = useState<"month" | "quarter" | "year">("month");
   const [showARCEForm, setShowARCEForm] = useState(false);
+  const [autoSync, setAutoSync] = useState(true);
+
+  // Sync with Freelance data
+  const syncFromFreelance = useCallback(async () => {
+    if (!freelanceData) return;
+
+    const tjm = freelanceData.tjm || 480;
+    const days = freelanceData.days || 18;
+    const startDate = new Date().toISOString().split("T")[0];
+
+    // Calculate annual revenue
+    const annualRevenue = tjm * days * 12;
+
+    // Costs from freelance data
+    const costs = {
+      retirement: freelanceData.costRetirement || 300,
+      lld: freelanceData.costLld || 450,
+      fuel: freelanceData.costFuel || 150,
+      mutuelle: freelanceData.costMutuelle || 80,
+      bankIns: freelanceData.costBankIns || 45,
+      accountant: freelanceData.costAccountant || 150,
+      meals: freelanceData.costMeals || 200,
+      telecom: freelanceData.costTelecom || 50,
+      tech: freelanceData.costTech || 50,
+    };
+
+    // Build cash flow items from freelance data
+    const newItems: CashFlowItem[] = [
+      {
+        id: "freelance_revenue",
+        label: "Revenu Freelance (CA)",
+        amount: annualRevenue,
+        type: "credit",
+        frequency: "mensuel",
+        startDate,
+        endDate: null,
+        category: "Chiffre d'affaires",
+        notes: `TJM: ${tjm}€ × ${days} jours/mois × 12 mois`,
+      },
+      {
+        id: "freelance_retirement",
+        label: "Cotisation retraite",
+        amount: costs.retirement,
+        type: "debit",
+        frequency: "mensuel",
+        startDate,
+        endDate: null,
+        category: "Charges sociales",
+        notes: "",
+      },
+      {
+        id: "freelance_lld",
+        label: "Location longue durée",
+        amount: costs.lld,
+        type: "debit",
+        frequency: "mensuel",
+        startDate,
+        endDate: null,
+        category: "Déplacements",
+        notes: "",
+      },
+      {
+        id: "freelance_fuel",
+        label: "Carburant",
+        amount: costs.fuel,
+        type: "debit",
+        frequency: "mensuel",
+        startDate,
+        endDate: null,
+        category: "Déplacements",
+        notes: "",
+      },
+      {
+        id: "freelance_mutuelle",
+        label: "Mutuelle santé",
+        amount: costs.mutuelle,
+        type: "debit",
+        frequency: "mensuel",
+        startDate,
+        endDate: null,
+        category: "Assurances",
+        notes: "",
+      },
+      {
+        id: "freelance_bank_ins",
+        label: "Assurance banque",
+        amount: costs.bankIns,
+        type: "debit",
+        frequency: "mensuel",
+        startDate,
+        endDate: null,
+        category: "Assurances",
+        notes: "",
+      },
+      {
+        id: "freelance_accountant",
+        label: "Expert comptable",
+        amount: costs.accountant,
+        type: "debit",
+        frequency: "mensuel",
+        startDate,
+        endDate: null,
+        category: "Fournisseurs",
+        notes: "",
+      },
+      {
+        id: "freelance_meals",
+        label: "Repas professionnels",
+        amount: costs.meals,
+        type: "debit",
+        frequency: "mensuel",
+        startDate,
+        endDate: null,
+        category: "Matériel",
+        notes: "",
+      },
+      {
+        id: "freelance_telecom",
+        label: "Télécommunications",
+        amount: costs.telecom,
+        type: "debit",
+        frequency: "mensuel",
+        startDate,
+        endDate: null,
+        category: "Télécom",
+        notes: "",
+      },
+      {
+        id: "freelance_tech",
+        label: "Matériel informatique",
+        amount: costs.tech,
+        type: "debit",
+        frequency: "mensuel",
+        startDate,
+        endDate: null,
+        category: "Logiciels",
+        notes: "",
+      },
+    ];
+
+    // Update initial balance from freelance if available
+    const newInitialBalance = freelanceData.salaryGross || 0;
+
+    await saveData({
+      items: newItems,
+      initialBalance: newInitialBalance,
+    });
+  }, [freelanceData, saveData]);
+
+  // Auto-sync when freelance data changes
+  useEffect(() => {
+    if (autoSync && freelanceData && !freelanceLoading) {
+      syncFromFreelance();
+    }
+  }, [freelanceData, freelanceLoading, autoSync, syncFromFreelance]);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -348,7 +510,22 @@ export default function CashFlowPlannerCard() {
         <h2 className="text-xl font-bold border-b-2 border-slate-100 pb-2">
           Planning prévisionnel de trésorerie
         </h2>
-        <div className="flex gap-2">
+        <div className="flex gap-2 items-center">
+          <button
+            onClick={() => syncFromFreelance()}
+            disabled={!freelanceData}
+            className="bg-purple-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-purple-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Synchroniser avec le simulateur Freelance"
+          >
+            🔄 Sync Freelance
+          </button>
+          <button
+            onClick={() => setAutoSync(!autoSync)}
+            className={`px-3 py-1 rounded text-sm font-medium ${autoSync ? "bg-emerald-600 text-white" : "bg-white border border-slate-200 text-slate-600"}`}
+            title={autoSync ? "Synchronisation automatique activée" : "Synchronisation automatique désactivée"}
+          >
+            {autoSync ? "Auto ✓" : "Auto ✗"}
+          </button>
           <button
             onClick={() => setViewMode("table")}
             className={`px-3 py-1 rounded text-sm font-medium ${viewMode === "table" ? "bg-blue-600 text-white" : "bg-white border border-slate-200 text-slate-600"}`}
