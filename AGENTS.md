@@ -24,3 +24,10 @@ Lancer ces deux commandes localement avant de conclure. Ne pas ajouter `npm run 
 Pousser les commits directement sur `main`. Ne pas créer de branche et ne pas ouvrir de pull request.
 
 Avant le push, lancer `npm test` et `npm run typecheck`. Après le push, vérifier que le workflow CI sur `main` est vert. S'il échoue, corriger et pousser à nouveau jusqu'à ce qu'il le soit.
+
+## Base Supabase
+
+Quand une modification change la structure de la base Supabase :
+
+- Mettre à jour `supabase/migrations/001_budgets.sql` pour que le fichier décrive l'état complet de la base. Ne pas créer un autre fichier de migration.
+- Dans la réponse, donner le SQL à exécuter sur la base déjà en place. Ce SQL doit pouvoir être collé dans l'éditeur SQL Supabase : il met à jour l'existant sans recréer les tables ni effacer les données.
