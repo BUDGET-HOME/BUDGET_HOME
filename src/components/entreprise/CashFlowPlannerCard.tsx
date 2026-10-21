@@ -12,23 +12,27 @@ import {
   CategoryScale,
   LinearScale,
   BarElement,
+  BarController,
   Title,
   Tooltip,
   Legend,
   PointElement,
   LineElement,
+  LineController,
 } from "chart.js";
-import { Bar, Line } from "react-chartjs-2";
+import { Chart } from "react-chartjs-2";
 
 ChartJS.register(
   CategoryScale,
   LinearScale,
   BarElement,
+  BarController,
   Title,
   Tooltip,
   Legend,
   PointElement,
-  LineElement
+  LineElement,
+  LineController
 );
 
 const CATEGORIES = [
@@ -292,8 +296,6 @@ export default function CashFlowPlannerCard() {
     return monthlyRevenueFromItems - monthlyExpensesFromItems;
   }, [monthlyRevenueFromItems, monthlyExpensesFromItems]);
   const initialBalance = savedData?.initialBalance ?? 0;
-  
-  const [enableARCE, setEnableARCE] = useState(false);
 
   const areEstimate = useMemo(() => {
     if (!freelanceData?.areToggle) return null;
@@ -301,14 +303,14 @@ export default function CashFlowPlannerCard() {
   }, [freelanceData]);
 
   const arcePlan = useMemo(
-    () => (enableARCE && areEstimate
+    () => (areEstimate
       ? arceFromAre(areEstimate, {
           contractEndDate: freelanceData?.contractEndDate,
           secondPayment: freelanceData?.arceSecondPayment !== false,
           microWithoutAcre: freelanceData?.status === "auto" && !freelanceData?.acre,
         })
       : null),
-    [enableARCE, areEstimate, freelanceData],
+    [areEstimate, freelanceData],
   );
 
   const projection = useMemo(
@@ -370,40 +372,43 @@ export default function CashFlowPlannerCard() {
     await saveField("initialBalance", value);
   }, [saveField]);
 
-  const handleToggleARCE = useCallback((enabled: boolean) => {
-    setEnableARCE(enabled);
-  }, []);
-
-  // Chart data
   const chartData = useMemo(() => ({
     labels: months,
     datasets: [
       {
+        type: "line" as const,
         label: "Solde mensuel",
         data: monthlyBalances,
-        borderColor: "rgb(75, 192, 192)",
-        backgroundColor: "rgba(75, 192, 192, 0.2)",
-        tension: 0.1,
-        type: "line" as const,
+        borderColor: "rgb(13, 148, 136)",
+        backgroundColor: "rgb(13, 148, 136)",
+        borderWidth: 2,
+        tension: 0.15,
+        pointRadius: 3,
         yAxisID: "y",
+        order: 0,
       },
       {
+        type: "bar" as const,
         label: "Crédits",
         data: projection.map((row) => row.credits),
-        backgroundColor: "rgba(75, 192, 192, 0.5)",
+        backgroundColor: "rgba(16, 185, 129, 0.75)",
         yAxisID: "y",
+        order: 1,
       },
       {
+        type: "bar" as const,
         label: "Débits",
         data: projection.map((row) => row.debits),
-        backgroundColor: "rgba(255, 99, 132, 0.5)",
+        backgroundColor: "rgba(244, 63, 94, 0.75)",
         yAxisID: "y",
+        order: 1,
       },
     ],
   }), [monthlyBalances, months, projection]);
 
   const chartOptions = useMemo(() => ({
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: { position: "top" as const },
       title: { display: true, text: "Évolution de la trésorerie" },
@@ -411,6 +416,7 @@ export default function CashFlowPlannerCard() {
     scales: {
       y: {
         type: "linear" as const,
+        beginAtZero: true,
         display: true,
         position: "left" as const,
         title: { display: true, text: "Montant (€)" },
@@ -488,35 +494,21 @@ export default function CashFlowPlannerCard() {
         </div>
       </div>
 
-      {/* ARCE Toggle */}
       <div className="bg-purple-50 rounded-lg border border-purple-200 p-4 mb-5">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <label className="relative inline-flex items-center cursor-pointer">
-              <input
-                type="checkbox"
-                checked={enableARCE}
-                onChange={(e) => handleToggleARCE(e.target.checked)}
-                className="sr-only peer"
-              />
-              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-purple-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-purple-600"></div>
-            </label>
-            <div>
-              <h3 className="text-lg font-bold text-purple-900">Simulateur ARCE (France Travail)</h3>
-              <p className="text-sm text-purple-700">
-                Aide à la reprise ou à la création d&apos;entreprise : 60 % des droits ARE restants depuis le 01/07/2023, 45 % avant.
-              </p>
-            </div>
-          </div>
+        <div>
+          <h3 className="text-lg font-bold text-purple-900">Simulateur ARCE (France Travail)</h3>
+          <p className="text-sm text-purple-700">
+            Aide à la reprise ou à la création d&apos;entreprise : 60 % des droits ARE restants depuis le 01/07/2023, 45 % avant.
+          </p>
         </div>
 
-        {enableARCE && !areEstimate && (
+        {!areEstimate && (
           <p className="mt-3 text-sm text-purple-800">
             Activez « Bénéficiaire Chômage (ARE) » dans le simulateur freelance, partie Paramètres Sociaux & Famille, et renseignez le salaire, les primes et l&apos;âge.
           </p>
         )}
 
-        {enableARCE && areEstimate && arcePlan && (
+        {areEstimate && arcePlan && (
           <div className="mt-4 pt-4 border-t border-purple-200 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-purple-900">
             <div>
               <div className="font-semibold text-purple-800">Allocation journalière nette</div>
@@ -877,8 +869,8 @@ export default function CashFlowPlannerCard() {
           </div>
           
           <div className="bg-white rounded-lg border border-slate-200 p-4">
-            <div className="h-96">
-              <Line data={chartData} options={chartOptions} />
+            <div className="relative w-full" style={{ height: 360 }}>
+              <Chart type="bar" data={chartData} options={chartOptions} />
             </div>
           </div>
         </div>
