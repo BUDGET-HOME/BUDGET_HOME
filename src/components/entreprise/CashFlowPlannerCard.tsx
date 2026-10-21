@@ -5,6 +5,7 @@ import { formatEUR } from "@/lib/budget";
 import { useCashFlowData, type CashFlowItem, type CashFlowFrequency } from "@/hooks/useCashFlowData";
 import { CASH_FLOW_AUTOSYNC_KEY } from "@/lib/entreprise-backup";
 import { occursInMonth, openingBalanceWithoutFirstRevenue, projectCashFlow } from "@/lib/cash-flow";
+import { arceCreditsByMonth, arceFromAre, calculateARE } from "@/lib/are";
 import { useFreelanceData } from "@/hooks/useFreelanceData";
 import {
   Chart as ChartJS,
@@ -74,7 +75,6 @@ export default function CashFlowPlannerCard() {
   const [editingItem, setEditingItem] = useState<CashFlowItem | null>(null);
   const [viewMode, setViewMode] = useState<"table" | "gantt" | "chart">("table");
   const [timeRange, setTimeRange] = useState<"month" | "quarter" | "year">("month");
-  const [showARCEForm, setShowARCEForm] = useState(false);
   const [autoSync, setAutoSync] = useState(
     () => typeof window === "undefined" || localStorage.getItem(CASH_FLOW_AUTOSYNC_KEY) !== "0"
   );
@@ -293,33 +293,38 @@ export default function CashFlowPlannerCard() {
   }, [monthlyRevenueFromItems, monthlyExpensesFromItems]);
   const initialBalance = savedData?.initialBalance ?? 0;
   
-  // ARCE state - managed locally only (not persisted to avoid table issues)
   const [enableARCE, setEnableARCE] = useState(false);
-  const [arceParams, setArceParams] = useState({
-    areEligible: true,
-    areDailyAmount: 57.42,
-    areDuration: 365,
-  });
-  
-  // Calculate ARCE amount based on France Travail parameters
-  // ARCE = 45% of remaining ARE rights
-  const arceAmount = useMemo(() => {
-    if (!enableARCE || !arceParams.areEligible) return 0;
-    return Math.round(arceParams.areDailyAmount * arceParams.areDuration * 0.45);
-  }, [enableARCE, arceParams.areEligible, arceParams.areDailyAmount, arceParams.areDuration]);
-  
-  // Total initial balance with ARCE. Le CA du mois n'y est pas inclus.
-  const totalInitialBalance = initialBalance + arceAmount;
+
+  const areEstimate = useMemo(() => {
+    if (!freelanceData?.areToggle) return null;
+    return calculateARE(
+      freelanceData.salaryGross ?? 3500,
+      freelanceData.salaryBonus ?? 0,
+      freelanceData.userAge ?? 35,
+      freelanceData.salaryMonths ?? 12,
+    );
+  }, [freelanceData]);
+
+  const arcePlan = useMemo(
+    () => (enableARCE && areEstimate ? arceFromAre(areEstimate) : null),
+    [enableARCE, areEstimate],
+  );
 
   const projection = useMemo(
-    () => projectCashFlow(items, totalInitialBalance),
-    [items, totalInitialBalance],
+    () => projectCashFlow(
+      items,
+      initialBalance,
+      new Date(),
+      12,
+      arcePlan ? arceCreditsByMonth(arcePlan) : [],
+    ),
+    [items, initialBalance, arcePlan],
   );
   const months = projection.map((row) => row.label);
   const monthlyBalances = projection.map((row) => row.balance);
   const totalCredit = projection.reduce((sum, row) => sum + row.credits, 0);
   const totalDebit = projection.reduce((sum, row) => sum + row.debits, 0);
-  const finalBalance = projection.length > 0 ? projection[projection.length - 1].balance : totalInitialBalance;
+  const finalBalance = projection.length > 0 ? projection[projection.length - 1].balance : initialBalance;
 
   const handleInputChange = useCallback((field: string, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -366,10 +371,6 @@ export default function CashFlowPlannerCard() {
 
   const handleToggleARCE = useCallback((enabled: boolean) => {
     setEnableARCE(enabled);
-  }, []);
-
-  const handleUpdateARCEParams = useCallback((params: typeof arceParams) => {
-    setArceParams(params);
   }, []);
 
   // Chart data
@@ -506,71 +507,29 @@ export default function CashFlowPlannerCard() {
               </p>
             </div>
           </div>
-          {enableARCE && (
-            <button
-              onClick={() => setShowARCEForm(!showARCEForm)}
-              className="bg-purple-600 text-white px-3 py-1 rounded text-sm font-medium hover:bg-purple-700"
-            >
-              {showARCEForm ? "Masquer" : "Configurer"}
-            </button>
-          )}
         </div>
-        
-        {enableARCE && showARCEForm && (
-          <div className="mt-4 pt-4 border-t border-purple-200 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-purple-800 mb-1">
-                Éligible ARE ?
-              </label>
-              <select
-                value={arceParams.areEligible ? "yes" : "no"}
-                onChange={(e) => handleUpdateARCEParams({
-                  ...arceParams,
-                  areEligible: e.target.value === "yes"
-                })}
-                className="w-full rounded-md border border-purple-300 px-3 py-2"
-              >
-                <option value="yes">Oui</option>
-                <option value="no">Non</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-purple-800 mb-1">
-                Allocation journalière (€)
-              </label>
-              <input
-                type="number"
-                value={arceParams.areDailyAmount}
-                onChange={(e) => handleUpdateARCEParams({
-                  ...arceParams,
-                  areDailyAmount: parseFloat(e.target.value) || 0
-                })}
-                className="w-full rounded-md border border-purple-300 px-3 py-2"
-                step="0.01"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-purple-800 mb-1">
-                Durée restante (jours)
-              </label>
-              <input
-                type="number"
-                value={arceParams.areDuration}
-                onChange={(e) => handleUpdateARCEParams({
-                  ...arceParams,
-                  areDuration: parseInt(e.target.value) || 0
-                })}
-                className="w-full rounded-md border border-purple-300 px-3 py-2"
-              />
-            </div>
-          </div>
+
+        {enableARCE && !areEstimate && (
+          <p className="mt-3 text-sm text-purple-800">
+            Activez « Bénéficiaire Chômage (ARE) » dans le simulateur freelance, partie Paramètres Sociaux & Famille, et renseignez le salaire, les primes et l&apos;âge.
+          </p>
         )}
-        
-        {enableARCE && (
-          <div className="mt-3 bg-purple-100 rounded-lg p-3">
-            <div className="flex justify-between items-center">
-              <span className="text-sm font-semibold text-purple-800">Montant ARCE estimé :</span>
-              <span className="text-xl font-bold text-purple-700">{formatEUR(arceAmount)}</span>
+
+        {enableARCE && areEstimate && arcePlan && (
+          <div className="mt-4 pt-4 border-t border-purple-200 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-purple-900">
+            <div>
+              <div className="font-semibold text-purple-800">Allocation journalière</div>
+              <div className="text-lg font-bold">{formatEUR(areEstimate.daily)}</div>
+              <p className="text-purple-700">Durée estimée : {areEstimate.durationMonths} mois</p>
+            </div>
+            <div>
+              <div className="font-semibold text-purple-800">ARCE totale (45 % des droits)</div>
+              <div className="text-lg font-bold">{formatEUR(arcePlan.total)}</div>
+            </div>
+            <div>
+              <div className="font-semibold text-purple-800">Deux versements de 50 %</div>
+              <p>{formatEUR(arcePlan.first)} à la fin du mois 1</p>
+              <p>{formatEUR(arcePlan.second)} six mois plus tard</p>
             </div>
           </div>
         )}
@@ -580,12 +539,7 @@ export default function CashFlowPlannerCard() {
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-5">
         <div className="bg-emerald-50 rounded-lg border border-emerald-100 p-4 text-center">
           <div className="text-sm font-semibold text-emerald-800 mb-1">Solde initial</div>
-          <div className="text-lg font-bold text-emerald-700">{formatEUR(totalInitialBalance)}</div>
-          {enableARCE && (
-            <div className="text-xs text-emerald-600 mt-1">
-              + ARCE : {formatEUR(arceAmount)}
-            </div>
-          )}
+          <div className="text-lg font-bold text-emerald-700">{formatEUR(initialBalance)}</div>
         </div>
         <div className="bg-blue-50 rounded-lg border border-blue-100 p-4 text-center">
           <div className="text-sm font-semibold text-blue-800 mb-1">Crédits sur 12 mois</div>

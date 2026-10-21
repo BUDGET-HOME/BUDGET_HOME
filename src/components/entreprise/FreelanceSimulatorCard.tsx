@@ -3,6 +3,7 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { formatEUR } from "@/lib/budget";
 import { useFreelanceData, type FreelanceSimulatorData } from "@/hooks/useFreelanceData";
+import { calculateARE } from "@/lib/are";
 
 type StatusType = "auto" | "eurl" | "sasu" | "portage";
 
@@ -22,12 +23,6 @@ interface PodiumResult {
   val: number;
   code: StatusType;
   penalty: boolean;
-}
-
-interface AREData {
-  daily: number;
-  monthly: number;
-  duration: number;
 }
 
 export default function FreelanceSimulatorCard() {
@@ -127,23 +122,6 @@ export default function FreelanceSimulatorCard() {
     if (quotient > 82341) { tax += (Math.min(quotient, 177106) - 82341) * 0.41; }
     if (quotient > 177106) { tax += (quotient - 177106) * 0.45; }
     return tax * parts;
-  };
-
-  const calculateARE = (monthlyGross: number, annualBonus: number, age: number, monthsCount: number): AREData => {
-    const annualTotal = (monthlyGross * monthsCount) + annualBonus;
-    const sjr = annualTotal / 365;
-    const formula1 = (sjr * 0.404) + 13.11;
-    const formula2 = sjr * 0.57;
-    let areBrut = Math.max(formula1, formula2);
-    const ceiling = sjr * 0.75;
-    const floor = 31.97;
-    areBrut = Math.min(areBrut, ceiling);
-    areBrut = Math.max(areBrut, floor);
-    const areNetDaily = areBrut * 0.97;
-    let durationMonths = 18;
-    if (age >= 53 && age < 55) durationMonths = 22.5;
-    if (age >= 55) durationMonths = 27;
-    return { daily: areNetDaily, monthly: areNetDaily * 30.42, duration: durationMonths };
   };
 
   const simulateStatus = (status: StatusType, params: {
@@ -310,7 +288,7 @@ export default function FreelanceSimulatorCard() {
       const areData = calculateARE(sGross, sBonus, uAge, sMonths);
       setAreMonthly(money(areData.monthly));
       setAreDaily(money(areData.daily));
-      setAreDuration(`Durée estimée : ${areData.duration} mois`);
+      setAreDuration(`Durée estimée : ${areData.durationMonths} mois`);
     }
 
     const params = { caMois, costs, pctPortage: pctPortageVal, isAcre: isAcreVal, parts };

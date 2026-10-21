@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { arceCreditsByMonth, arceFromAre, calculateARE } from "./are";
 import {
   occursInMonth,
   openingBalanceWithoutFirstRevenue,
@@ -59,6 +60,24 @@ describe("projectCashFlow", () => {
     const month = new Date(2026, 2, 1);
     expect(occursInMonth(item({ amount: 1, type: "debit", frequency: "mensuel", endDate: "2026-02-28" }), month)).toBe(false);
     expect(occursInMonth(item({ amount: 1, type: "debit", frequency: "mensuel", endDate: "2026-03-01" }), month)).toBe(true);
+  });
+});
+
+describe("ARCE", () => {
+  it("calcule l'aide depuis les paramètres ARE puis la verse en deux fois", () => {
+    const are = calculateARE(3500, 0, 38, 12);
+    const plan = arceFromAre(are);
+    expect(plan.first + plan.second).toBe(plan.total);
+    expect(plan.first).toBe(Math.round(plan.total / 2));
+    const credits = arceCreditsByMonth(plan);
+    expect(credits[0]).toBe(plan.first);
+    expect(credits[6]).toBe(plan.second);
+    expect(credits.filter((amount) => amount > 0)).toHaveLength(2);
+
+    const rows = projectCashFlow([], 1000, now, 12, credits);
+    expect(rows[0].balance).toBe(1000 + plan.first);
+    expect(rows[5].balance).toBe(1000 + plan.first);
+    expect(rows[6].balance).toBe(1000 + plan.total);
   });
 });
 

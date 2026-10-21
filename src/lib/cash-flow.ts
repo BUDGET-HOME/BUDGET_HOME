@@ -52,13 +52,14 @@ export function projectCashFlow(
   openingBalance: number,
   now = new Date(),
   monthCount = 12,
+  extraCredits: number[] = [],
 ): MonthCashFlow[] {
   const horizon = monthStart(now);
   let balance = openingBalance;
   const rows: MonthCashFlow[] = [];
   for (let index = 0; index < monthCount; index += 1) {
     const month = addMonths(horizon, index);
-    let credits = 0;
+    let credits = extraCredits[index] ?? 0;
     let debits = 0;
     for (const item of items) {
       if (!occursInMonth(item, month)) continue;
