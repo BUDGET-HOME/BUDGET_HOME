@@ -42,7 +42,7 @@ export default function AnalyseCard({ state, viewMode, setViewMode }: Props) {
   return (
     <section className="budget-card">
       <div className="flex flex-wrap justify-between items-center border-b-2 border-slate-100 pb-2 mb-5 gap-3">
-        <h2 className="text-xl font-bold">3. Équilibre du budget actuel</h2>
+        <h2 className="text-xl font-bold">Équilibre du budget actuel</h2>
         <div className="flex rounded-lg bg-slate-100 p-1">
           <button
             onClick={() => setViewMode("annual")}

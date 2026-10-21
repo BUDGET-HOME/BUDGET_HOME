@@ -74,18 +74,22 @@ export default function BudgetApp() {
         </div>
       )}
       <FitFrame>
-        <div className="grid grid-cols-4 items-start gap-2">
-          <div className="col-span-2 min-w-0">
-            <LoanCard state={state} update={update} />
+        <div className="grid grid-cols-2 items-start gap-2">
+          <div className="min-w-0">
             <RevenusCard state={state} update={update} />
+            <AnalyseCard state={state} viewMode={viewMode} setViewMode={setViewMode} />
           </div>
           <div className="min-w-0">
             <DepensesForm state={state} update={update} />
             <ChargesTable state={state} update={update} />
           </div>
-          <div className="min-w-0">
-            <AnalyseCard state={state} viewMode={viewMode} setViewMode={setViewMode} />
-            <ChartsCard state={state} />
+          <div className="col-span-2 grid grid-cols-2 items-start gap-2">
+            <div className="min-w-0">
+              <LoanCard state={state} update={update} />
+            </div>
+            <div className="min-w-0">
+              <ChartsCard state={state} />
+            </div>
           </div>
         </div>
       </FitFrame>

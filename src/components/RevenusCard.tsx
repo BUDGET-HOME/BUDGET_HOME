@@ -16,7 +16,7 @@ export default function RevenusCard({ state, update }: Props) {
   return (
     <section className="budget-card">
       <h2 className="text-xl font-bold border-b-2 border-slate-100 pb-2 mb-5">
-        1. Revenus & Profils
+        Revenus & Profils
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         <div>

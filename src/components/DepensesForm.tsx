@@ -44,7 +44,7 @@ export default function DepensesForm({ state, update }: Props) {
   return (
     <section className="budget-card no-print">
       <h2 className="text-xl font-bold border-b-2 border-slate-100 pb-2 mb-5">
-        2. Ajouter une dépense
+        Ajouter une dépense
       </h2>
       {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
