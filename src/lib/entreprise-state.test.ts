@@ -81,4 +81,27 @@ describe("état entreprise", () => {
     expect(again.freelance.tjm).toBe(0);
     expect(again.freelance.acre).toBe(false);
   });
+
+  it("conserve les paramètres ARE et les dates", () => {
+    const state = normalizeEntreprise({
+      freelance: {
+        areWorkedDays: 400,
+        contractEndDate: "2024-05-01",
+        arceSecondPayment: false,
+        areInactivityDays: 0,
+      },
+    });
+    const backup = toEntrepriseBackup(state, "2026-10-21T00:00:00.000Z");
+    expect(backup.freelance).toMatchObject({
+      are_worked_days: 400,
+      contract_end_date: "2024-05-01",
+      arce_second_payment: false,
+      are_inactivity_days: 0,
+    });
+    const again = normalizeEntreprise(backup);
+    expect(again.freelance.areWorkedDays).toBe(400);
+    expect(again.freelance.contractEndDate).toBe("2024-05-01");
+    expect(again.freelance.arceSecondPayment).toBe(false);
+    expect(again.freelance.activityStartDate).toBe("");
+  });
 });

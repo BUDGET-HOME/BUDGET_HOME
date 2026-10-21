@@ -5,7 +5,7 @@ import { formatEUR } from "@/lib/budget";
 import { useCashFlowData, type CashFlowItem, type CashFlowFrequency } from "@/hooks/useCashFlowData";
 import { CASH_FLOW_AUTOSYNC_KEY } from "@/lib/entreprise-backup";
 import { occursInMonth, openingBalanceWithoutFirstRevenue, projectCashFlow } from "@/lib/cash-flow";
-import { arceCreditsByMonth, arceFromAre, calculateARE } from "@/lib/are";
+import { arceCreditsByMonth, arceFromAre, areInputFromFreelance, estimateAre } from "@/lib/are";
 import { useFreelanceData } from "@/hooks/useFreelanceData";
 import {
   Chart as ChartJS,
@@ -297,17 +297,18 @@ export default function CashFlowPlannerCard() {
 
   const areEstimate = useMemo(() => {
     if (!freelanceData?.areToggle) return null;
-    return calculateARE(
-      freelanceData.salaryGross ?? 3500,
-      freelanceData.salaryBonus ?? 0,
-      freelanceData.userAge ?? 35,
-      freelanceData.salaryMonths ?? 12,
-    );
+    return estimateAre(areInputFromFreelance(freelanceData));
   }, [freelanceData]);
 
   const arcePlan = useMemo(
-    () => (enableARCE && areEstimate ? arceFromAre(areEstimate) : null),
-    [enableARCE, areEstimate],
+    () => (enableARCE && areEstimate
+      ? arceFromAre(areEstimate, {
+          contractEndDate: freelanceData?.contractEndDate,
+          secondPayment: freelanceData?.arceSecondPayment !== false,
+          microWithoutAcre: freelanceData?.status === "auto" && !freelanceData?.acre,
+        })
+      : null),
+    [enableARCE, areEstimate, freelanceData],
   );
 
   const projection = useMemo(
@@ -503,7 +504,7 @@ export default function CashFlowPlannerCard() {
             <div>
               <h3 className="text-lg font-bold text-purple-900">Simulateur ARCE (France Travail)</h3>
               <p className="text-sm text-purple-700">
-                Aide à la Reprise ou Création d'Entreprise (45% des droits ARE restants)
+                Aide à la reprise ou à la création d&apos;entreprise : 60 % des droits ARE restants depuis le 01/07/2023, 45 % avant.
               </p>
             </div>
           </div>
@@ -518,18 +519,29 @@ export default function CashFlowPlannerCard() {
         {enableARCE && areEstimate && arcePlan && (
           <div className="mt-4 pt-4 border-t border-purple-200 grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-purple-900">
             <div>
-              <div className="font-semibold text-purple-800">Allocation journalière</div>
+              <div className="font-semibold text-purple-800">Allocation journalière nette</div>
               <div className="text-lg font-bold">{formatEUR(areEstimate.daily)}</div>
-              <p className="text-purple-700">Durée estimée : {areEstimate.durationMonths} mois</p>
+              <p className="text-purple-700">
+                {areEstimate.eligible
+                  ? `${areEstimate.durationDays} jours (${areEstimate.durationMonths} mois), ${areEstimate.remainingDays} jours restants`
+                  : areEstimate.reason}
+              </p>
             </div>
             <div>
-              <div className="font-semibold text-purple-800">ARCE totale (45 % des droits)</div>
-              <div className="text-lg font-bold">{formatEUR(arcePlan.total)}</div>
+              <div className="font-semibold text-purple-800">
+                ARCE {Math.round(arcePlan.rate * 100)} % des droits restants
+              </div>
+              <div className="text-lg font-bold">{formatEUR(arcePlan.capital)}</div>
+              {arcePlan.blockedReason && <p className="text-purple-700">{arcePlan.blockedReason}</p>}
             </div>
             <div>
               <div className="font-semibold text-purple-800">Deux versements de 50 %</div>
               <p>{formatEUR(arcePlan.first)} à la fin du mois 1</p>
-              <p>{formatEUR(arcePlan.second)} six mois plus tard</p>
+              <p>
+                {arcePlan.second > 0
+                  ? `${formatEUR(arcePlan.second)} six mois plus tard`
+                  : "Second versement non retenu"}
+              </p>
             </div>
           </div>
         )}

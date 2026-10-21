@@ -31,6 +31,21 @@ export interface FreelanceData {
   salaryMonths: number;
   userAge: number;
   useSpouseMutuelle: boolean;
+  activityStartDate: string;
+  contractEndDate: string;
+  areWorkedDays: number;
+  areInactivityDays: number;
+  areExcludedDays: number;
+  arePartTime: number;
+  arePaidLeave: number;
+  areSeverance: number;
+  areRightsUsed: number;
+  areOverseas: boolean;
+  areIndividualAgreement: boolean;
+  areReducedMinimum: boolean;
+  areEconomicLayoff: boolean;
+  areWaitingServed: boolean;
+  arceSecondPayment: boolean;
 }
 
 export interface EntrepriseState {
@@ -61,6 +76,21 @@ export const DEFAULT_FREELANCE: FreelanceData = {
   salaryMonths: 12,
   userAge: 35,
   useSpouseMutuelle: false,
+  activityStartDate: "",
+  contractEndDate: "",
+  areWorkedDays: 730,
+  areInactivityDays: 0,
+  areExcludedDays: 0,
+  arePartTime: 100,
+  arePaidLeave: 0,
+  areSeverance: 0,
+  areRightsUsed: 0,
+  areOverseas: false,
+  areIndividualAgreement: false,
+  areReducedMinimum: false,
+  areEconomicLayoff: false,
+  areWaitingServed: false,
+  arceSecondPayment: true,
 };
 
 const EMPTY_CASH_FLOW: CashFlowBackup = { items: [], initialBalance: 0 };
@@ -99,6 +129,21 @@ const FREELANCE_FIELDS: {
   { camel: "salaryMonths", snake: "salary_months", kind: "number" },
   { camel: "userAge", snake: "user_age", kind: "number" },
   { camel: "useSpouseMutuelle", snake: "use_spouse_mutuelle", kind: "boolean" },
+  { camel: "activityStartDate", snake: "activity_start_date", kind: "string" },
+  { camel: "contractEndDate", snake: "contract_end_date", kind: "string" },
+  { camel: "areWorkedDays", snake: "are_worked_days", kind: "number" },
+  { camel: "areInactivityDays", snake: "are_inactivity_days", kind: "number" },
+  { camel: "areExcludedDays", snake: "are_excluded_days", kind: "number" },
+  { camel: "arePartTime", snake: "are_part_time", kind: "number" },
+  { camel: "arePaidLeave", snake: "are_paid_leave", kind: "number" },
+  { camel: "areSeverance", snake: "are_severance", kind: "number" },
+  { camel: "areRightsUsed", snake: "are_rights_used", kind: "number" },
+  { camel: "areOverseas", snake: "are_overseas", kind: "boolean" },
+  { camel: "areIndividualAgreement", snake: "are_individual_agreement", kind: "boolean" },
+  { camel: "areReducedMinimum", snake: "are_reduced_minimum", kind: "boolean" },
+  { camel: "areEconomicLayoff", snake: "are_economic_layoff", kind: "boolean" },
+  { camel: "areWaitingServed", snake: "are_waiting_served", kind: "boolean" },
+  { camel: "arceSecondPayment", snake: "arce_second_payment", kind: "boolean" },
 ];
 
 export function defaultEntreprise(): EntrepriseState {
@@ -133,8 +178,12 @@ export function freelanceFromRecord(raw: unknown): FreelanceData {
       next[field.camel] = finiteNumber(value, DEFAULT_FREELANCE[field.camel] as number) as never;
     } else if (field.kind === "boolean") {
       next[field.camel] = booleanValue(value, DEFAULT_FREELANCE[field.camel] as boolean) as never;
-    } else if (typeof value === "string" && value) {
-      next.status = value;
+    } else if (typeof value === "string") {
+      if (field.camel === "status") {
+        if (value) next.status = value;
+      } else {
+        next[field.camel] = value as never;
+      }
     }
   }
   return next;

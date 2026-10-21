@@ -26,6 +26,21 @@ const FREELANCE_FIELDS = [
   "salary_months",
   "user_age",
   "use_spouse_mutuelle",
+  "activity_start_date",
+  "contract_end_date",
+  "are_worked_days",
+  "are_inactivity_days",
+  "are_excluded_days",
+  "are_part_time",
+  "are_paid_leave",
+  "are_severance",
+  "are_rights_used",
+  "are_overseas",
+  "are_individual_agreement",
+  "are_reduced_minimum",
+  "are_economic_layoff",
+  "are_waiting_served",
+  "arce_second_payment",
 ] as const;
 
 const GANTT_FIELDS = ["tasks"] as const;

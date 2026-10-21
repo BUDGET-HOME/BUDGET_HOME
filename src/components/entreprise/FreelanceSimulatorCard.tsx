@@ -3,7 +3,52 @@
 import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { formatEUR } from "@/lib/budget";
 import { useFreelanceData, type FreelanceSimulatorData } from "@/hooks/useFreelanceData";
-import { calculateARE } from "@/lib/are";
+import { acreDirectorExemption, acreDirectorWindowOpen, describeMicroAcre } from "@/lib/acre";
+import { arceFromAre, areInputFromFreelance, estimateAre } from "@/lib/are";
+
+function FieldTip({ label, tip, children }: { label: string; tip: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+        <label className="block text-sm text-gray-500">{label}</label>
+        <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <div className="tooltip-content">{tip}</div>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+const fieldClass = "w-full p-2 text-sm border border-gray-200 rounded text-right bg-white";
+
+function SocialCheck({
+  label,
+  tip,
+  checked,
+  onToggle,
+}: {
+  label: string;
+  tip: string;
+  checked: boolean;
+  onToggle: (value: boolean) => void;
+}) {
+  return (
+    <label className="flex items-center justify-between gap-2 bg-white border border-blue-100 rounded px-2 py-1 cursor-pointer">
+      <span className="text-sm text-slate-700 tooltip-trigger relative">
+        {label}
+        <span className="tooltip-content">{tip}</span>
+      </span>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={(event) => onToggle(event.target.checked)}
+        className="h-4 w-4"
+      />
+    </label>
+  );
+}
 
 type StatusType = "auto" | "eurl" | "sasu" | "portage";
 
@@ -57,6 +102,21 @@ export default function FreelanceSimulatorCard() {
   const salaryMonths = savedData?.salaryMonths ?? 12;
   const userAge = savedData?.userAge ?? 35;
   const useSpouseMutuelle = savedData?.useSpouseMutuelle ?? false;
+  const activityStartDate = savedData?.activityStartDate ?? "";
+  const contractEndDate = savedData?.contractEndDate ?? "";
+  const areWorkedDays = savedData?.areWorkedDays ?? 730;
+  const areInactivityDays = savedData?.areInactivityDays ?? 0;
+  const areExcludedDays = savedData?.areExcludedDays ?? 0;
+  const arePartTime = savedData?.arePartTime ?? 100;
+  const arePaidLeave = savedData?.arePaidLeave ?? 0;
+  const areSeverance = savedData?.areSeverance ?? 0;
+  const areRightsUsed = savedData?.areRightsUsed ?? 0;
+  const areOverseas = savedData?.areOverseas ?? false;
+  const areIndividualAgreement = savedData?.areIndividualAgreement ?? false;
+  const areReducedMinimum = savedData?.areReducedMinimum ?? false;
+  const areEconomicLayoff = savedData?.areEconomicLayoff ?? false;
+  const areWaitingServed = savedData?.areWaitingServed ?? false;
+  const arceSecondPayment = savedData?.arceSecondPayment ?? true;
 
   // Local state for inputs (not auto-saved)
   const [localStatus, setLocalStatus] = useState<StatusType>(status as StatusType);
@@ -80,6 +140,21 @@ export default function FreelanceSimulatorCard() {
   const [localSalaryMonths, setLocalSalaryMonths] = useState<number>(salaryMonths);
   const [localUserAge, setLocalUserAge] = useState<number>(userAge);
   const [localUseSpouseMutuelle, setLocalUseSpouseMutuelle] = useState<boolean>(useSpouseMutuelle);
+  const [localActivityStart, setLocalActivityStart] = useState<string>(activityStartDate);
+  const [localContractEnd, setLocalContractEnd] = useState<string>(contractEndDate);
+  const [localAreWorkedDays, setLocalAreWorkedDays] = useState<number>(areWorkedDays);
+  const [localAreInactivityDays, setLocalAreInactivityDays] = useState<number>(areInactivityDays);
+  const [localAreExcludedDays, setLocalAreExcludedDays] = useState<number>(areExcludedDays);
+  const [localArePartTime, setLocalArePartTime] = useState<number>(arePartTime);
+  const [localArePaidLeave, setLocalArePaidLeave] = useState<number>(arePaidLeave);
+  const [localAreSeverance, setLocalAreSeverance] = useState<number>(areSeverance);
+  const [localAreRightsUsed, setLocalAreRightsUsed] = useState<number>(areRightsUsed);
+  const [localAreOverseas, setLocalAreOverseas] = useState<boolean>(areOverseas);
+  const [localAreIndividualAgreement, setLocalAreIndividualAgreement] = useState<boolean>(areIndividualAgreement);
+  const [localAreReducedMinimum, setLocalAreReducedMinimum] = useState<boolean>(areReducedMinimum);
+  const [localAreEconomicLayoff, setLocalAreEconomicLayoff] = useState<boolean>(areEconomicLayoff);
+  const [localAreWaitingServed, setLocalAreWaitingServed] = useState<boolean>(areWaitingServed);
+  const [localArceSecondPayment, setLocalArceSecondPayment] = useState<boolean>(arceSecondPayment);
 
   // Sync local state with saved data when it changes
   useEffect(() => {
@@ -105,6 +180,21 @@ export default function FreelanceSimulatorCard() {
       setLocalSalaryMonths(savedData.salaryMonths ?? 12);
       setLocalUserAge(savedData.userAge ?? 35);
       setLocalUseSpouseMutuelle(savedData.useSpouseMutuelle ?? false);
+      setLocalActivityStart(savedData.activityStartDate ?? "");
+      setLocalContractEnd(savedData.contractEndDate ?? "");
+      setLocalAreWorkedDays(savedData.areWorkedDays ?? 730);
+      setLocalAreInactivityDays(savedData.areInactivityDays ?? 0);
+      setLocalAreExcludedDays(savedData.areExcludedDays ?? 0);
+      setLocalArePartTime(savedData.arePartTime ?? 100);
+      setLocalArePaidLeave(savedData.arePaidLeave ?? 0);
+      setLocalAreSeverance(savedData.areSeverance ?? 0);
+      setLocalAreRightsUsed(savedData.areRightsUsed ?? 0);
+      setLocalAreOverseas(savedData.areOverseas ?? false);
+      setLocalAreIndividualAgreement(savedData.areIndividualAgreement ?? false);
+      setLocalAreReducedMinimum(savedData.areReducedMinimum ?? false);
+      setLocalAreEconomicLayoff(savedData.areEconomicLayoff ?? false);
+      setLocalAreWaitingServed(savedData.areWaitingServed ?? false);
+      setLocalArceSecondPayment(savedData.arceSecondPayment ?? true);
     }
   }, [savedData]);
 
@@ -124,12 +214,21 @@ export default function FreelanceSimulatorCard() {
     return tax * parts;
   };
 
+  const directorNet = (marge: number, chargeOnNet: number, isAcre: boolean, activityStart: string) => {
+    if (marge <= 0) return { netAvantIR: marge, exemption: 0 };
+    const annualWithout = marge / (1 + chargeOnNet) * 12;
+    const exemption = acreDirectorExemption(isAcre, annualWithout, activityStart);
+    const netAvantIR = marge / (1 + chargeOnNet * (1 - exemption));
+    return { netAvantIR, exemption };
+  };
+
   const simulateStatus = (status: StatusType, params: {
     caMois: number;
     costs: { ret: number; lld: number; fuel: number; mutuelle: number; bank: number; acct: number; meals: number; tel: number; tech: number };
     pctPortage: number;
     isAcre: boolean;
     parts: number;
+    activityStart: string;
   }): SimulationResult => {
     const caMois = params.caMois;
     const parts = params.parts;
@@ -141,8 +240,8 @@ export default function FreelanceSimulatorCard() {
     let net = 0;
 
     if (status === 'auto') {
-      const tauxUrssaf = params.isAcre ? 11.0 : 21.2;
-      taxes = caMois * (tauxUrssaf / 100);
+      const micro = describeMicroAcre(params.isAcre, params.activityStart);
+      taxes = caMois * (micro.rate / 100);
       const baseImposable = (caMois * 12) * 0.66;
       ir = estimateIR(baseImposable, parts) / 12;
       deductible = 0;
@@ -152,7 +251,7 @@ export default function FreelanceSimulatorCard() {
       deductible = commonCosts + params.costs.acct + CFE_LISSEE;
       nonDeductible = 0;
       const marge = caMois - deductible;
-      const netAvantIR = marge / 1.45;
+      const { netAvantIR } = directorNet(marge, 0.45, params.isAcre, params.activityStart);
       taxes = marge - netAvantIR;
       ir = estimateIR(netAvantIR * 12, parts) / 12;
       net = netAvantIR - ir;
@@ -160,7 +259,7 @@ export default function FreelanceSimulatorCard() {
       deductible = commonCosts + params.costs.acct + CFE_LISSEE;
       nonDeductible = 0;
       const marge = caMois - deductible;
-      const netAvantIR = marge / 1.82;
+      const { netAvantIR } = directorNet(marge, 0.82, params.isAcre, params.activityStart);
       taxes = marge - netAvantIR;
       ir = estimateIR(netAvantIR * 12, parts) / 12;
       net = netAvantIR - ir;
@@ -203,6 +302,21 @@ export default function FreelanceSimulatorCard() {
       case 'salaryMonths': setLocalSalaryMonths(value as number); break;
       case 'userAge': setLocalUserAge(value as number); break;
       case 'useSpouseMutuelle': setLocalUseSpouseMutuelle(value as boolean); break;
+      case 'activityStartDate': setLocalActivityStart(value as string); break;
+      case 'contractEndDate': setLocalContractEnd(value as string); break;
+      case 'areWorkedDays': setLocalAreWorkedDays(value as number); break;
+      case 'areInactivityDays': setLocalAreInactivityDays(value as number); break;
+      case 'areExcludedDays': setLocalAreExcludedDays(value as number); break;
+      case 'arePartTime': setLocalArePartTime(value as number); break;
+      case 'arePaidLeave': setLocalArePaidLeave(value as number); break;
+      case 'areSeverance': setLocalAreSeverance(value as number); break;
+      case 'areRightsUsed': setLocalAreRightsUsed(value as number); break;
+      case 'areOverseas': setLocalAreOverseas(value as boolean); break;
+      case 'areIndividualAgreement': setLocalAreIndividualAgreement(value as boolean); break;
+      case 'areReducedMinimum': setLocalAreReducedMinimum(value as boolean); break;
+      case 'areEconomicLayoff': setLocalAreEconomicLayoff(value as boolean); break;
+      case 'areWaitingServed': setLocalAreWaitingServed(value as boolean); break;
+      case 'arceSecondPayment': setLocalArceSecondPayment(value as boolean); break;
     }
   }, []);
 
@@ -237,6 +351,8 @@ export default function FreelanceSimulatorCard() {
   const [areMonthly, setAreMonthly] = useState<string>("0 €");
   const [areDaily, setAreDaily] = useState<string>("0 €");
   const [areDuration, setAreDuration] = useState<string>("Durée : 18 mois");
+  const [areBreakdown, setAreBreakdown] = useState<string>("");
+  const [arceBreakdown, setArceBreakdown] = useState<string>("");
   const [verdictTitle, setVerdictTitle] = useState<string>("Analyse en cours...");
   const [verdictText, setVerdictText] = useState<string>("Analyse en cours...");
 
@@ -279,19 +395,48 @@ export default function FreelanceSimulatorCard() {
     const pctPortageVal = localPctPortage;
     const isAcreVal = localAcre;
 
-    // ARE Logic
     if (localAreToggle) {
-      const sGross = localSalaryGross;
-      const sBonus = localSalaryBonus;
-      const uAge = localUserAge;
-      const sMonths = localSalaryMonths;
-      const areData = calculateARE(sGross, sBonus, uAge, sMonths);
+      const areData = estimateAre(areInputFromFreelance({
+        salaryGross: localSalaryGross,
+        salaryBonus: localSalaryBonus,
+        salaryMonths: localSalaryMonths,
+        userAge: localUserAge,
+        areWorkedDays: localAreWorkedDays,
+        areInactivityDays: localAreInactivityDays,
+        areExcludedDays: localAreExcludedDays,
+        arePartTime: localArePartTime,
+        areOverseas: localAreOverseas,
+        areIndividualAgreement: localAreIndividualAgreement,
+        areReducedMinimum: localAreReducedMinimum,
+        arePaidLeave: localArePaidLeave,
+        areSeverance: localAreSeverance,
+        areEconomicLayoff: localAreEconomicLayoff,
+        areWaitingServed: localAreWaitingServed,
+        areRightsUsed: localAreRightsUsed,
+      }));
+      const plan = arceFromAre(areData, {
+        contractEndDate: localContractEnd,
+        secondPayment: localArceSecondPayment,
+        microWithoutAcre: localStatus === "auto" && !localAcre,
+      });
       setAreMonthly(money(areData.monthly));
       setAreDaily(money(areData.daily));
-      setAreDuration(`Durée estimée : ${areData.durationMonths} mois`);
+      setAreDuration(areData.eligible
+        ? `${areData.durationDays} jours (${areData.durationMonths} mois)`
+        : areData.reason);
+      setAreBreakdown(areData.eligible
+        ? `SJR ${money(areData.sjr)} · brute ${money(areData.dailyGross)} · nette ${money(areData.daily)} · ${areData.remainingDays} j restants`
+        : "");
+      const deferDays = Math.round(areData.deferSeveranceDays + areData.deferLeaveDays + areData.waitingDays);
+      setArceBreakdown(plan.blockedReason
+        ? plan.blockedReason
+        : `ARCE ${Math.round(plan.rate * 100)} % : ${money(plan.capital)} (${money(plan.first)} fin de mois 1${plan.second > 0 ? `, ${money(plan.second)} à +6 mois` : ", second versement non retenu"}). Départ de l'ARE repoussé de ${deferDays} j.`);
+    } else {
+      setAreBreakdown("");
+      setArceBreakdown("");
     }
 
-    const params = { caMois, costs, pctPortage: pctPortageVal, isAcre: isAcreVal, parts };
+    const params = { caMois, costs, pctPortage: pctPortageVal, isAcre: isAcreVal, parts, activityStart: localActivityStart };
 
     const currentSim = simulateStatus(localStatus, params);
 
@@ -318,14 +463,23 @@ export default function FreelanceSimulatorCard() {
 
     if (localStatus === 'auto') {
       setRetirementNote("Payé de votre poche (après impôts et charges)");
-      const tauxUrssaf = isAcreVal ? 11.0 : 21.2;
-      setAppliedRateLabel(`${tauxUrssaf}% (ACRE: ${isAcreVal ? 'OUI' : 'NON'})`);
-    } else if (localStatus === 'eurl') {
+      setAppliedRateLabel(describeMicroAcre(isAcreVal, localActivityStart).label);
+    } else if (localStatus === 'eurl' || localStatus === 'sasu') {
       setRetirementNote("Déductible - Réduit vos charges");
-      setAppliedRateLabel("~45% sur Net (Régime TNS)");
-    } else if (localStatus === 'sasu') {
-      setRetirementNote("Déductible - Réduit vos charges");
-      setAppliedRateLabel("~82% sur Net (Régime Salarié)");
+      const chargeOnNet = localStatus === "eurl" ? 0.45 : 0.82;
+      const deductiblePreview = Object.values(costs).reduce((sum, value) => sum + value, 0) + CFE_LISSEE;
+      const annualWithout = Math.max(0, caMois - deductiblePreview) / (1 + chargeOnNet) * 12;
+      const exemption = caMois > deductiblePreview
+        ? acreDirectorExemption(isAcreVal, annualWithout, localActivityStart)
+        : 0;
+      const base = localStatus === "eurl" ? "~45 % sur le net (TNS)" : "~82 % sur le net (salarié)";
+      if (exemption > 0) {
+        setAppliedRateLabel(`${base}, ACRE −${Math.round(exemption * 100)} %`);
+      } else if (isAcreVal && !acreDirectorWindowOpen(localActivityStart, new Date())) {
+        setAppliedRateLabel(`ACRE terminée — ${base}`);
+      } else {
+        setAppliedRateLabel(base);
+      }
     } else if (localStatus === 'portage') {
       setRetirementNote("Déductible - Réduit vos charges");
       setAppliedRateLabel("Charges Salariales + Patronales");
@@ -406,7 +560,11 @@ export default function FreelanceSimulatorCard() {
   }, [
     localStatus, localTjm, localDays, localCostRetirement, localCostLld, localCostFuel, localCostMutuelle,
     localCostBankIns, localCostAccountant, localPctPortage, localCostMeals, localCostTelecom, localCostTech,
-    localAcre, localFiscalParts, localAreToggle, localSalaryGross, localSalaryBonus, localSalaryMonths, localUserAge
+    localAcre, localFiscalParts, localAreToggle, localSalaryGross, localSalaryBonus, localSalaryMonths, localUserAge,
+    localUseSpouseMutuelle, localActivityStart, localContractEnd, localAreWorkedDays, localAreInactivityDays,
+    localAreExcludedDays, localArePartTime, localArePaidLeave, localAreSeverance, localAreRightsUsed,
+    localAreOverseas, localAreIndividualAgreement, localAreReducedMinimum, localAreEconomicLayoff,
+    localAreWaitingServed, localArceSecondPayment
   ]);
 
   useEffect(() => {
@@ -442,7 +600,7 @@ export default function FreelanceSimulatorCard() {
       observer.disconnect();
       window.removeEventListener("resize", apply);
     };
-  }, [dataLoading, localAreToggle, headerCA, superNet, verdictText, caMensuel]);
+  }, [dataLoading, localAreToggle, headerCA, superNet, verdictText, caMensuel, areDuration, areBreakdown]);
 
   if (dataLoading) {
     return (
@@ -582,7 +740,7 @@ export default function FreelanceSimulatorCard() {
                     <svg className="w-3 h-3 text-red-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    <div className="tooltip-content">Aide aux Créateurs : Exonération partielle de charges sociales (-50%) la première année (sous conditions).</div>
+                    <div className="tooltip-content">Micro : 10,6 % avant le 01/07/2026, puis 15,9 % jusqu&apos;à la fin du 3e trimestre civil suivant le début. Dirigeant : −25 % des cotisations si le revenu annuel est inférieur ou égal à 36 045 €, puis dégressif jusqu&apos;à 48 060 €, pendant 12 mois.</div>
                   </div>
                   <div className="relative inline-block w-8 align-middle select-none">
                     <input
@@ -598,6 +756,16 @@ export default function FreelanceSimulatorCard() {
                     <label className="toggle-label block overflow-hidden h-4 rounded-full bg-gray-300 cursor-pointer" />
                   </div>
                 </div>
+                <label className="block text-sm text-red-800 mt-2">Début d&apos;activité</label>
+                <input
+                  type="date"
+                  value={localActivityStart}
+                  onChange={(event) => {
+                    handleChange("activityStartDate", event.target.value);
+                    handleSave("activityStartDate", event.target.value);
+                  }}
+                  className="w-full p-1 text-sm bg-white border border-red-200 rounded text-red-900"
+                />
               </div>
 
               <div className="bg-blue-50 p-2 rounded border border-blue-100 relative">
@@ -652,85 +820,63 @@ export default function FreelanceSimulatorCard() {
             </div>
 
             {localAreToggle && (
-              <div className="space-y-3 bg-blue-50/50 p-3 rounded-lg border border-blue-100">
+              <div className="space-y-2 bg-blue-50/50 p-3 rounded-lg border border-blue-100">
                 <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                      <label className="block text-sm text-gray-500">Salaire Brut Mensuel</label>
-                      <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <div className="tooltip-content">Votre ancien salaire brut mensuel moyen, base de calcul de vos indemnités.</div>
-                    </div>
-                    <input
-                      type="number"
-                      value={localSalaryGross}
-                      onChange={(e) => handleChange('salaryGross', parseFloat(e.target.value) || 0)}
-                      onBlur={() => handleSave('salaryGross', localSalaryGross)}
-                      onKeyDown={(e) => handleKeyDown('salaryGross', localSalaryGross, e)}
-                      className="w-full p-2 text-sm border border-gray-200 rounded text-right"
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                      <label className="block text-sm text-gray-500">Sur combien de mois</label>
-                      <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <div className="tooltip-content">Si vous aviez un 13ème ou 14ème mois, cela augmente le Salaire Journalier de Référence (SJR).</div>
-                    </div>
-                    <select
-                      value={localSalaryMonths}
-                      onChange={(e) => {
-                        const value = parseFloat(e.target.value) || 12;
-                        handleChange('salaryMonths', value);
-                        handleSave('salaryMonths', value);
-                      }}
-                      onBlur={() => handleSave('salaryMonths', localSalaryMonths)}
-                      className="w-full p-2 text-sm border border-gray-200 rounded text-right bg-white"
-                    >
+                  <FieldTip label="Salaire brut mensuel" tip="Salaire brut mensuel moyen. Plafonné à 16 020 € pour le SJR.">
+                    <input type="number" value={localSalaryGross} onChange={(e) => handleChange("salaryGross", parseFloat(e.target.value) || 0)} onBlur={() => handleSave("salaryGross", localSalaryGross)} onKeyDown={(e) => handleKeyDown("salaryGross", localSalaryGross, e)} className={fieldClass} />
+                  </FieldTip>
+                  <FieldTip label="Mois de paie" tip="12, 13 ou 14 mois de salaire dans l'année. Ce n'est pas la durée d'affiliation.">
+                    <select value={localSalaryMonths} onChange={(e) => { const value = parseFloat(e.target.value) || 12; handleChange("salaryMonths", value); handleSave("salaryMonths", value); }} className={fieldClass}>
                       <option value="12">12 mois</option>
                       <option value="13">13 mois</option>
-                      <option value="13.5">13.5</option>
+                      <option value="13.5">13,5 mois</option>
                       <option value="14">14 mois</option>
                     </select>
-                  </div>
+                  </FieldTip>
+                  <FieldTip label="Primes sur la période" tip="Total des primes brutes perçues pendant les jours travaillés. Elles entrent dans le salaire de référence.">
+                    <input type="number" value={localSalaryBonus} onChange={(e) => handleChange("salaryBonus", parseFloat(e.target.value) || 0)} onBlur={() => handleSave("salaryBonus", localSalaryBonus)} onKeyDown={(e) => handleKeyDown("salaryBonus", localSalaryBonus, e)} className={fieldClass} />
+                  </FieldTip>
+                  <FieldTip label="Âge en fin de contrat" tip="Avant 55 ans : 18 mois maximum. 55 ou 56 ans : 22,5 mois. À partir de 57 ans : 27 mois.">
+                    <input type="number" value={localUserAge} onChange={(e) => handleChange("userAge", parseFloat(e.target.value) || 0)} onBlur={() => handleSave("userAge", localUserAge)} onKeyDown={(e) => handleKeyDown("userAge", localUserAge, e)} className={fieldClass} />
+                  </FieldTip>
+                  <FieldTip label="Jours travaillés" tip="Jours sous contrat sur la période de référence (24 mois, ou 36 mois à partir de 55 ans). 730 jours donnent le plafond de 18 mois. Minimum d'ouverture : 130 jours.">
+                    <input type="number" value={localAreWorkedDays} onChange={(e) => handleChange("areWorkedDays", parseFloat(e.target.value) || 0)} onBlur={() => handleSave("areWorkedDays", localAreWorkedDays)} onKeyDown={(e) => handleKeyDown("areWorkedDays", localAreWorkedDays, e)} className={fieldClass} />
+                  </FieldTip>
+                  <FieldTip label="Jours non travaillés" tip="Intervalles entre contrats, retenus dans la limite de 70 % des jours travaillés. Ils allongent la durée et entrent au dénominateur du SJR.">
+                    <input type="number" value={localAreInactivityDays} onChange={(e) => handleChange("areInactivityDays", parseFloat(e.target.value) || 0)} onBlur={() => handleSave("areInactivityDays", localAreInactivityDays)} onKeyDown={(e) => handleKeyDown("areInactivityDays", localAreInactivityDays, e)} className={fieldClass} />
+                  </FieldTip>
+                  <FieldTip label="Jours exclus" tip="Maladie de plus de 15 jours, maternité, accident du travail ou formation, à soustraire des jours retenus.">
+                    <input type="number" value={localAreExcludedDays} onChange={(e) => handleChange("areExcludedDays", parseFloat(e.target.value) || 0)} onBlur={() => handleSave("areExcludedDays", localAreExcludedDays)} onKeyDown={(e) => handleKeyDown("areExcludedDays", localAreExcludedDays, e)} className={fieldClass} />
+                  </FieldTip>
+                  <FieldTip label="Temps partiel (%)" tip="100 % = temps plein. Un temps partiel réduit la partie fixe de 13,18 € et l'allocation minimale de 32,13 €.">
+                    <input type="number" min={1} max={100} value={localArePartTime} onChange={(e) => handleChange("arePartTime", parseFloat(e.target.value) || 0)} onBlur={() => handleSave("arePartTime", localArePartTime)} onKeyDown={(e) => handleKeyDown("arePartTime", localArePartTime, e)} className={fieldClass} />
+                  </FieldTip>
+                  <FieldTip label="Jours d'ARE déjà consommés" tip="Jours d'allocation déjà versés. L'ARCE ne porte que sur les droits restants.">
+                    <input type="number" value={localAreRightsUsed} onChange={(e) => handleChange("areRightsUsed", parseFloat(e.target.value) || 0)} onBlur={() => handleSave("areRightsUsed", localAreRightsUsed)} onKeyDown={(e) => handleKeyDown("areRightsUsed", localAreRightsUsed, e)} className={fieldClass} />
+                  </FieldTip>
+                  <FieldTip label="Fin du contrat" tip="À partir du 01/07/2023, l'ARCE est de 60 % des droits restants. Avant cette date, elle est de 45 %.">
+                    <input type="date" value={localContractEnd} onChange={(e) => { handleChange("contractEndDate", e.target.value); handleSave("contractEndDate", e.target.value); }} className="w-full p-2 text-sm border border-gray-200 rounded bg-white" />
+                  </FieldTip>
+                  <FieldTip label="Indemnité de congés payés" tip="Indemnité compensatrice perçue sur les 6 derniers mois. Différé = montant ÷ SJR, plafonné à 30 jours.">
+                    <input type="number" value={localArePaidLeave} onChange={(e) => handleChange("arePaidLeave", parseFloat(e.target.value) || 0)} onBlur={() => handleSave("arePaidLeave", localArePaidLeave)} onKeyDown={(e) => handleKeyDown("arePaidLeave", localArePaidLeave, e)} className={fieldClass} />
+                  </FieldTip>
+                  <FieldTip label="Indemnité supra-légale" tip="Part de l'indemnité de rupture au-dessus du légal. Différé = montant ÷ 111,80 €, plafonné à 150 jours (75 si licenciement économique).">
+                    <input type="number" value={localAreSeverance} onChange={(e) => handleChange("areSeverance", parseFloat(e.target.value) || 0)} onBlur={() => handleSave("areSeverance", localAreSeverance)} onKeyDown={(e) => handleKeyDown("areSeverance", localAreSeverance, e)} className={fieldClass} />
+                  </FieldTip>
                 </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                      <label className="block text-sm text-gray-500">Primes (An)</label>
-                      <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <div className="tooltip-content">Total annuel brut de vos primes (objectifs, vacances...) pour le calcul du SJR.</div>
-                    </div>
-                    <input
-                      type="number"
-                      value={localSalaryBonus}
-                      onChange={(e) => handleChange('salaryBonus', parseFloat(e.target.value) || 0)}
-                      onBlur={() => handleSave('salaryBonus', localSalaryBonus)}
-                      onKeyDown={(e) => handleKeyDown('salaryBonus', localSalaryBonus, e)}
-                      className="w-full p-2 text-sm border border-gray-200 rounded text-right"
-                    />
-                  </div>
-                  <div>
-                    <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                      <label className="block text-sm text-gray-500">Âge</label>
-                      <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
-                      <div className="tooltip-content">Détermine la durée d'indemnisation (18 mois avant 53 ans, plus au-delà).</div>
-                    </div>
-                    <input
-                      type="number"
-                      value={localUserAge}
-                      onChange={(e) => handleChange('userAge', parseFloat(e.target.value) || 0)}
-                      onBlur={() => handleSave('userAge', localUserAge)}
-                      onKeyDown={(e) => handleKeyDown('userAge', localUserAge, e)}
-                      className="w-full p-2 text-sm border border-gray-200 rounded text-right"
-                    />
-                  </div>
+                <div className="grid grid-cols-2 gap-1">
+                  <SocialCheck label="DROM-COM" tip="Pas de coefficient 0,75. Les plafonds de durée sont plus longs." checked={localAreOverseas} onToggle={(value) => { handleChange("areOverseas", value); handleSave("areOverseas", value); }} />
+                  <SocialCheck label="Rupture conventionnelle" tip="Rupture conventionnelle individuelle à compter du 01/09/2026 : plafond abaissé (15 mois avant 55 ans, 20,5 mois à 55-56 ans)." checked={localAreIndividualAgreement} onToggle={(value) => { handleChange("areIndividualAgreement", value); handleSave("areIndividualAgreement", value); }} />
+                  <SocialCheck label="Minimum 5 mois" tip="Saisonnier ou première ouverture de droits depuis 20 ans : plancher de 152 jours au lieu de 182." checked={localAreReducedMinimum} onToggle={(value) => { handleChange("areReducedMinimum", value); handleSave("areReducedMinimum", value); }} />
+                  <SocialCheck label="Licenciement économique" tip="Le différé d'indemnité de rupture est plafonné à 75 jours." checked={localAreEconomicLayoff} onToggle={(value) => { handleChange("areEconomicLayoff", value); handleSave("areEconomicLayoff", value); }} />
+                  <SocialCheck label="Délai d'attente déjà purgé" tip="Le délai fixe de 7 jours ne s'applique qu'une fois tous les 12 mois." checked={localAreWaitingServed} onToggle={(value) => { handleChange("areWaitingServed", value); handleSave("areWaitingServed", value); }} />
+                  <SocialCheck label="Second versement ARCE" tip="La seconde moitié est versée 6 mois plus tard seulement si l'activité continue et qu'il n'y a pas de CDI à temps plein." checked={localArceSecondPayment} onToggle={(value) => { handleChange("arceSecondPayment", value); handleSave("arceSecondPayment", value); }} />
+                </div>
+                <div className="text-sm text-blue-900 bg-white rounded border border-blue-100 p-2 space-y-1">
+                  <p><span className="font-semibold">ARE nette / mois :</span> {areMonthly} · <span className="font-semibold">nette / jour :</span> {areDaily}</p>
+                  <p><span className="font-semibold">Durée :</span> {areDuration}</p>
+                  {areBreakdown && <p>{areBreakdown}</p>}
+                  {arceBreakdown && <p>{arceBreakdown}</p>}
                 </div>
               </div>
             )}
