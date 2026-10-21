@@ -505,7 +505,7 @@ export default function FreelanceSimulatorCard() {
           </div>
         </div>
         <div className="relative z-10 text-right">
-          <div className="text-xs text-slate-400 uppercase tracking-widest font-semibold print:text-gray-500">CA Annuel Projeté</div>
+          <div className="text-sm text-slate-400 uppercase tracking-widest font-semibold print:text-gray-500">CA Annuel Projeté</div>
           <div id="headerAnnualCA" className="text-xl font-bold text-white tracking-tight">{headerCA}</div>
         </div>
         <div className="absolute -top-10 -right-10 w-64 h-64 bg-indigo-600 rounded-full opacity-10 blur-3xl no-print" />
@@ -515,16 +515,16 @@ export default function FreelanceSimulatorCard() {
       <div ref={fitInnerRef} className="absolute left-0 top-0">
       <div className="grid grid-cols-12">
         {/* GAUCHE : PARAMÈTRES */}
-        <div className="col-span-8 p-2 bg-gray-50 border-r border-gray-200 space-y-2 overflow-hidden">
+        <div className="col-span-8 p-2 bg-gray-50 border-r border-gray-200 grid grid-cols-2 items-start gap-2 overflow-hidden">
           {/* 0. STATUT */}
           <div className="bg-indigo-50 p-4 rounded-xl shadow-sm border border-indigo-100">
-            <h2 className="text-sm font-bold text-indigo-800 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <h2 className="text-xl font-bold text-indigo-800 uppercase tracking-wider mb-3 flex items-center gap-2">
               0. Statut & Facturation
             </h2>
-            <div className="space-y-4">
+            <div className="space-y-2">
               <div className="relative">
                 <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                  <label className="block text-xs font-semibold text-gray-500">Statut Juridique</label>
+                  <label className="block text-sm font-semibold text-gray-500">Statut Juridique</label>
                   <svg className="w-3 h-3 text-indigo-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -549,7 +549,7 @@ export default function FreelanceSimulatorCard() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                    <label className="block text-xs font-semibold text-gray-500">TJM (HT)</label>
+                    <label className="block text-sm font-semibold text-gray-500">TJM (HT)</label>
                     <svg className="w-3 h-3 text-indigo-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -564,12 +564,12 @@ export default function FreelanceSimulatorCard() {
                       onKeyDown={(e) => handleKeyDown('tjm', localTjm, e)}
                       className="unit-input w-full pl-3 pr-8 py-2 border border-gray-200 bg-white rounded-lg outline-none text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-500"
                     />
-                    <span className="absolute right-3 top-2 text-gray-400 text-xs pointer-events-none">€</span>
+                    <span className="absolute right-3 top-2 text-gray-400 text-sm pointer-events-none">€</span>
                   </div>
                 </div>
                 <div>
                   <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                    <label className="block text-xs font-semibold text-gray-500">Jours / mois</label>
+                    <label className="block text-sm font-semibold text-gray-500">Jours / mois</label>
                     <svg className="w-3 h-3 text-indigo-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -585,219 +585,22 @@ export default function FreelanceSimulatorCard() {
                       max={25}
                       className="unit-input w-full pl-3 pr-8 py-2 border border-gray-200 bg-white rounded-lg outline-none text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-500"
                     />
-                    <span className="absolute right-3 top-2 text-gray-400 text-xs pointer-events-none">j</span>
+                    <span className="absolute right-3 top-2 text-gray-400 text-sm pointer-events-none">j</span>
                   </div>
                 </div>
               </div>
-            </div>
-          </div>
-
-          {/* 2. CHARGES */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 ring-1 ring-orange-100">
-            <h2 className="text-sm font-bold text-orange-600 uppercase tracking-wider mb-3">2. Charges & Investissements</h2>
-            <div className="space-y-4">
-              <div>
-                <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                  <label className="block text-xs font-bold text-emerald-600">Epargne Retraite (Mensuelle)</label>
-                  <svg className="w-3 h-3 text-emerald-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                  <div className="tooltip-content">Montant placé volontairement (PER, Assurance Vie) pour compenser la perte de revenus à la retraite.</div>
-                </div>
-                <div className="relative">
-                  <input
-                    type="number"
-                    value={localCostRetirement}
-                    onChange={(e) => handleChange('costRetirement', parseFloat(e.target.value) || 0)}
-                    onBlur={() => handleSave('costRetirement', localCostRetirement)}
-                    onKeyDown={(e) => handleKeyDown('costRetirement', localCostRetirement, e)}
-                    className="unit-input w-full p-2 pr-24 text-sm border border-emerald-200 rounded text-right font-bold text-emerald-800 focus:ring-2 focus:ring-emerald-500 outline-none"
-                  />
-                  <span className="absolute right-4 top-2.5 text-emerald-600 text-xs font-bold pointer-events-none">€/mois</span>
-                </div>
-                <p className="text-xs text-emerald-600 mt-1 italic">{retirementNote}</p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                    <label className="block text-xs text-gray-500">Loyer Véhicule (LLD)</label>
-                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div className="tooltip-content">Coût de la Location Longue Durée ou LOA de votre véhicule professionnel.</div>
-                  </div>
-                  <input
-                    type="number"
-                    value={localCostLld}
-                    onChange={(e) => handleChange('costLld', parseFloat(e.target.value) || 0)}
-                    onBlur={() => handleSave('costLld', localCostLld)}
-                    onKeyDown={(e) => handleKeyDown('costLld', localCostLld, e)}
-                    className="w-full p-2 text-sm border border-gray-200 rounded text-right"
-                  />
-                </div>
-                <div>
-                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                    <label className="block text-xs text-gray-500">Carburant/Entretien</label>
-                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div className="tooltip-content">Frais d'essence, péages, assurance, réparations et maintenance.</div>
-                  </div>
-                  <input
-                    type="number"
-                    value={localCostFuel}
-                    onChange={(e) => handleChange('costFuel', parseFloat(e.target.value) || 0)}
-                    onBlur={() => handleSave('costFuel', localCostFuel)}
-                    onKeyDown={(e) => handleKeyDown('costFuel', localCostFuel, e)}
-                    className="w-full p-2 text-sm border border-gray-200 rounded text-right"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                    <label className="block text-xs text-gray-500">Mutuelle Santé</label>
-                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div className="tooltip-content">Cotisation mensuelle pour votre complémentaire santé (Madelin possible en société).</div>
-                  </div>
-                  <input
-                    type="number"
-                    value={localCostMutuelle}
-                    onChange={(e) => handleChange('costMutuelle', parseFloat(e.target.value) || 0)}
-                    onBlur={() => handleSave('costMutuelle', localCostMutuelle)}
-                    onKeyDown={(e) => handleKeyDown('costMutuelle', localCostMutuelle, e)}
-                    className="w-full p-2 text-sm border border-gray-200 rounded text-right"
-                  />
-                </div>
-                <div>
-                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                    <label className="block text-xs text-gray-500">RC Pro & Banque</label>
-                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div className="tooltip-content">Assurance Responsabilité Civile Pro (obligatoire ou conseillée) et frais de compte bancaire.</div>
-                  </div>
-                  <input
-                    type="number"
-                    value={localCostBankIns}
-                    onChange={(e) => handleChange('costBankIns', parseFloat(e.target.value) || 0)}
-                    onBlur={() => handleSave('costBankIns', localCostBankIns)}
-                    onKeyDown={(e) => handleKeyDown('costBankIns', localCostBankIns, e)}
-                    className="w-full p-2 text-sm border border-gray-200 rounded text-right"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 bg-gray-50 p-2 rounded">
-                <div>
-                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                    <label className="block text-xs text-gray-500">Comptable (si Soc.)</label>
-                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div className="tooltip-content">Honoraires mensuels de l'expert-comptable (Bilan, TVA). Obligatoire en EURL/SASU.</div>
-                  </div>
-                  <input
-                    type="number"
-                    value={localCostAccountant}
-                    onChange={(e) => handleChange('costAccountant', parseFloat(e.target.value) || 0)}
-                    onBlur={() => handleSave('costAccountant', localCostAccountant)}
-                    onKeyDown={(e) => handleKeyDown('costAccountant', localCostAccountant, e)}
-                    className="w-full p-2 text-sm border border-gray-200 rounded bg-white text-right"
-                  />
-                </div>
-                <div>
-                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                    <label className="block text-xs text-gray-500">Frais Portage (%)</label>
-                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div className="tooltip-content">Commission de gestion prélevée sur votre CA par la société de portage (souvent 5% à 10%).</div>
-                  </div>
-                  <input
-                    type="number"
-                    value={localPctPortage}
-                    onChange={(e) => handleChange('pctPortage', parseFloat(e.target.value) || 0)}
-                    onBlur={() => handleSave('pctPortage', localPctPortage)}
-                    onKeyDown={(e) => handleKeyDown('pctPortage', localPctPortage, e)}
-                    className="w-full p-2 text-sm border border-gray-200 rounded bg-white text-right"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <div>
-                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                    <label className="block text-xs text-gray-500">Repas</label>
-                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div className="tooltip-content">Frais de repas du midi lors de vos journées de travail.</div>
-                  </div>
-                  <input
-                    type="number"
-                    value={localCostMeals}
-                    onChange={(e) => handleChange('costMeals', parseFloat(e.target.value) || 0)}
-                    onBlur={() => handleSave('costMeals', localCostMeals)}
-                    onKeyDown={(e) => handleKeyDown('costMeals', localCostMeals, e)}
-                    className="w-full p-2 text-sm border border-gray-200 rounded text-right"
-                  />
-                </div>
-                <div>
-                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                    <label className="block text-xs text-gray-500">Tel/Net</label>
-                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div className="tooltip-content">Quote-part professionnelle de vos abonnements téléphone et internet.</div>
-                  </div>
-                  <input
-                    type="number"
-                    value={localCostTelecom}
-                    onChange={(e) => handleChange('costTelecom', parseFloat(e.target.value) || 0)}
-                    onBlur={() => handleSave('costTelecom', localCostTelecom)}
-                    onKeyDown={(e) => handleKeyDown('costTelecom', localCostTelecom, e)}
-                    className="w-full p-2 text-sm border border-gray-200 rounded text-right"
-                  />
-                </div>
-                <div>
-                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                    <label className="block text-xs text-gray-500">Matos</label>
-                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div className="tooltip-content">Petit équipement, fournitures de bureau, licences logicielles (SaaS), etc.</div>
-                  </div>
-                  <input
-                    type="number"
-                    value={localCostTech}
-                    onChange={(e) => handleChange('costTech', parseFloat(e.target.value) || 0)}
-                    onBlur={() => handleSave('costTech', localCostTech)}
-                    onKeyDown={(e) => handleKeyDown('costTech', localCostTech, e)}
-                    className="w-full p-2 text-sm border border-gray-200 rounded text-right"
-                  />
-                </div>
-              </div>
-            </div>
-            <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
-              <span className="text-xs font-bold text-gray-600">TOTAL SORTIES / mois</span>
-              <span className="text-sm font-bold text-orange-600">{totalChargesInput}</span>
             </div>
           </div>
 
           {/* 3. PARAMÈTRES SOCIAUX & FAMILLE */}
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <h2 className="text-sm font-bold text-red-500 uppercase tracking-wider mb-3">3. Paramètres Sociaux & Famille</h2>
+            <h2 className="text-xl font-bold text-red-500 uppercase tracking-wider mb-3">3. Paramètres Sociaux & Famille</h2>
 
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="flex flex-col justify-center bg-red-50 p-2 rounded border border-red-100 relative">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-1 tooltip-trigger cursor-help relative">
-                    <span className="text-xs font-bold text-red-800">ACRE (An 1)</span>
+                    <span className="text-sm font-bold text-red-800">ACRE (An 1)</span>
                     <svg className="w-3 h-3 text-red-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -821,7 +624,7 @@ export default function FreelanceSimulatorCard() {
 
               <div className="bg-blue-50 p-2 rounded border border-blue-100 relative">
                 <div className="flex items-center gap-1 mb-1 tooltip-trigger cursor-help relative">
-                  <label className="block text-xs font-bold text-blue-800">Parts Fiscales</label>
+                  <label className="block text-sm font-bold text-blue-800">Parts Fiscales</label>
                   <svg className="w-3 h-3 text-blue-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -849,7 +652,7 @@ export default function FreelanceSimulatorCard() {
 
             <div className="flex items-center justify-between mb-3 bg-blue-50 p-2 rounded border border-blue-100 relative">
               <div className="flex items-center gap-1 tooltip-trigger cursor-help relative">
-                <span className="text-xs font-bold text-blue-800">Bénéficiaire Chômage (ARE) ?</span>
+                <span className="text-sm font-bold text-blue-800">Bénéficiaire Chômage (ARE) ?</span>
                 <svg className="w-3 h-3 text-blue-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
@@ -875,7 +678,7 @@ export default function FreelanceSimulatorCard() {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                      <label className="block text-xs text-gray-500">Salaire Brut Mensuel</label>
+                      <label className="block text-sm text-gray-500">Salaire Brut Mensuel</label>
                       <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -892,7 +695,7 @@ export default function FreelanceSimulatorCard() {
                   </div>
                   <div>
                     <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                      <label className="block text-xs text-gray-500">Sur combien de mois</label>
+                      <label className="block text-sm text-gray-500">Sur combien de mois</label>
                       <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -918,7 +721,7 @@ export default function FreelanceSimulatorCard() {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                      <label className="block text-xs text-gray-500">Primes (An)</label>
+                      <label className="block text-sm text-gray-500">Primes (An)</label>
                       <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -935,7 +738,7 @@ export default function FreelanceSimulatorCard() {
                   </div>
                   <div>
                     <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                      <label className="block text-xs text-gray-500">Âge</label>
+                      <label className="block text-sm text-gray-500">Âge</label>
                       <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -954,30 +757,216 @@ export default function FreelanceSimulatorCard() {
               </div>
             )}
 
-            <div className="flex justify-between items-center text-xs text-gray-500 mt-2">
+            <div className="flex justify-between items-center text-sm text-gray-500 mt-2">
               <span>Taux appliqué :</span>
               <span className="font-bold text-gray-700">{appliedRateLabel}</span>
             </div>
           </div>
+          {/* 2. CHARGES */}
+          <div className="col-span-2 bg-white p-4 rounded-xl shadow-sm border border-gray-100 ring-1 ring-orange-100">
+            <h2 className="text-xl font-bold text-orange-600 uppercase tracking-wider mb-3">2. Charges & Investissements</h2>
+            <div className="space-y-2">
+              <div>
+                <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                  <label className="block text-sm font-bold text-emerald-600">Epargne Retraite (Mensuelle)</label>
+                  <svg className="w-3 h-3 text-emerald-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="tooltip-content">Montant placé volontairement (PER, Assurance Vie) pour compenser la perte de revenus à la retraite.</div>
+                </div>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={localCostRetirement}
+                    onChange={(e) => handleChange('costRetirement', parseFloat(e.target.value) || 0)}
+                    onBlur={() => handleSave('costRetirement', localCostRetirement)}
+                    onKeyDown={(e) => handleKeyDown('costRetirement', localCostRetirement, e)}
+                    className="unit-input w-full p-2 pr-24 text-sm border border-emerald-200 rounded text-right font-bold text-emerald-800 focus:ring-2 focus:ring-emerald-500 outline-none"
+                  />
+                  <span className="absolute right-4 top-2.5 text-emerald-600 text-sm font-bold pointer-events-none">€/mois</span>
+                </div>
+                <p className="text-sm text-emerald-600 mt-1 italic">{retirementNote}</p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                    <label className="block text-sm text-gray-500">Loyer Véhicule (LLD)</label>
+                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="tooltip-content">Coût de la Location Longue Durée ou LOA de votre véhicule professionnel.</div>
+                  </div>
+                  <input
+                    type="number"
+                    value={localCostLld}
+                    onChange={(e) => handleChange('costLld', parseFloat(e.target.value) || 0)}
+                    onBlur={() => handleSave('costLld', localCostLld)}
+                    onKeyDown={(e) => handleKeyDown('costLld', localCostLld, e)}
+                    className="w-full p-2 text-sm border border-gray-200 rounded text-right"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                    <label className="block text-sm text-gray-500">Carburant/Entretien</label>
+                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="tooltip-content">Frais d'essence, péages, assurance, réparations et maintenance.</div>
+                  </div>
+                  <input
+                    type="number"
+                    value={localCostFuel}
+                    onChange={(e) => handleChange('costFuel', parseFloat(e.target.value) || 0)}
+                    onBlur={() => handleSave('costFuel', localCostFuel)}
+                    onKeyDown={(e) => handleKeyDown('costFuel', localCostFuel, e)}
+                    className="w-full p-2 text-sm border border-gray-200 rounded text-right"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                    <label className="block text-sm text-gray-500">Mutuelle Santé</label>
+                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="tooltip-content">Cotisation mensuelle pour votre complémentaire santé (Madelin possible en société).</div>
+                  </div>
+                  <input
+                    type="number"
+                    value={localCostMutuelle}
+                    onChange={(e) => handleChange('costMutuelle', parseFloat(e.target.value) || 0)}
+                    onBlur={() => handleSave('costMutuelle', localCostMutuelle)}
+                    onKeyDown={(e) => handleKeyDown('costMutuelle', localCostMutuelle, e)}
+                    className="w-full p-2 text-sm border border-gray-200 rounded text-right"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                    <label className="block text-sm text-gray-500">RC Pro & Banque</label>
+                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="tooltip-content">Assurance Responsabilité Civile Pro (obligatoire ou conseillée) et frais de compte bancaire.</div>
+                  </div>
+                  <input
+                    type="number"
+                    value={localCostBankIns}
+                    onChange={(e) => handleChange('costBankIns', parseFloat(e.target.value) || 0)}
+                    onBlur={() => handleSave('costBankIns', localCostBankIns)}
+                    onKeyDown={(e) => handleKeyDown('costBankIns', localCostBankIns, e)}
+                    className="w-full p-2 text-sm border border-gray-200 rounded text-right"
+                  />
+                </div>
+                <div className="rounded bg-gray-50 p-2">
+                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                    <label className="block text-sm text-gray-500">Comptable (si Soc.)</label>
+                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="tooltip-content">Honoraires mensuels de l'expert-comptable (Bilan, TVA). Obligatoire en EURL/SASU.</div>
+                  </div>
+                  <input
+                    type="number"
+                    value={localCostAccountant}
+                    onChange={(e) => handleChange('costAccountant', parseFloat(e.target.value) || 0)}
+                    onBlur={() => handleSave('costAccountant', localCostAccountant)}
+                    onKeyDown={(e) => handleKeyDown('costAccountant', localCostAccountant, e)}
+                    className="w-full p-2 text-sm border border-gray-200 rounded bg-white text-right"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                    <label className="block text-sm text-gray-500">Frais Portage (%)</label>
+                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="tooltip-content">Commission de gestion prélevée sur votre CA par la société de portage (souvent 5% à 10%).</div>
+                  </div>
+                  <input
+                    type="number"
+                    value={localPctPortage}
+                    onChange={(e) => handleChange('pctPortage', parseFloat(e.target.value) || 0)}
+                    onBlur={() => handleSave('pctPortage', localPctPortage)}
+                    onKeyDown={(e) => handleKeyDown('pctPortage', localPctPortage, e)}
+                    className="w-full p-2 text-sm border border-gray-200 rounded bg-white text-right"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                    <label className="block text-sm text-gray-500">Repas</label>
+                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="tooltip-content">Frais de repas du midi lors de vos journées de travail.</div>
+                  </div>
+                  <input
+                    type="number"
+                    value={localCostMeals}
+                    onChange={(e) => handleChange('costMeals', parseFloat(e.target.value) || 0)}
+                    onBlur={() => handleSave('costMeals', localCostMeals)}
+                    onKeyDown={(e) => handleKeyDown('costMeals', localCostMeals, e)}
+                    className="w-full p-2 text-sm border border-gray-200 rounded text-right"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                    <label className="block text-sm text-gray-500">Tel/Net</label>
+                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="tooltip-content">Quote-part professionnelle de vos abonnements téléphone et internet.</div>
+                  </div>
+                  <input
+                    type="number"
+                    value={localCostTelecom}
+                    onChange={(e) => handleChange('costTelecom', parseFloat(e.target.value) || 0)}
+                    onBlur={() => handleSave('costTelecom', localCostTelecom)}
+                    onKeyDown={(e) => handleKeyDown('costTelecom', localCostTelecom, e)}
+                    className="w-full p-2 text-sm border border-gray-200 rounded text-right"
+                  />
+                </div>
+                <div>
+                  <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                    <label className="block text-sm text-gray-500">Matos</label>
+                    <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    <div className="tooltip-content">Petit équipement, fournitures de bureau, licences logicielles (SaaS), etc.</div>
+                  </div>
+                  <input
+                    type="number"
+                    value={localCostTech}
+                    onChange={(e) => handleChange('costTech', parseFloat(e.target.value) || 0)}
+                    onBlur={() => handleSave('costTech', localCostTech)}
+                    onKeyDown={(e) => handleKeyDown('costTech', localCostTech, e)}
+                    className="w-full p-2 text-sm border border-gray-200 rounded text-right"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
+              <span className="text-sm font-bold text-gray-600">TOTAL SORTIES / mois</span>
+              <span className="text-sm font-bold text-orange-600">{totalChargesInput}</span>
+            </div>
+          </div>
+
         </div>
 
         {/* DROITE : DASHBOARD */}
         <div className="col-span-4 p-2 bg-white flex flex-col gap-1.5 overflow-hidden">
-          <div className="grid grid-cols-1 gap-1.5">
-            <div className="bg-blue-50 px-3 py-2 rounded-xl border border-blue-100">
-              <div className="text-blue-500 text-xs font-bold uppercase tracking-wider">CA Mensuel HT</div>
+          <div className="grid grid-cols-3 gap-1.5">
+            <div className="bg-blue-50 px-2 py-2 rounded-xl border border-blue-100">
+              <div className="text-blue-500 text-sm font-bold uppercase tracking-wider">CA Mensuel HT</div>
               <div className="text-xl font-bold text-blue-900">{caMensuel}</div>
               <div className={tvaBadge.className}>{tvaBadge.text}</div>
             </div>
-            <div className="grid grid-cols-2 gap-1.5">
-              <div className="bg-red-50 px-3 py-2 rounded-xl border border-red-100">
-                <div className="text-red-500 text-xs font-bold uppercase tracking-wider">Cotis. & Impôts</div>
-                <div className="text-lg font-bold text-red-900">{displayTaxes}</div>
-              </div>
-              <div className="bg-orange-50 px-3 py-2 rounded-xl border border-orange-100">
-                <div className="text-orange-600 text-xs font-bold uppercase tracking-wider">Total Charges</div>
-                <div className="text-lg font-bold text-orange-700">{displayFrais}</div>
-              </div>
+            <div className="bg-red-50 px-2 py-2 rounded-xl border border-red-100">
+              <div className="text-red-500 text-sm font-bold uppercase tracking-wider">Cotis. & Impôts</div>
+              <div className="text-lg font-bold text-red-900">{displayTaxes}</div>
+            </div>
+            <div className="bg-orange-50 px-2 py-2 rounded-xl border border-orange-100">
+              <div className="text-orange-600 text-sm font-bold uppercase tracking-wider">Total Charges</div>
+              <div className="text-lg font-bold text-orange-700">{displayFrais}</div>
             </div>
           </div>
 
@@ -985,15 +974,15 @@ export default function FreelanceSimulatorCard() {
             <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-3 py-2 rounded-xl shadow-lg text-white relative overflow-hidden">
               <div className="relative z-10 flex justify-between items-center">
                 <div>
-                  <div className="text-blue-200 text-xs font-bold uppercase tracking-wider">Filet de Sécurité (ARE)</div>
+                  <div className="text-blue-200 text-sm font-bold uppercase tracking-wider">Filet de Sécurité (ARE)</div>
                   <div className="flex items-baseline gap-2">
                     <div className="text-xl font-bold">{areMonthly}</div>
                     <span className="text-sm opacity-80">/ mois (Net)</span>
                   </div>
-                  <div className="text-xs text-blue-100 mt-1">{areDuration}</div>
+                  <div className="text-sm text-blue-100 mt-1">{areDuration}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xs text-blue-300 uppercase font-bold">Alloc. Journalière</div>
+                  <div className="text-sm text-blue-300 uppercase font-bold">Alloc. Journalière</div>
                   <div className="text-xl font-bold">{areDaily}</div>
                 </div>
               </div>
@@ -1002,12 +991,12 @@ export default function FreelanceSimulatorCard() {
 
           <div className="bg-gradient-to-r from-emerald-600 to-teal-700 px-3 py-2 rounded-xl shadow-xl text-white relative overflow-hidden group">
             <div className="relative z-10">
-              <div className="text-emerald-100 text-xs font-bold uppercase tracking-wider">Reste à vivre (Super Net) / Mois</div>
+              <div className="text-emerald-100 text-sm font-bold uppercase tracking-wider">Reste à vivre (Super Net) / Mois</div>
               <div className="flex items-baseline gap-3">
                 <div className="text-xl font-extrabold tracking-tight">{superNet}</div>
                 <div className="text-sm font-medium text-emerald-300">{marginPct}</div>
               </div>
-              <div className="mt-1 text-xs text-emerald-100 opacity-90 font-medium">
+              <div className="mt-1 text-sm text-emerald-100 opacity-90 font-medium">
                 Montant NET réel disponible après TOUT (Charges, Retraite, Impôts).
               </div>
             </div>
@@ -1015,13 +1004,13 @@ export default function FreelanceSimulatorCard() {
 
           <div className="bg-white rounded-xl border border-gray-100 px-3 py-2">
             <div className="flex justify-between items-end mb-2">
-              <h3 className="text-gray-400 text-xs font-bold uppercase">Flux Financier (Statut Sélectionné)</h3>
-              <span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500 font-mono">{chartMode}</span>
+              <h3 className="text-gray-400 text-sm font-bold uppercase">Flux Financier (Statut Sélectionné)</h3>
+              <span className="text-sm bg-gray-100 px-2 py-1 rounded text-gray-500 font-mono">{chartMode}</span>
             </div>
             <div className="space-y-2">
               {showDeductible && (
                 <div>
-                  <div className="flex justify-between text-xs mb-1 font-semibold text-gray-600">
+                  <div className="flex justify-between text-sm mb-1 font-semibold text-gray-600">
                     <span>1. Frais Déduits</span>
                     <span className="text-orange-600">{valDeductible}</span>
                   </div>
@@ -1031,7 +1020,7 @@ export default function FreelanceSimulatorCard() {
                 </div>
               )}
               <div>
-                <div className="flex justify-between text-xs mb-1 font-semibold text-gray-600">
+                <div className="flex justify-between text-sm mb-1 font-semibold text-gray-600">
                   <span>{labelTaxes}</span>
                   <span className="text-red-600">{valTaxes}</span>
                 </div>
@@ -1041,7 +1030,7 @@ export default function FreelanceSimulatorCard() {
               </div>
               {showNonDeductible && (
                 <div>
-                  <div className="flex justify-between text-xs mb-1 font-semibold text-gray-600">
+                  <div className="flex justify-between text-sm mb-1 font-semibold text-gray-600">
                     <span>3. Frais Non Déductibles</span>
                     <span className="text-orange-600">{valNonDeductible}</span>
                   </div>
@@ -1055,37 +1044,34 @@ export default function FreelanceSimulatorCard() {
 
           <div className="bg-indigo-900 rounded-xl px-3 py-2 text-white shadow-xl relative overflow-hidden">
             <div className="relative z-10">
-              <h3 className="text-sm font-bold mb-1 flex items-center gap-2">
+              <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
                 <span>🏆</span> Bilan & Recommandation
               </h3>
 
-              <div className="flex items-end justify-center gap-2 mb-1 h-12">
-                <div className="flex flex-col items-center w-1/4 group transition-all duration-500">
-                  <div className="text-xs text-indigo-300 font-bold mb-1">{podium2.name}</div>
-                  <div className="text-xs text-indigo-400 mb-1">{podium2.val}</div>
-                  <div className="w-full bg-indigo-500/50 rounded-t-lg relative podium-bar group-hover:bg-indigo-500/70 transition-all duration-500" style={{ height: `${podium2Height}%` }}>
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 text-xl">🥈</div>
-                  </div>
+              <div className="flex items-end justify-center gap-2 mb-2 h-40">
+                <div className="flex h-full flex-col items-center justify-end w-1/4 group transition-all duration-500">
+                  <div className="text-2xl leading-none">🥈</div>
+                  <div className="text-sm text-indigo-300 font-bold">{podium2.name}</div>
+                  <div className="text-sm text-indigo-400 mb-1">{podium2.val}</div>
+                  <div className="w-full bg-indigo-500/50 rounded-t-lg podium-bar group-hover:bg-indigo-500/70 transition-all duration-500" style={{ height: `${Math.max(podium2Height, 18)}%` }} />
                 </div>
-                <div className={`flex flex-col items-center w-1/3 group transition-all duration-500 ${podium1.penalty ? 'blur-locked' : ''}`}>
-                  <div className="text-sm text-yellow-300 font-bold mb-1">{podium1.name}</div>
-                  <div className="text-xs text-white font-bold mb-1">{podium1.val}</div>
-                  <div className="w-full bg-gradient-to-t from-yellow-600 to-yellow-400 rounded-t-lg relative podium-bar shadow-[0_0_15px_rgba(250,204,21,0.4)] transition-all duration-500" style={{ height: `${podium1Height}%` }}>
-                    <div className="absolute -top-4 left-1/2 transform -translate-x-1/2 text-2xl">🥇</div>
-                  </div>
+                <div className={`flex h-full flex-col items-center justify-end w-1/3 group transition-all duration-500 ${podium1.penalty ? 'blur-locked' : ''}`}>
+                  <div className="text-3xl leading-none">🥇</div>
+                  <div className="text-sm text-yellow-300 font-bold">{podium1.name}</div>
+                  <div className="text-sm text-white font-bold mb-1">{podium1.val}</div>
+                  <div className="w-full bg-gradient-to-t from-yellow-600 to-yellow-400 rounded-t-lg podium-bar shadow-[0_0_15px_rgba(250,204,21,0.4)] transition-all duration-500" style={{ height: `${Math.max(podium1Height, 28)}%` }} />
                 </div>
-                <div className="flex flex-col items-center w-1/4 group transition-all duration-500">
-                  <div className="text-xs text-indigo-300 font-bold mb-1">{podium3.name}</div>
-                  <div className="text-xs text-indigo-400 mb-1">{podium3.val}</div>
-                  <div className="w-full bg-indigo-700/50 rounded-t-lg relative podium-bar group-hover:bg-indigo-700/70 transition-all duration-500" style={{ height: `${podium3Height}%` }}>
-                    <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 text-xl">🥉</div>
-                  </div>
+                <div className="flex h-full flex-col items-center justify-end w-1/4 group transition-all duration-500">
+                  <div className="text-2xl leading-none">🥉</div>
+                  <div className="text-sm text-indigo-300 font-bold">{podium3.name}</div>
+                  <div className="text-sm text-indigo-400 mb-1">{podium3.val}</div>
+                  <div className="w-full bg-indigo-700/50 rounded-t-lg podium-bar group-hover:bg-indigo-700/70 transition-all duration-500" style={{ height: `${Math.max(podium3Height, 12)}%` }} />
                 </div>
               </div>
 
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 border border-white/10">
                 <h4 className="text-sm font-bold text-yellow-300 mb-1" dangerouslySetInnerHTML={{ __html: verdictTitle }} />
-                <p className="text-xs text-indigo-100 leading-snug" dangerouslySetInnerHTML={{ __html: verdictText }} />
+                <p className="text-sm text-indigo-100 leading-snug" dangerouslySetInnerHTML={{ __html: verdictText }} />
               </div>
             </div>
             <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-indigo-600 rounded-full blur-3xl opacity-30 no-print" />

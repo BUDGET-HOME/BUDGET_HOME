@@ -99,10 +99,20 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         html.fit-viewport .fit-help { display: none; }
         html.fit-viewport .budget-card .text-2xl { font-size: 1rem !important; }
         html.fit-viewport .budget-card .text-xl { font-size: 0.95rem !important; }
+        html.fit-viewport .freelance-board .text-2xl { font-size: 1.5rem !important; line-height: 2rem !important; }
+        html.fit-viewport .freelance-board .text-xl { font-size: 1.25rem !important; line-height: 1.75rem !important; }
         html.fit-viewport .budget-card input,
         html.fit-viewport .budget-card select,
         html.fit-viewport .budget-card textarea {
           padding: 0.15rem 0.4rem !important;
+        }
+        html.fit-viewport .freelance-board input,
+        html.fit-viewport .freelance-board select {
+          padding: 0.5rem 0.75rem !important;
+          font-size: 1rem !important;
+        }
+        html.fit-viewport .freelance-board input.unit-input {
+          padding-right: 4.75rem !important;
         }
         html.fit-viewport .h-96 { height: 8rem !important; }
         html.fit-viewport .h-72 { height: 6.5rem !important; }
