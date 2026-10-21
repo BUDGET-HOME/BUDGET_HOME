@@ -500,8 +500,7 @@ export default function FreelanceSimulatorCard() {
               </svg>
             </div>
             <div>
-              <h1 className="text-lg font-bold tracking-tight">Simulateur Freelance Ultimate</h1>
-              <p className="text-slate-400 text-xs md:text-sm print:text-gray-600">V24.0 • Décisionnel & Pédagogique</p>
+              <h1 className="text-lg font-bold tracking-tight">Simulateur Freelance</h1>
             </div>
           </div>
         </div>
@@ -516,16 +515,16 @@ export default function FreelanceSimulatorCard() {
       <div ref={fitInnerRef} className="absolute left-0 top-0">
       <div className="grid grid-cols-12">
         {/* GAUCHE : PARAMÈTRES */}
-        <div className="col-span-5 p-2 bg-gray-50 border-r border-gray-200 space-y-2 overflow-hidden">
+        <div className="col-span-8 p-2 bg-gray-50 border-r border-gray-200 space-y-2 overflow-hidden">
           {/* 0. STATUT */}
           <div className="bg-indigo-50 p-4 rounded-xl shadow-sm border border-indigo-100">
-            <h2 className="text-xs font-bold text-indigo-800 uppercase tracking-wider mb-3 flex items-center gap-2">
+            <h2 className="text-sm font-bold text-indigo-800 uppercase tracking-wider mb-3 flex items-center gap-2">
               0. Statut & Facturation
             </h2>
             <div className="space-y-4">
               <div className="relative">
                 <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                  <label className="block text-[10px] font-semibold text-gray-500">Statut Juridique</label>
+                  <label className="block text-xs font-semibold text-gray-500">Statut Juridique</label>
                   <svg className="w-3 h-3 text-indigo-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -550,7 +549,7 @@ export default function FreelanceSimulatorCard() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                    <label className="block text-[10px] font-semibold text-gray-500">TJM (HT)</label>
+                    <label className="block text-xs font-semibold text-gray-500">TJM (HT)</label>
                     <svg className="w-3 h-3 text-indigo-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -563,14 +562,14 @@ export default function FreelanceSimulatorCard() {
                       onChange={(e) => handleChange('tjm', parseFloat(e.target.value) || 0)}
                       onBlur={() => handleSave('tjm', localTjm)}
                       onKeyDown={(e) => handleKeyDown('tjm', localTjm, e)}
-                      className="w-full pl-3 pr-8 py-2 border border-gray-200 bg-white rounded-lg outline-none text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-500"
+                      className="unit-input w-full pl-3 pr-8 py-2 border border-gray-200 bg-white rounded-lg outline-none text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-500"
                     />
                     <span className="absolute right-3 top-2 text-gray-400 text-xs pointer-events-none">€</span>
                   </div>
                 </div>
                 <div>
                   <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                    <label className="block text-[10px] font-semibold text-gray-500">Jours / mois</label>
+                    <label className="block text-xs font-semibold text-gray-500">Jours / mois</label>
                     <svg className="w-3 h-3 text-indigo-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -584,7 +583,7 @@ export default function FreelanceSimulatorCard() {
                       onBlur={() => handleSave('days', localDays)}
                       onKeyDown={(e) => handleKeyDown('days', localDays, e)}
                       max={25}
-                      className="w-full pl-3 pr-8 py-2 border border-gray-200 bg-white rounded-lg outline-none text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-500"
+                      className="unit-input w-full pl-3 pr-8 py-2 border border-gray-200 bg-white rounded-lg outline-none text-sm font-bold text-slate-800 focus:ring-2 focus:ring-blue-500"
                     />
                     <span className="absolute right-3 top-2 text-gray-400 text-xs pointer-events-none">j</span>
                   </div>
@@ -595,11 +594,11 @@ export default function FreelanceSimulatorCard() {
 
           {/* 2. CHARGES */}
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 ring-1 ring-orange-100">
-            <h2 className="text-xs font-bold text-orange-600 uppercase tracking-wider mb-3">2. Charges & Investissements</h2>
+            <h2 className="text-sm font-bold text-orange-600 uppercase tracking-wider mb-3">2. Charges & Investissements</h2>
             <div className="space-y-4">
               <div>
                 <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                  <label className="block text-[10px] font-bold text-emerald-600">Epargne Retraite (Mensuelle)</label>
+                  <label className="block text-xs font-bold text-emerald-600">Epargne Retraite (Mensuelle)</label>
                   <svg className="w-3 h-3 text-emerald-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -612,17 +611,17 @@ export default function FreelanceSimulatorCard() {
                     onChange={(e) => handleChange('costRetirement', parseFloat(e.target.value) || 0)}
                     onBlur={() => handleSave('costRetirement', localCostRetirement)}
                     onKeyDown={(e) => handleKeyDown('costRetirement', localCostRetirement, e)}
-                    className="w-full p-2 pr-16 text-sm border border-emerald-200 rounded text-right font-bold text-emerald-800 focus:ring-2 focus:ring-emerald-500 outline-none"
+                    className="unit-input w-full p-2 pr-24 text-sm border border-emerald-200 rounded text-right font-bold text-emerald-800 focus:ring-2 focus:ring-emerald-500 outline-none"
                   />
                   <span className="absolute right-4 top-2.5 text-emerald-600 text-xs font-bold pointer-events-none">€/mois</span>
                 </div>
-                <p className="text-[9px] text-emerald-600 mt-1 italic">{retirementNote}</p>
+                <p className="text-xs text-emerald-600 mt-1 italic">{retirementNote}</p>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                    <label className="block text-[10px] text-gray-500">Loyer Véhicule (LLD)</label>
+                    <label className="block text-xs text-gray-500">Loyer Véhicule (LLD)</label>
                     <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -639,7 +638,7 @@ export default function FreelanceSimulatorCard() {
                 </div>
                 <div>
                   <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                    <label className="block text-[10px] text-gray-500">Carburant/Entretien</label>
+                    <label className="block text-xs text-gray-500">Carburant/Entretien</label>
                     <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -659,7 +658,7 @@ export default function FreelanceSimulatorCard() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                    <label className="block text-[10px] text-gray-500">Mutuelle Santé</label>
+                    <label className="block text-xs text-gray-500">Mutuelle Santé</label>
                     <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -676,7 +675,7 @@ export default function FreelanceSimulatorCard() {
                 </div>
                 <div>
                   <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                    <label className="block text-[10px] text-gray-500">RC Pro & Banque</label>
+                    <label className="block text-xs text-gray-500">RC Pro & Banque</label>
                     <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -696,7 +695,7 @@ export default function FreelanceSimulatorCard() {
               <div className="grid grid-cols-2 gap-3 bg-gray-50 p-2 rounded">
                 <div>
                   <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                    <label className="block text-[10px] text-gray-500">Comptable (si Soc.)</label>
+                    <label className="block text-xs text-gray-500">Comptable (si Soc.)</label>
                     <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -713,7 +712,7 @@ export default function FreelanceSimulatorCard() {
                 </div>
                 <div>
                   <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                    <label className="block text-[10px] text-gray-500">Frais Portage (%)</label>
+                    <label className="block text-xs text-gray-500">Frais Portage (%)</label>
                     <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -733,7 +732,7 @@ export default function FreelanceSimulatorCard() {
               <div className="grid grid-cols-3 gap-2">
                 <div>
                   <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                    <label className="block text-[10px] text-gray-500">Repas</label>
+                    <label className="block text-xs text-gray-500">Repas</label>
                     <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -750,7 +749,7 @@ export default function FreelanceSimulatorCard() {
                 </div>
                 <div>
                   <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                    <label className="block text-[10px] text-gray-500">Tel/Net</label>
+                    <label className="block text-xs text-gray-500">Tel/Net</label>
                     <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -767,7 +766,7 @@ export default function FreelanceSimulatorCard() {
                 </div>
                 <div>
                   <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                    <label className="block text-[10px] text-gray-500">Matos</label>
+                    <label className="block text-xs text-gray-500">Matos</label>
                     <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
@@ -792,7 +791,7 @@ export default function FreelanceSimulatorCard() {
 
           {/* 3. PARAMÈTRES SOCIAUX & FAMILLE */}
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <h2 className="text-xs font-bold text-red-500 uppercase tracking-wider mb-3">3. Paramètres Sociaux & Famille</h2>
+            <h2 className="text-sm font-bold text-red-500 uppercase tracking-wider mb-3">3. Paramètres Sociaux & Famille</h2>
 
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="flex flex-col justify-center bg-red-50 p-2 rounded border border-red-100 relative">
@@ -822,7 +821,7 @@ export default function FreelanceSimulatorCard() {
 
               <div className="bg-blue-50 p-2 rounded border border-blue-100 relative">
                 <div className="flex items-center gap-1 mb-1 tooltip-trigger cursor-help relative">
-                  <label className="block text-[10px] font-bold text-blue-800">Parts Fiscales</label>
+                  <label className="block text-xs font-bold text-blue-800">Parts Fiscales</label>
                   <svg className="w-3 h-3 text-blue-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -876,7 +875,7 @@ export default function FreelanceSimulatorCard() {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                      <label className="block text-[10px] text-gray-500">Salaire Brut Mensuel</label>
+                      <label className="block text-xs text-gray-500">Salaire Brut Mensuel</label>
                       <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -893,7 +892,7 @@ export default function FreelanceSimulatorCard() {
                   </div>
                   <div>
                     <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                      <label className="block text-[10px] text-gray-500">Sur combien de mois</label>
+                      <label className="block text-xs text-gray-500">Sur combien de mois</label>
                       <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -919,7 +918,7 @@ export default function FreelanceSimulatorCard() {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                      <label className="block text-[10px] text-gray-500">Primes (An)</label>
+                      <label className="block text-xs text-gray-500">Primes (An)</label>
                       <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -936,7 +935,7 @@ export default function FreelanceSimulatorCard() {
                   </div>
                   <div>
                     <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-                      <label className="block text-[10px] text-gray-500">Âge</label>
+                      <label className="block text-xs text-gray-500">Âge</label>
                       <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
@@ -963,59 +962,61 @@ export default function FreelanceSimulatorCard() {
         </div>
 
         {/* DROITE : DASHBOARD */}
-        <div className="col-span-7 p-2 bg-white flex flex-col gap-2 overflow-hidden">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 col-span-2">
-              <div className="text-blue-500 text-[10px] font-bold uppercase tracking-wider mb-1">CA Mensuel HT</div>
-              <div className="text-2xl md:text-3xl font-bold text-blue-900">{caMensuel}</div>
+        <div className="col-span-4 p-2 bg-white flex flex-col gap-1.5 overflow-hidden">
+          <div className="grid grid-cols-1 gap-1.5">
+            <div className="bg-blue-50 px-3 py-2 rounded-xl border border-blue-100">
+              <div className="text-blue-500 text-xs font-bold uppercase tracking-wider">CA Mensuel HT</div>
+              <div className="text-xl font-bold text-blue-900">{caMensuel}</div>
               <div className={tvaBadge.className}>{tvaBadge.text}</div>
             </div>
-            <div className="bg-red-50 p-4 rounded-2xl border border-red-100">
-              <div className="text-red-500 text-[10px] font-bold uppercase tracking-wider mb-1">Cotis. & Impôts</div>
-              <div className="text-xl md:text-2xl font-bold text-red-900">{displayTaxes}</div>
-            </div>
-            <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100">
-              <div className="text-orange-600 text-[10px] font-bold uppercase tracking-wider mb-1">Total Charges</div>
-              <div className="text-xl md:text-2xl font-bold text-orange-700">{displayFrais}</div>
+            <div className="grid grid-cols-2 gap-1.5">
+              <div className="bg-red-50 px-3 py-2 rounded-xl border border-red-100">
+                <div className="text-red-500 text-xs font-bold uppercase tracking-wider">Cotis. & Impôts</div>
+                <div className="text-lg font-bold text-red-900">{displayTaxes}</div>
+              </div>
+              <div className="bg-orange-50 px-3 py-2 rounded-xl border border-orange-100">
+                <div className="text-orange-600 text-xs font-bold uppercase tracking-wider">Total Charges</div>
+                <div className="text-lg font-bold text-orange-700">{displayFrais}</div>
+              </div>
             </div>
           </div>
 
           {localAreToggle && (
-            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-5 rounded-2xl shadow-lg text-white relative overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-3 py-2 rounded-xl shadow-lg text-white relative overflow-hidden">
               <div className="relative z-10 flex justify-between items-center">
                 <div>
-                  <div className="text-blue-200 text-xs font-bold uppercase tracking-wider mb-1">Filet de Sécurité (ARE)</div>
+                  <div className="text-blue-200 text-xs font-bold uppercase tracking-wider">Filet de Sécurité (ARE)</div>
                   <div className="flex items-baseline gap-2">
-                    <div className="text-3xl font-bold">{areMonthly}</div>
+                    <div className="text-xl font-bold">{areMonthly}</div>
                     <span className="text-sm opacity-80">/ mois (Net)</span>
                   </div>
                   <div className="text-xs text-blue-100 mt-1">{areDuration}</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-[10px] text-blue-300 uppercase font-bold">Alloc. Journalière</div>
+                  <div className="text-xs text-blue-300 uppercase font-bold">Alloc. Journalière</div>
                   <div className="text-xl font-bold">{areDaily}</div>
                 </div>
               </div>
             </div>
           )}
 
-          <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-3 rounded-xl shadow-xl text-white relative overflow-hidden group">
+          <div className="bg-gradient-to-r from-emerald-600 to-teal-700 px-3 py-2 rounded-xl shadow-xl text-white relative overflow-hidden group">
             <div className="relative z-10">
-              <div className="text-emerald-100 text-xs font-bold uppercase tracking-wider mb-2">Reste à vivre (Super Net) / Mois</div>
-              <div className="flex items-baseline gap-4">
-                <div className="text-3xl font-extrabold tracking-tight">{superNet}</div>
-                <div className="text-xl font-medium text-emerald-300">{marginPct}</div>
+              <div className="text-emerald-100 text-xs font-bold uppercase tracking-wider">Reste à vivre (Super Net) / Mois</div>
+              <div className="flex items-baseline gap-3">
+                <div className="text-xl font-extrabold tracking-tight">{superNet}</div>
+                <div className="text-sm font-medium text-emerald-300">{marginPct}</div>
               </div>
-              <div className="mt-3 text-xs text-emerald-100 opacity-90 font-medium">
+              <div className="mt-1 text-xs text-emerald-100 opacity-90 font-medium">
                 Montant NET réel disponible après TOUT (Charges, Retraite, Impôts).
               </div>
             </div>
           </div>
 
-          <div className="bg-white rounded-xl border border-gray-100 p-3">
-            <div className="flex justify-between items-end mb-4">
+          <div className="bg-white rounded-xl border border-gray-100 px-3 py-2">
+            <div className="flex justify-between items-end mb-2">
               <h3 className="text-gray-400 text-xs font-bold uppercase">Flux Financier (Statut Sélectionné)</h3>
-              <span className="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-500 font-mono">{chartMode}</span>
+              <span className="text-xs bg-gray-100 px-2 py-1 rounded text-gray-500 font-mono">{chartMode}</span>
             </div>
             <div className="space-y-2">
               {showDeductible && (
@@ -1052,16 +1053,16 @@ export default function FreelanceSimulatorCard() {
             </div>
           </div>
 
-          <div className="bg-indigo-900 rounded-2xl p-3 text-white shadow-xl relative overflow-hidden">
+          <div className="bg-indigo-900 rounded-xl px-3 py-2 text-white shadow-xl relative overflow-hidden">
             <div className="relative z-10">
-              <h3 className="text-base font-bold mb-2 flex items-center gap-2">
+              <h3 className="text-sm font-bold mb-1 flex items-center gap-2">
                 <span>🏆</span> Bilan & Recommandation
               </h3>
 
-              <div className="flex items-end justify-center gap-3 mb-2 h-16">
+              <div className="flex items-end justify-center gap-2 mb-1 h-12">
                 <div className="flex flex-col items-center w-1/4 group transition-all duration-500">
                   <div className="text-xs text-indigo-300 font-bold mb-1">{podium2.name}</div>
-                  <div className="text-[10px] text-indigo-400 mb-1">{podium2.val}</div>
+                  <div className="text-xs text-indigo-400 mb-1">{podium2.val}</div>
                   <div className="w-full bg-indigo-500/50 rounded-t-lg relative podium-bar group-hover:bg-indigo-500/70 transition-all duration-500" style={{ height: `${podium2Height}%` }}>
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 text-xl">🥈</div>
                   </div>
@@ -1075,7 +1076,7 @@ export default function FreelanceSimulatorCard() {
                 </div>
                 <div className="flex flex-col items-center w-1/4 group transition-all duration-500">
                   <div className="text-xs text-indigo-300 font-bold mb-1">{podium3.name}</div>
-                  <div className="text-[10px] text-indigo-400 mb-1">{podium3.val}</div>
+                  <div className="text-xs text-indigo-400 mb-1">{podium3.val}</div>
                   <div className="w-full bg-indigo-700/50 rounded-t-lg relative podium-bar group-hover:bg-indigo-700/70 transition-all duration-500" style={{ height: `${podium3Height}%` }}>
                     <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 text-xl">🥉</div>
                   </div>
@@ -1101,6 +1102,9 @@ export default function FreelanceSimulatorCard() {
       )}
 
       <style jsx>{`
+        :global(html.fit-viewport) input.unit-input {
+          padding-right: 4.75rem !important;
+        }
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f1f1; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: #c7c7c7; border-radius: 3px; }
