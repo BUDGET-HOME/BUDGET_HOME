@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { formatEUR } from "@/lib/budget";
 import { useCashFlowData, type CashFlowItem, type CashFlowFrequency } from "@/hooks/useCashFlowData";
 import { CASH_FLOW_AUTOSYNC_KEY } from "@/lib/entreprise-backup";
+import { occursInMonth, openingBalanceWithoutFirstRevenue, projectCashFlow } from "@/lib/cash-flow";
 import { useFreelanceData } from "@/hooks/useFreelanceData";
 import {
   Chart as ChartJS,
@@ -216,14 +217,11 @@ export default function CashFlowPlannerCard() {
       },
     ];
 
-    // Update initial balance from freelance if available
-    const newInitialBalance = monthlyRevenue;
-
     await saveData({
       items: newItems,
-      initialBalance: newInitialBalance,
+      initialBalance: openingBalanceWithoutFirstRevenue(savedData?.initialBalance ?? 0, monthlyRevenue),
     });
-  }, [freelanceData, saveData]);
+  }, [freelanceData, saveData, savedData?.initialBalance]);
 
   // Auto-sync when freelance data changes. An import turns this off
   // (cashFlowAutoSync = "0") so the loaded lines are not replaced.
@@ -310,87 +308,18 @@ export default function CashFlowPlannerCard() {
     return Math.round(arceParams.areDailyAmount * arceParams.areDuration * 0.45);
   }, [enableARCE, arceParams.areEligible, arceParams.areDailyAmount, arceParams.areDuration]);
   
-  // Total initial balance with ARCE
+  // Total initial balance with ARCE. Le CA du mois n'y est pas inclus.
   const totalInitialBalance = initialBalance + arceAmount;
 
-  // Calculate balance over time
-  const { monthlyBalances, months, totalCredit, totalDebit } = useMemo(() => {
-    const now = new Date();
-    const monthCount = 12;
-    const generatedMonths: string[] = [];
-    const balances: number[] = [initialBalance];
-    
-    for (let i = 0; i < monthCount; i++) {
-      const date = new Date(now.getFullYear(), now.getMonth() + i, 1);
-      generatedMonths.push(date.toLocaleString("fr-FR", { month: "short", year: "numeric" }));
-    }
-
-    // Process each item
-    items.forEach(item => {
-      const startDate = new Date(item.startDate);
-      const endDate = item.endDate ? new Date(item.endDate) : null;
-      const amount = item.type === "credit" ? item.amount : -item.amount;
-
-      if (item.frequency === "ponctuel") {
-        const monthIndex = startDate.getMonth() - now.getMonth() + (startDate.getFullYear() - now.getFullYear()) * 12;
-        if (monthIndex >= 0 && monthIndex < monthCount) {
-          if (!balances[monthIndex + 1]) balances[monthIndex + 1] = 0;
-          balances[monthIndex + 1] = (balances[monthIndex + 1] || 0) + amount;
-        }
-      } else if (item.frequency === "mensuel") {
-        let currentDate = new Date(startDate);
-        while (currentDate < (endDate || new Date(now.getFullYear() + 1, now.getMonth(), 1))) {
-          const monthIndex = currentDate.getMonth() - now.getMonth() + (currentDate.getFullYear() - now.getFullYear()) * 12;
-          if (monthIndex >= 0 && monthIndex < monthCount) {
-            if (!balances[monthIndex + 1]) balances[monthIndex + 1] = 0;
-            balances[monthIndex + 1] = (balances[monthIndex + 1] || 0) + amount;
-          }
-          currentDate.setMonth(currentDate.getMonth() + 1);
-        }
-      } else if (item.frequency === "trimestriel") {
-        let currentDate = new Date(startDate);
-        while (currentDate < (endDate || new Date(now.getFullYear() + 1, now.getMonth(), 1))) {
-          const monthIndex = currentDate.getMonth() - now.getMonth() + (currentDate.getFullYear() - now.getFullYear()) * 12;
-          if (monthIndex >= 0 && monthIndex < monthCount) {
-            if (!balances[monthIndex + 1]) balances[monthIndex + 1] = 0;
-            balances[monthIndex + 1] = (balances[monthIndex + 1] || 0) + amount;
-          }
-          currentDate.setMonth(currentDate.getMonth() + 3);
-        }
-      } else if (item.frequency === "annuel") {
-        let currentDate = new Date(startDate);
-        while (currentDate < (endDate || new Date(now.getFullYear() + 2, now.getMonth(), 1))) {
-          const monthIndex = currentDate.getMonth() - now.getMonth() + (currentDate.getFullYear() - now.getFullYear()) * 12;
-          if (monthIndex >= 0 && monthIndex < monthCount) {
-            if (!balances[monthIndex + 1]) balances[monthIndex + 1] = 0;
-            balances[monthIndex + 1] = (balances[monthIndex + 1] || 0) + amount;
-          }
-          currentDate.setFullYear(currentDate.getFullYear() + 1);
-        }
-      }
-    });
-
-    // Fill gaps and calculate cumulative
-    const cumulativeBalances: number[] = [initialBalance];
-    for (let i = 0; i < monthCount; i++) {
-      cumulativeBalances.push((cumulativeBalances[i] || 0) + (balances[i + 1] || 0));
-    }
-
-    // Calculate totals
-    const calcTotalCredit = items
-      .filter(i => i.type === "credit")
-      .reduce((sum, i) => sum + i.amount, 0);
-    const calcTotalDebit = items
-      .filter(i => i.type === "debit")
-      .reduce((sum, i) => sum + i.amount, 0);
-
-    return {
-      monthlyBalances: cumulativeBalances.slice(1),
-      months: generatedMonths,
-      totalCredit: calcTotalCredit,
-      totalDebit: calcTotalDebit,
-    };
-  }, [items, initialBalance]);
+  const projection = useMemo(
+    () => projectCashFlow(items, totalInitialBalance),
+    [items, totalInitialBalance],
+  );
+  const months = projection.map((row) => row.label);
+  const monthlyBalances = projection.map((row) => row.balance);
+  const totalCredit = projection.reduce((sum, row) => sum + row.credits, 0);
+  const totalDebit = projection.reduce((sum, row) => sum + row.debits, 0);
+  const finalBalance = projection.length > 0 ? projection[projection.length - 1].balance : totalInitialBalance;
 
   const handleInputChange = useCallback((field: string, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -458,36 +387,18 @@ export default function CashFlowPlannerCard() {
       },
       {
         label: "Crédits",
-        data: monthlyBalances.map((_, i) => 
-          items
-            .filter(item => item.type === "credit")
-            .reduce((sum, item) => {
-              const startDate = new Date(item.startDate);
-              const now = new Date();
-              const monthIndex = startDate.getMonth() - now.getMonth() + (startDate.getFullYear() - now.getFullYear()) * 12;
-              return monthIndex === i ? sum + item.amount : sum;
-            }, 0)
-        ),
+        data: projection.map((row) => row.credits),
         backgroundColor: "rgba(75, 192, 192, 0.5)",
         yAxisID: "y",
       },
       {
         label: "Débits",
-        data: monthlyBalances.map((_, i) => 
-          items
-            .filter(item => item.type === "debit")
-            .reduce((sum, item) => {
-              const startDate = new Date(item.startDate);
-              const now = new Date();
-              const monthIndex = startDate.getMonth() - now.getMonth() + (startDate.getFullYear() - now.getFullYear()) * 12;
-              return monthIndex === i ? sum + item.amount : sum;
-            }, 0)
-        ),
+        data: projection.map((row) => row.debits),
         backgroundColor: "rgba(255, 99, 132, 0.5)",
         yAxisID: "y",
       },
     ],
-  }), [monthlyBalances, months, items]);
+  }), [monthlyBalances, months, projection]);
 
   const chartOptions = useMemo(() => ({
     responsive: true,
@@ -677,17 +588,17 @@ export default function CashFlowPlannerCard() {
           )}
         </div>
         <div className="bg-blue-50 rounded-lg border border-blue-100 p-4 text-center">
-          <div className="text-sm font-semibold text-blue-800 mb-1">Total crédits</div>
+          <div className="text-sm font-semibold text-blue-800 mb-1">Crédits sur 12 mois</div>
           <div className="text-2xl font-bold text-blue-700">{formatEUR(totalCredit)}</div>
         </div>
         <div className="bg-red-50 rounded-lg border border-red-100 p-4 text-center">
-          <div className="text-sm font-semibold text-red-800 mb-1">Total débits</div>
+          <div className="text-sm font-semibold text-red-800 mb-1">Débits sur 12 mois</div>
           <div className="text-2xl font-bold text-red-700">{formatEUR(totalDebit)}</div>
         </div>
         <div className="bg-purple-50 rounded-lg border border-purple-100 p-4 text-center">
           <div className="text-sm font-semibold text-purple-800 mb-1">Solde final</div>
           <div className="text-2xl font-bold text-purple-700">
-            {formatEUR(totalInitialBalance + totalCredit - totalDebit)}
+            {formatEUR(finalBalance)}
           </div>
         </div>
       </div>
@@ -815,7 +726,9 @@ export default function CashFlowPlannerCard() {
             <label className="block text-sm font-semibold text-amber-800 mb-1">
               Solde initial de trésorerie
             </label>
-            <p className="text-xs text-amber-600">Montant disponible au démarrage</p>
+            <p className="text-xs text-amber-600">
+              Trésorerie déjà disponible. Le premier mois de chiffre d&apos;affaires n&apos;y entre pas : les clients ne paient pas en début de mois.
+            </p>
           </div>
           <div className="flex items-center gap-2">
             <input
@@ -945,26 +858,7 @@ export default function CashFlowPlannerCard() {
                 
                 {/* Rows */}
                 {items.map((item) => {
-                  const startDate = new Date(item.startDate);
-                  const endDate = item.endDate ? new Date(item.endDate) : new Date(startDate.getFullYear() + 1, startDate.getMonth(), 1);
                   const now = new Date();
-                  
-                  // Calculate start and end month indices
-                  let startMonth = startDate.getMonth() - now.getMonth() + (startDate.getFullYear() - now.getFullYear()) * 12;
-                  let endMonth = endDate.getMonth() - now.getMonth() + (endDate.getFullYear() - now.getFullYear()) * 12;
-                  
-                  // Clamp to visible range
-                  startMonth = Math.max(0, Math.min(startMonth, 11));
-                  endMonth = Math.max(0, Math.min(endMonth, 11));
-                  
-                  // For recurring items, extend to end of year
-                  if (item.frequency !== "ponctuel") {
-                    endMonth = 11;
-                  }
-                  
-                  const colSpan = Math.max(1, endMonth - startMonth + 1);
-                  const startCol = Math.min(startMonth, 11);
-                  
                   return (
                     <div key={item.id} className="contents">
                       <div className="col-span-4 bg-white p-2 text-sm border-r border-slate-200">
@@ -974,21 +868,20 @@ export default function CashFlowPlannerCard() {
                         </div>
                       </div>
                       {Array.from({ length: 12 }).map((_, colIndex) => {
-                        const isFilled = colIndex >= startCol && colIndex < startCol + colSpan;
+                        const month = new Date(now.getFullYear(), now.getMonth() + colIndex, 1);
+                        const active = occursInMonth(item, month);
                         return (
                           <div
                             key={colIndex}
                             className={`p-1 text-center text-xs ${
-                              isFilled 
-                                ? item.type === "credit" 
-                                  ? "bg-emerald-200 text-emerald-800" 
+                              active
+                                ? item.type === "credit"
+                                  ? "bg-emerald-200 text-emerald-800"
                                   : "bg-red-200 text-red-800"
                                 : "bg-white"
                             }`}
                           >
-                            {isFilled && colIndex === startCol ? (
-                              item.type === "credit" ? "+" : "-"
-                            ) : ""}
+                            {active ? formatEUR(item.amount) : ""}
                           </div>
                         );
                       })}
