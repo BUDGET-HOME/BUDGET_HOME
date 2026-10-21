@@ -319,7 +319,7 @@ export default function FreelanceSimulatorCard() {
 
     setHeaderCA(money(caAnnuel));
     setCaMensuel(money(caMois));
-    setTotalChargesInput(money(Object.values(costs).reduce((a, b) => a + b, 0) + costs.acct + CFE_LISSEE));
+    setTotalChargesInput(money(Object.values(costs).reduce((a, b) => a + b, 0) + CFE_LISSEE));
     setDisplayTaxes(`- ${money(currentSim.taxes + currentSim.ir)}`);
     setDisplayFrais(`- ${money(currentSim.deductible + currentSim.nonDeductible)}`);
     setSuperNet(money(currentSim.net));
@@ -511,8 +511,8 @@ export default function FreelanceSimulatorCard() {
         <div className="absolute -top-10 -right-10 w-64 h-64 bg-indigo-600 rounded-full opacity-10 blur-3xl no-print" />
       </div>
 
-      <div ref={fitHostRef} className="relative min-h-0 flex-1 overflow-hidden">
-      <div ref={fitInnerRef} className="absolute left-0 top-0">
+      <div ref={fitHostRef} className="fit-frame-host relative min-h-0 flex-1 overflow-hidden">
+      <div ref={fitInnerRef} className="fit-frame-inner absolute left-0 top-0">
       <div className="grid grid-cols-12">
         {/* GAUCHE : PARAMÈTRES */}
         <div className="col-span-8 p-2 bg-gray-50 border-r border-gray-200 grid grid-cols-2 items-start gap-2 overflow-hidden">

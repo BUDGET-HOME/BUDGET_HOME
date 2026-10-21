@@ -10,7 +10,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 ## Vérification
 
-Ne pas vérifier l'application dans le navigateur : pas d'ouverture de l'interface, pas de captures, pas d'enregistrement d'écran.
+Ne pas vérifier l'application dans le navigateur : pas d'ouverture de l'interface, pas de captures, pas d'enregistrement d'écran. Ne pas joindre de capture de page dans la réponse.
 
 S'appuyer sur la CI (`.github/workflows/ci.yml`), qui exécute :
 
@@ -23,7 +23,7 @@ Lancer ces deux commandes localement avant de conclure. Ne pas ajouter `npm run 
 
 Pousser les commits directement sur `main`. Ne pas créer de branche et ne pas ouvrir de pull request.
 
-Avant le push, lancer `npm test` et `npm run typecheck`. Après le push, vérifier que le workflow CI sur `main` est vert. S'il échoue, corriger et pousser à nouveau jusqu'à ce qu'il le soit.
+Avant le push, lancer `npm test` et `npm run typecheck`. Ne pas attendre que la CI soit au vert.
 
 ## Base Supabase
 

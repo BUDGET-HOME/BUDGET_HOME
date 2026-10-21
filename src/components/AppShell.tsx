@@ -121,17 +121,19 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           html.fit-viewport,
           html.fit-viewport body,
           html.fit-viewport body > div,
-          html.fit-viewport main {
-            height: auto;
-            overflow: visible;
-            display: block;
+          html.fit-viewport main,
+          html.fit-viewport .freelance-board {
+            height: auto !important;
+            overflow: visible !important;
+            display: block !important;
           }
           html.fit-viewport .fit-frame-host {
-            height: auto;
-            overflow: visible;
+            height: auto !important;
+            overflow: visible !important;
+            position: static !important;
           }
           html.fit-viewport .fit-frame-inner {
-            position: static;
+            position: static !important;
             transform: none !important;
             width: auto !important;
           }
