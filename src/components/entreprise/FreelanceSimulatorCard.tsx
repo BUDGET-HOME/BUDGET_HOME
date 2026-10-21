@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
 import { formatEUR } from "@/lib/budget";
 import { useFreelanceData, type FreelanceSimulatorData } from "@/hooks/useFreelanceData";
 
@@ -281,6 +281,8 @@ export default function FreelanceSimulatorCard() {
   const [podium3Height, setPodium3Height] = useState<number>(40);
 
   const appRef = useRef<HTMLDivElement>(null);
+  const fitHostRef = useRef<HTMLDivElement>(null);
+  const fitInnerRef = useRef<HTMLDivElement>(null);
 
   const calculate = useCallback(() => {
     const caMois = localTjm * localDays;
@@ -434,6 +436,37 @@ export default function FreelanceSimulatorCard() {
     calculate();
   }, [calculate]);
 
+  useLayoutEffect(() => {
+    const host = fitHostRef.current;
+    const inner = fitInnerRef.current;
+    if (!host || !inner) return;
+
+    const apply = () => {
+      const width = host.clientWidth;
+      const available = host.clientHeight;
+      if (width <= 0 || available <= 0) return;
+      inner.style.transform = "none";
+      inner.style.width = `${width}px`;
+      let needed = inner.scrollHeight;
+      let scale = Math.min(1, available / Math.max(needed, 1));
+      inner.style.width = `${width / scale}px`;
+      needed = inner.scrollHeight;
+      scale = Math.min(1, available / Math.max(needed, 1));
+      inner.style.transformOrigin = "top left";
+      inner.style.transform = scale < 0.999 ? `scale(${scale})` : "none";
+      if (scale >= 0.999) inner.style.width = `${width}px`;
+    };
+
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(host);
+    window.addEventListener("resize", apply);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", apply);
+    };
+  }, [dataLoading, localAreToggle, headerCA, superNet, verdictText, caMensuel]);
+
   const downloadPDF = async () => {
     const btn = document.getElementById('btnDownload');
     const btnText = document.getElementById('btnText');
@@ -508,8 +541,8 @@ export default function FreelanceSimulatorCard() {
   }
 
   return (
-    <section className="budget-card">
-      <div className="bg-slate-900 p-6 text-white flex justify-between items-center relative overflow-hidden rounded-t-3xl -mx-4 -mt-4 mb-4">
+    <section className="budget-card freelance-board !mb-0 flex h-full min-h-0 flex-col !p-0 overflow-hidden">
+      <div className="bg-slate-900 px-4 py-2 text-white flex justify-between items-center relative overflow-hidden shrink-0">
         <div className="relative z-10">
           <div className="flex items-center gap-3">
             <div className="bg-indigo-600 p-2 rounded-lg no-print">
@@ -518,7 +551,7 @@ export default function FreelanceSimulatorCard() {
               </svg>
             </div>
             <div>
-              <h1 className="text-xl md:text-2xl font-bold tracking-tight">Simulateur Freelance Ultimate</h1>
+              <h1 className="text-lg font-bold tracking-tight">Simulateur Freelance Ultimate</h1>
               <p className="text-slate-400 text-xs md:text-sm print:text-gray-600">V24.0 • Décisionnel & Pédagogique</p>
             </div>
           </div>
@@ -526,7 +559,7 @@ export default function FreelanceSimulatorCard() {
         <div className="flex items-center gap-4 relative z-10">
           <div className="hidden md:block text-right">
             <div className="text-xs text-slate-400 uppercase tracking-widest font-semibold print:text-gray-500">CA Annuel Projeté</div>
-            <div id="headerAnnualCA" className="text-3xl font-bold text-white tracking-tight">{headerCA}</div>
+            <div id="headerAnnualCA" className="text-xl font-bold text-white tracking-tight">{headerCA}</div>
           </div>
           <button
             onClick={downloadPDF}
@@ -542,9 +575,11 @@ export default function FreelanceSimulatorCard() {
         <div className="absolute -top-10 -right-10 w-64 h-64 bg-indigo-600 rounded-full opacity-10 blur-3xl no-print" />
       </div>
 
-      <div ref={appRef} className="grid grid-cols-1 xl:grid-cols-12">
+      <div ref={fitHostRef} className="relative min-h-0 flex-1 overflow-hidden">
+      <div ref={fitInnerRef} className="absolute left-0 top-0">
+      <div ref={appRef} className="grid grid-cols-12">
         {/* GAUCHE : PARAMÈTRES */}
-        <div className="xl:col-span-5 p-6 bg-gray-50 border-r border-gray-200 space-y-6 max-h-[calc(100vh-100px)] overflow-y-auto custom-scrollbar">
+        <div className="col-span-5 p-2 bg-gray-50 border-r border-gray-200 space-y-2 overflow-hidden">
           {/* 0. STATUT */}
           <div className="bg-indigo-50 p-4 rounded-xl shadow-sm border border-indigo-100">
             <h2 className="text-xs font-bold text-indigo-800 uppercase tracking-wider mb-3 flex items-center gap-2">
@@ -991,7 +1026,7 @@ export default function FreelanceSimulatorCard() {
         </div>
 
         {/* DROITE : DASHBOARD */}
-        <div className="xl:col-span-7 p-6 bg-white flex flex-col gap-6 xl:h-screen xl:sticky xl:top-0 overflow-y-auto">
+        <div className="col-span-7 p-2 bg-white flex flex-col gap-2 overflow-hidden">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="bg-blue-50 p-4 rounded-2xl border border-blue-100 col-span-2">
               <div className="text-blue-500 text-[10px] font-bold uppercase tracking-wider mb-1">CA Mensuel HT</div>
@@ -1027,11 +1062,11 @@ export default function FreelanceSimulatorCard() {
             </div>
           )}
 
-          <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-6 rounded-2xl shadow-xl text-white relative overflow-hidden group">
+          <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-3 rounded-xl shadow-xl text-white relative overflow-hidden group">
             <div className="relative z-10">
               <div className="text-emerald-100 text-xs font-bold uppercase tracking-wider mb-2">Reste à vivre (Super Net) / Mois</div>
               <div className="flex items-baseline gap-4">
-                <div className="text-5xl font-extrabold tracking-tight">{superNet}</div>
+                <div className="text-3xl font-extrabold tracking-tight">{superNet}</div>
                 <div className="text-xl font-medium text-emerald-300">{marginPct}</div>
               </div>
               <div className="mt-3 text-xs text-emerald-100 opacity-90 font-medium">
@@ -1040,12 +1075,12 @@ export default function FreelanceSimulatorCard() {
             </div>
           </div>
 
-          <div className="bg-white rounded-2xl border border-gray-100 p-6">
+          <div className="bg-white rounded-xl border border-gray-100 p-3">
             <div className="flex justify-between items-end mb-4">
               <h3 className="text-gray-400 text-xs font-bold uppercase">Flux Financier (Statut Sélectionné)</h3>
               <span className="text-[10px] bg-gray-100 px-2 py-1 rounded text-gray-500 font-mono">{chartMode}</span>
             </div>
-            <div className="space-y-5">
+            <div className="space-y-2">
               {showDeductible && (
                 <div>
                   <div className="flex justify-between text-xs mb-1 font-semibold text-gray-600">
@@ -1080,13 +1115,13 @@ export default function FreelanceSimulatorCard() {
             </div>
           </div>
 
-          <div className="bg-indigo-900 rounded-3xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden transition-all duration-500">
+          <div className="bg-indigo-900 rounded-2xl p-3 text-white shadow-xl relative overflow-hidden">
             <div className="relative z-10">
-              <h3 className="text-2xl font-bold mb-6 flex items-center gap-2">
+              <h3 className="text-base font-bold mb-2 flex items-center gap-2">
                 <span>🏆</span> Bilan & Recommandation
               </h3>
 
-              <div className="flex items-end justify-center gap-4 mb-8 h-40">
+              <div className="flex items-end justify-center gap-3 mb-2 h-16">
                 <div className="flex flex-col items-center w-1/4 group transition-all duration-500">
                   <div className="text-xs text-indigo-300 font-bold mb-1">{podium2.name}</div>
                   <div className="text-[10px] text-indigo-400 mb-1">{podium2.val}</div>
@@ -1110,14 +1145,16 @@ export default function FreelanceSimulatorCard() {
                 </div>
               </div>
 
-              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-5 border border-white/10">
-                <h4 className="text-lg font-bold text-yellow-300 mb-2" dangerouslySetInnerHTML={{ __html: verdictTitle }} />
-                <p className="text-sm text-indigo-100 leading-relaxed" dangerouslySetInnerHTML={{ __html: verdictText }} />
+              <div className="bg-white/10 backdrop-blur-sm rounded-lg p-2 border border-white/10">
+                <h4 className="text-sm font-bold text-yellow-300 mb-1" dangerouslySetInnerHTML={{ __html: verdictTitle }} />
+                <p className="text-xs text-indigo-100 leading-snug" dangerouslySetInnerHTML={{ __html: verdictText }} />
               </div>
             </div>
             <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 bg-indigo-600 rounded-full blur-3xl opacity-30 no-print" />
           </div>
         </div>
+      </div>
+      </div>
       </div>
 
       {saving && (

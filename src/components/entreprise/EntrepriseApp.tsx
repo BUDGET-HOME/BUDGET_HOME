@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { downloadJSON } from "@/lib/budget-service";
 import { parseEntrepriseBackup, writeStoredCashFlow } from "@/lib/entreprise-backup";
 import { stateFromBackup, toEntrepriseBackup } from "@/lib/entreprise-state";
@@ -34,6 +34,13 @@ function EntrepriseScreen() {
   const [revision, setRevision] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const fit = activeTool === "freelance";
+
+  useEffect(() => {
+    if (!fit) return;
+    document.documentElement.classList.add("fit-viewport");
+    return () => document.documentElement.classList.remove("fit-viewport");
+  }, [fit]);
 
   const handleExport = useCallback(() => {
     const backup = toEntrepriseBackup(state);
@@ -78,45 +85,46 @@ function EntrepriseScreen() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl">
+    <div className={fit ? "flex h-full min-h-0 flex-1 flex-col gap-1.5" : "mx-auto max-w-5xl"}>
       <PageHeader
         title="Gestion Entreprise"
         user={user}
         syncStatus={syncStatus}
         onExport={handleExport}
         onImport={handleImport}
+        compact={fit}
       />
       {error && (
-        <div className="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-700">
+        <div className={`rounded-md border border-red-300 bg-red-50 text-red-700 ${fit ? "shrink-0 px-2 py-1 text-xs" : "mb-4 px-4 py-2 text-sm"}`}>
           {error}
         </div>
       )}
       {syncStatus === "error" && (
-        <div className="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-700">
+        <div className={`rounded-md border border-red-300 bg-red-50 text-red-700 ${fit ? "shrink-0 px-2 py-1 text-xs" : "mb-4 px-4 py-2 text-sm"}`}>
           La sauvegarde sur le compte a échoué. Les modifications restent sur cet appareil.
         </div>
       )}
       {notice && (
-        <div className="mb-4 rounded-md border border-green-300 bg-green-50 px-4 py-2 text-sm text-green-800">
+        <div className={`rounded-md border border-green-300 bg-green-50 text-green-800 ${fit ? "shrink-0 px-2 py-1 text-xs" : "mb-4 px-4 py-2 text-sm"}`}>
           {notice}
         </div>
       )}
       {!user && (
-        <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-800 no-print">
-          Vous utilisez l&apos;application en mode local.{" "}
+        <div className={`rounded-md border border-blue-200 bg-blue-50 text-blue-800 no-print ${fit ? "shrink-0 px-2 py-1 text-xs" : "mb-4 px-4 py-2 text-sm"}`}>
+          Mode local.{" "}
           <a href="/signup" className="font-semibold underline">
             Créez un compte
           </a>{" "}
-          pour sauvegarder vos données sur le serveur.
+          pour sauvegarder sur le serveur.
         </div>
       )}
 
-      <div className="flex flex-wrap gap-2 mb-5 no-print">
+      <div className={`no-print flex flex-wrap ${fit ? "shrink-0 gap-1" : "mb-5 gap-2"}`}>
         {TOOLS.map((tool) => (
           <button
             key={tool.id}
             onClick={() => setActiveTool(tool.id)}
-            className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${
+            className={`rounded-lg font-semibold transition-colors ${fit ? "px-2.5 py-1 text-xs" : "px-4 py-2 text-sm"} ${
               activeTool === tool.id
                 ? "bg-blue-600 text-white"
                 : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -127,10 +135,34 @@ function EntrepriseScreen() {
         ))}
       </div>
 
-      {activeTool === "freelance" && <FreelanceSimulatorCard key={`freelance-${revision}`} />}
+      {activeTool === "freelance" && (
+        <div className="min-h-0 flex-1">
+          <FreelanceSimulatorCard key={`freelance-${revision}`} />
+        </div>
+      )}
       {activeTool === "statuts" && <StatusCompareCard key={`statuts-${revision}`} />}
       {activeTool === "gantt" && <GanttCard key={`gantt-${revision}`} />}
       {activeTool === "cashflow" && <CashFlowPlannerCard key={`cashflow-${revision}`} />}
+      <style jsx global>{`
+        html.fit-viewport,
+        html.fit-viewport body {
+          height: 100%;
+          overflow: hidden;
+        }
+        html.fit-viewport body > div {
+          height: 100%;
+          min-height: 0;
+          overflow: hidden;
+        }
+        html.fit-viewport main {
+          display: flex;
+          flex-direction: column;
+          height: 100%;
+          min-height: 0;
+          overflow: hidden;
+          padding: 8px 12px;
+        }
+      `}</style>
     </div>
   );
 }
