@@ -70,9 +70,9 @@ export default function BudgetApp() {
       <RevenusCard state={state} update={update} />
       <LoanCard state={state} update={update} />
       <DepensesForm state={state} update={update} />
+      <ChargesTable state={state} update={update} />
       <ChartsCard state={state} />
       <AnalyseCard state={state} viewMode={viewMode} setViewMode={setViewMode} />
-      <ChargesTable state={state} update={update} />
     </div>
   );
 }

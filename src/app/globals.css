@@ -4,7 +4,6 @@
   --primary: #2563eb;
   --primary-dark: #1e40af;
   --secondary: #db2777;
-  --purple: #7c3aed;
 }
 
 .budget-card {
@@ -14,11 +13,6 @@
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
   padding: 24px;
   margin-bottom: 24px;
-}
-
-.budget-card-immo {
-  border: 2px solid var(--purple);
-  background: #fbfbfc;
 }
 
 .calc-content {

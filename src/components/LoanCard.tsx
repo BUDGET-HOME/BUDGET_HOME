@@ -35,7 +35,7 @@ export default function LoanCard({ state, update }: Props) {
   const savedMonths = summary.remainingMonths - projection.monthsToPayoff;
 
   return (
-    <section className="budget-card budget-card-immo">
+    <section className="budget-card">
       <h2 className="text-xl font-bold text-purple-700 border-b-2 border-purple-100 pb-2 mb-5">
         🏦 Notre crédit maison
       </h2>
