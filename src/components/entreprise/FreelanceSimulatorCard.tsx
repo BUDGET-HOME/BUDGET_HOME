@@ -280,7 +280,6 @@ export default function FreelanceSimulatorCard() {
   const [podium2Height, setPodium2Height] = useState<number>(60);
   const [podium3Height, setPodium3Height] = useState<number>(40);
 
-  const appRef = useRef<HTMLDivElement>(null);
   const fitHostRef = useRef<HTMLDivElement>(null);
   const fitInnerRef = useRef<HTMLDivElement>(null);
 
@@ -467,56 +466,6 @@ export default function FreelanceSimulatorCard() {
     };
   }, [dataLoading, localAreToggle, headerCA, superNet, verdictText, caMensuel]);
 
-  const downloadPDF = async () => {
-    const btn = document.getElementById('btnDownload');
-    const btnText = document.getElementById('btnText');
-    const mainApp = appRef.current;
-
-    if (!mainApp || !btn || !btnText) return;
-
-    const originalText = btnText.innerText;
-    btnText.innerText = "Génération...";
-    btn.classList.add('opacity-75', 'cursor-not-allowed');
-
-    document.body.classList.add('print-mode');
-
-    await new Promise(r => setTimeout(r, 800));
-
-    try {
-      const { default: html2canvas } = await import('html2canvas');
-      const { jsPDF } = await import('jspdf');
-
-      const canvas = await html2canvas(mainApp, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        windowWidth: 1100,
-        backgroundColor: '#ffffff'
-      });
-
-      const imgData = canvas.toDataURL('image/jpeg', 0.90);
-      const imgWidth = 210;
-      const pageHeight = (canvas.height * imgWidth) / canvas.width;
-
-      const pdf = new jsPDF({
-        orientation: 'p',
-        unit: 'mm',
-        format: [imgWidth, pageHeight]
-      });
-
-      pdf.addImage(imgData, 'JPEG', 0, 0, imgWidth, pageHeight);
-      pdf.save('simulation_freelance_portrait.pdf');
-
-    } catch (err) {
-      console.error("PDF Error:", err);
-      alert("Erreur PDF. Veuillez réessayer.");
-    } finally {
-      document.body.classList.remove('print-mode');
-      btnText.innerText = originalText;
-      btn.classList.remove('opacity-75', 'cursor-not-allowed');
-    }
-  };
-
   if (dataLoading) {
     return (
       <section className="budget-card">
@@ -556,28 +505,16 @@ export default function FreelanceSimulatorCard() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-4 relative z-10">
-          <div className="hidden md:block text-right">
-            <div className="text-xs text-slate-400 uppercase tracking-widest font-semibold print:text-gray-500">CA Annuel Projeté</div>
-            <div id="headerAnnualCA" className="text-xl font-bold text-white tracking-tight">{headerCA}</div>
-          </div>
-          <button
-            onClick={downloadPDF}
-            id="btnDownload"
-            className="no-print bg-indigo-600 hover:bg-indigo-500 text-white p-2 px-4 rounded-lg transition shadow-lg flex items-center gap-2 text-sm font-bold"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            <span id="btnText">Télécharger PDF</span>
-          </button>
+        <div className="relative z-10 text-right">
+          <div className="text-xs text-slate-400 uppercase tracking-widest font-semibold print:text-gray-500">CA Annuel Projeté</div>
+          <div id="headerAnnualCA" className="text-xl font-bold text-white tracking-tight">{headerCA}</div>
         </div>
         <div className="absolute -top-10 -right-10 w-64 h-64 bg-indigo-600 rounded-full opacity-10 blur-3xl no-print" />
       </div>
 
       <div ref={fitHostRef} className="relative min-h-0 flex-1 overflow-hidden">
       <div ref={fitInnerRef} className="absolute left-0 top-0">
-      <div ref={appRef} className="grid grid-cols-12">
+      <div className="grid grid-cols-12">
         {/* GAUCHE : PARAMÈTRES */}
         <div className="col-span-5 p-2 bg-gray-50 border-r border-gray-200 space-y-2 overflow-hidden">
           {/* 0. STATUT */}
