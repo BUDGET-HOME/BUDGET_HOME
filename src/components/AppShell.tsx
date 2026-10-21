@@ -11,7 +11,7 @@ const TABS = [
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const fit = pathname === "/" || pathname.startsWith("/entreprise");
+  const fit = pathname.startsWith("/entreprise");
 
   useEffect(() => {
     if (!fit) return;

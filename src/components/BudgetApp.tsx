@@ -11,7 +11,6 @@ import ChargesTable from "./ChargesTable";
 import ChartsCard from "./ChartsCard";
 import { exportJSON, normalizeState } from "@/lib/budget-service";
 import { isEntrepriseBackup } from "@/lib/entreprise-backup";
-import FitFrame from "./FitFrame";
 
 export default function BudgetApp() {
   const { state, update, replaceState, user, authReady, loaded, syncStatus } = useBudget();
@@ -37,35 +36,30 @@ export default function BudgetApp() {
   };
 
   if (!authReady || !loaded) {
-    return (
-      <div className="flex h-full min-h-0 flex-1 flex-col">
-        <p className="text-slate-500">Chargement…</p>
-      </div>
-    );
+    return <p className="text-slate-500">Chargement…</p>;
   }
 
   return (
-    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-1.5">
+    <div>
       <PageHeader
         title="Budget du foyer"
         user={user}
         syncStatus={syncStatus}
         onExport={() => exportJSON(state)}
         onImport={handleImport}
-        compact
       />
       {error && (
-        <div className="shrink-0 rounded-md border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-700">
+        <div className="mb-4 rounded-md border border-red-300 bg-red-50 px-4 py-2 text-sm text-red-700">
           {error}
         </div>
       )}
       {notice && (
-        <div className="shrink-0 rounded-md border border-green-300 bg-green-50 px-2 py-1 text-xs text-green-800">
+        <div className="mb-4 rounded-md border border-green-300 bg-green-50 px-4 py-2 text-sm text-green-800">
           {notice}
         </div>
       )}
       {!user && (
-        <div className="shrink-0 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-xs text-blue-800 no-print">
+        <div className="mb-4 rounded-md border border-blue-200 bg-blue-50 px-4 py-2 text-sm text-blue-800 no-print">
           Mode local.{" "}
           <a href="/signup" className="font-semibold underline">
             Créez un compte
@@ -73,26 +67,12 @@ export default function BudgetApp() {
           pour sauvegarder sur le serveur.
         </div>
       )}
-      <FitFrame>
-        <div className="grid grid-cols-2 items-start gap-2">
-          <div className="min-w-0">
-            <RevenusCard state={state} update={update} />
-            <AnalyseCard state={state} viewMode={viewMode} setViewMode={setViewMode} />
-          </div>
-          <div className="min-w-0">
-            <DepensesForm state={state} update={update} />
-            <ChargesTable state={state} update={update} />
-          </div>
-          <div className="col-span-2 grid grid-cols-2 items-start gap-2">
-            <div className="min-w-0">
-              <LoanCard state={state} update={update} />
-            </div>
-            <div className="min-w-0">
-              <ChartsCard state={state} />
-            </div>
-          </div>
-        </div>
-      </FitFrame>
+      <RevenusCard state={state} update={update} />
+      <LoanCard state={state} update={update} />
+      <DepensesForm state={state} update={update} />
+      <ChartsCard state={state} />
+      <AnalyseCard state={state} viewMode={viewMode} setViewMode={setViewMode} />
+      <ChargesTable state={state} update={update} />
     </div>
   );
 }
