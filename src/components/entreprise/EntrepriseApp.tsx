@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { downloadJSON } from "@/lib/budget-service";
 import { parseEntrepriseBackup, writeStoredCashFlow } from "@/lib/entreprise-backup";
 import { stateFromBackup, toEntrepriseBackup } from "@/lib/entreprise-state";
@@ -10,6 +10,7 @@ import GanttCard from "./GanttCard";
 import StatusCompareCard from "./StatusCompareCard";
 import FreelanceSimulatorCard from "./FreelanceSimulatorCard";
 import CashFlowPlannerCard from "./CashFlowPlannerCard";
+import FitFrame from "../FitFrame";
 
 const TOOLS = [
   { id: "freelance", label: "Simulateur Freelance" },
@@ -34,13 +35,6 @@ function EntrepriseScreen() {
   const [revision, setRevision] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
-  const fit = activeTool === "freelance";
-
-  useEffect(() => {
-    if (!fit) return;
-    document.documentElement.classList.add("fit-viewport");
-    return () => document.documentElement.classList.remove("fit-viewport");
-  }, [fit]);
 
   const handleExport = useCallback(() => {
     const backup = toEntrepriseBackup(state);
@@ -78,39 +72,39 @@ function EntrepriseScreen() {
 
   if (!loaded) {
     return (
-      <div className="mx-auto max-w-5xl">
+      <div className="flex h-full min-h-0 flex-1 flex-col">
         <p className="text-slate-500">Chargement...</p>
       </div>
     );
   }
 
   return (
-    <div className={fit ? "flex h-full min-h-0 flex-1 flex-col gap-1.5" : "mx-auto max-w-5xl"}>
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-1.5">
       <PageHeader
         title="Gestion Entreprise"
         user={user}
         syncStatus={syncStatus}
         onExport={handleExport}
         onImport={handleImport}
-        compact={fit}
+        compact
       />
       {error && (
-        <div className={`rounded-md border border-red-300 bg-red-50 text-red-700 ${fit ? "shrink-0 px-2 py-1 text-xs" : "mb-4 px-4 py-2 text-sm"}`}>
+        <div className="shrink-0 rounded-md border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-700">
           {error}
         </div>
       )}
       {syncStatus === "error" && (
-        <div className={`rounded-md border border-red-300 bg-red-50 text-red-700 ${fit ? "shrink-0 px-2 py-1 text-xs" : "mb-4 px-4 py-2 text-sm"}`}>
+        <div className="shrink-0 rounded-md border border-red-300 bg-red-50 px-2 py-1 text-xs text-red-700">
           La sauvegarde sur le compte a échoué. Les modifications restent sur cet appareil.
         </div>
       )}
       {notice && (
-        <div className={`rounded-md border border-green-300 bg-green-50 text-green-800 ${fit ? "shrink-0 px-2 py-1 text-xs" : "mb-4 px-4 py-2 text-sm"}`}>
+        <div className="shrink-0 rounded-md border border-green-300 bg-green-50 px-2 py-1 text-xs text-green-800">
           {notice}
         </div>
       )}
       {!user && (
-        <div className={`rounded-md border border-blue-200 bg-blue-50 text-blue-800 no-print ${fit ? "shrink-0 px-2 py-1 text-xs" : "mb-4 px-4 py-2 text-sm"}`}>
+        <div className="shrink-0 rounded-md border border-blue-200 bg-blue-50 px-2 py-1 text-xs text-blue-800 no-print">
           Mode local.{" "}
           <a href="/signup" className="font-semibold underline">
             Créez un compte
@@ -119,12 +113,12 @@ function EntrepriseScreen() {
         </div>
       )}
 
-      <div className={`no-print flex flex-wrap ${fit ? "shrink-0 gap-1" : "mb-5 gap-2"}`}>
+      <div className="no-print flex shrink-0 flex-wrap gap-1">
         {TOOLS.map((tool) => (
           <button
             key={tool.id}
             onClick={() => setActiveTool(tool.id)}
-            className={`rounded-lg font-semibold transition-colors ${fit ? "px-2.5 py-1 text-xs" : "px-4 py-2 text-sm"} ${
+            className={`rounded-lg px-2.5 py-1 text-xs font-semibold transition-colors ${
               activeTool === tool.id
                 ? "bg-blue-600 text-white"
                 : "bg-white border border-slate-200 text-slate-600 hover:bg-slate-50"
@@ -135,34 +129,24 @@ function EntrepriseScreen() {
         ))}
       </div>
 
-      {activeTool === "freelance" && (
-        <div className="min-h-0 flex-1">
-          <FreelanceSimulatorCard key={`freelance-${revision}`} />
-        </div>
-      )}
-      {activeTool === "statuts" && <StatusCompareCard key={`statuts-${revision}`} />}
-      {activeTool === "gantt" && <GanttCard key={`gantt-${revision}`} />}
-      {activeTool === "cashflow" && <CashFlowPlannerCard key={`cashflow-${revision}`} />}
-      <style jsx global>{`
-        html.fit-viewport,
-        html.fit-viewport body {
-          height: 100%;
-          overflow: hidden;
-        }
-        html.fit-viewport body > div {
-          height: 100%;
-          min-height: 0;
-          overflow: hidden;
-        }
-        html.fit-viewport main {
-          display: flex;
-          flex-direction: column;
-          height: 100%;
-          min-height: 0;
-          overflow: hidden;
-          padding: 8px 12px;
-        }
-      `}</style>
+      <div className="flex min-h-0 flex-1 flex-col">
+        {activeTool === "freelance" && <FreelanceSimulatorCard key={`freelance-${revision}`} />}
+        {activeTool === "statuts" && (
+          <FitFrame>
+            <StatusCompareCard key={`statuts-${revision}`} />
+          </FitFrame>
+        )}
+        {activeTool === "gantt" && (
+          <FitFrame>
+            <GanttCard key={`gantt-${revision}`} />
+          </FitFrame>
+        )}
+        {activeTool === "cashflow" && (
+          <FitFrame>
+            <CashFlowPlannerCard key={`cashflow-${revision}`} />
+          </FitFrame>
+        )}
+      </div>
     </div>
   );
 }

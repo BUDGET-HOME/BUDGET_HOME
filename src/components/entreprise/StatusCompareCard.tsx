@@ -106,6 +106,8 @@ export default function StatusCompareCard() {
         Choix du statut
       </h2>
 
+      <div className="grid grid-cols-2 items-start gap-3">
+      <div className="min-w-0">
       <div className="bg-blue-50 rounded-lg border border-blue-100 p-4 mb-5">
         <h3 className="text-lg font-bold text-blue-900 mb-3">Données récupérées du simulateur Freelance</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -175,6 +177,26 @@ export default function StatusCompareCard() {
           Des frais supplémentaires peuvent s'appliquer (expert-comptable, domiciliation, etc.).
         </p>
       </div>
+
+      <h3 className="font-bold text-sm mb-2">Plafonds de revenu à connaître</h3>
+      <ul className="text-sm space-y-1">
+        {plafonds().map((p) => (
+          <li key={p.label} className="flex gap-2">
+            <span className="font-semibold min-w-56">{p.label}</span>
+            <span>
+              {p.limit === Infinity ? "illimité" : formatEUR(p.limit)} — {" "}
+              <span className="text-slate-500">{p.note}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+
+      <p className="text-xs text-slate-500 mt-4">
+        Estimations simplifiées (taux 2025, barème indicatif) — validez avec un
+        expert-comptable avant de choisir votre statut.
+      </p>
+      </div>
+      <div className="min-w-0">
 
       {/* EURL vs SASU Comparison Section */}
       {eurlResult && sasuResult && (best.status === "eurl" || best.status === "sasu") && (
@@ -321,25 +343,8 @@ export default function StatusCompareCard() {
           </tbody>
         </table>
       </div>
-
-      <h3 className="font-bold text-sm mb-2">Plafonds de revenu à connaître</h3>
-      <ul className="text-sm space-y-1">
-        {plafonds().map((p) => (
-          <li key={p.label} className="flex gap-2">
-            <span className="font-semibold min-w-56">{p.label}</span>
-            <span>
-              {p.limit === Infinity ? "illimité" : formatEUR(p.limit)} — {" "}
-              <span className="text-slate-500">{p.note}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
-
-      <p className="text-xs text-slate-500 mt-4">
-        Estimations simplifiées (taux 2025, barème indicatif) — validez avec un
-        expert-comptable avant de choisir votre statut.
-      </p>
-
+      </div>
+      </div>
 
     </section>
   );

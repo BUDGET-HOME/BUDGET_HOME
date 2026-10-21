@@ -79,7 +79,7 @@ export default function LoanCard({ state, update }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
         <div>
           <label className="block text-sm font-semibold text-slate-500 mb-1">
             Versement mensuel (€) — assurance incluse
@@ -97,7 +97,7 @@ export default function LoanCard({ state, update }: Props) {
             }
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="fit-help text-xs text-slate-500 mt-1">
             Montant total du versement (comme sur le tableau d&apos;amortissement).
             Laissez vide pour un calcul automatique hors assurance.
           </p>
@@ -116,7 +116,7 @@ export default function LoanCard({ state, update }: Props) {
             }
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="fit-help text-xs text-slate-500 mt-1">
             Indiqué sur l&apos;offre de prêt, pour comparaison avec le TAEG recalculé.
           </p>
         </div>
@@ -183,7 +183,7 @@ export default function LoanCard({ state, update }: Props) {
             }
             className="w-full rounded-md border border-slate-300 px-3 py-2"
           />
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="fit-help text-xs text-slate-500 mt-1">
             1ʳᵉ cotisation :{" "}
             {insuranceForMonth(loan, loan.capital).toFixed(2)} € — cotisation
             dégressive calculée sur le capital restant dû chaque mois.
@@ -253,6 +253,7 @@ export default function LoanCard({ state, update }: Props) {
         </div>
       </details>
 
+      <div className="grid grid-cols-1 gap-3 xl:grid-cols-2">
       <div className="rounded-lg border-l-4 border-purple-600 bg-purple-50 p-4">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
@@ -358,7 +359,7 @@ export default function LoanCard({ state, update }: Props) {
               onChange={(e) => setExtraOneTimeDate(e.target.value)}
               className="rounded-md border border-slate-300 px-3 py-2 w-40"
             />
-            <p className="text-xs text-slate-500 mt-1">
+            <p className="fit-help text-xs text-slate-500 mt-1">
               Vide = ce mois-ci.
             </p>
           </div>
@@ -410,6 +411,7 @@ export default function LoanCard({ state, update }: Props) {
             )}
           </div>
         </div>
+      </div>
       </div>
 
       <div className="text-center mt-4">

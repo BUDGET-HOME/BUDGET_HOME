@@ -103,7 +103,7 @@ export default function ChargesTable({ state, update }: Props) {
         </button>
       </div>
       {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
-      <div className="overflow-x-auto">
+      <div className="charges-fit overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b-2 border-slate-200 text-left text-xs uppercase text-slate-500">
