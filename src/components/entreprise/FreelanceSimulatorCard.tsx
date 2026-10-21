@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { formatEUR } from "@/lib/budget";
 import { useFreelanceData, type FreelanceSimulatorData } from "@/hooks/useFreelanceData";
 import { acreDirectorExemption, acreDirectorWindowOpen, describeMicroAcre } from "@/lib/acre";
@@ -10,7 +10,7 @@ function FieldTip({ label, tip, children }: { label: string; tip: string; childr
   return (
     <div>
       <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
-        <label className="block text-sm text-gray-500">{label}</label>
+        <label className="block text-base text-gray-600">{label}</label>
         <svg className="w-3 h-3 text-gray-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
@@ -21,7 +21,7 @@ function FieldTip({ label, tip, children }: { label: string; tip: string; childr
   );
 }
 
-const fieldClass = "w-full p-2 text-sm border border-gray-200 rounded text-right bg-white";
+const fieldClass = "w-full p-2 text-base border border-gray-200 rounded text-right bg-white";
 
 function SocialCheck({
   label,
@@ -36,7 +36,7 @@ function SocialCheck({
 }) {
   return (
     <label className="flex items-center justify-between gap-2 bg-white border border-blue-100 rounded px-2 py-1 cursor-pointer">
-      <span className="text-sm text-slate-700 tooltip-trigger relative">
+      <span className="text-base text-slate-700 tooltip-trigger relative">
         {label}
         <span className="tooltip-content">{tip}</span>
       </span>
@@ -374,9 +374,6 @@ export default function FreelanceSimulatorCard() {
   const [podium2Height, setPodium2Height] = useState<number>(60);
   const [podium3Height, setPodium3Height] = useState<number>(40);
 
-  const fitHostRef = useRef<HTMLDivElement>(null);
-  const fitInnerRef = useRef<HTMLDivElement>(null);
-
   const calculate = useCallback(() => {
     const caMois = localTjm * localDays;
     const caAnnuel = caMois * 12;
@@ -571,37 +568,6 @@ export default function FreelanceSimulatorCard() {
     calculate();
   }, [calculate]);
 
-  useLayoutEffect(() => {
-    const host = fitHostRef.current;
-    const inner = fitInnerRef.current;
-    if (!host || !inner) return;
-
-    const apply = () => {
-      const width = host.clientWidth;
-      const available = host.clientHeight;
-      if (width <= 0 || available <= 0) return;
-      inner.style.transform = "none";
-      inner.style.width = `${width}px`;
-      let needed = inner.scrollHeight;
-      let scale = Math.min(1, available / Math.max(needed, 1));
-      inner.style.width = `${width / scale}px`;
-      needed = inner.scrollHeight;
-      scale = Math.min(1, available / Math.max(needed, 1));
-      inner.style.transformOrigin = "top left";
-      inner.style.transform = scale < 0.999 ? `scale(${scale})` : "none";
-      if (scale >= 0.999) inner.style.width = `${width}px`;
-    };
-
-    apply();
-    const observer = new ResizeObserver(apply);
-    observer.observe(host);
-    window.addEventListener("resize", apply);
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("resize", apply);
-    };
-  }, [dataLoading, localAreToggle, headerCA, superNet, verdictText, caMensuel, areDuration, areBreakdown]);
-
   if (dataLoading) {
     return (
       <section className="budget-card">
@@ -647,13 +613,12 @@ export default function FreelanceSimulatorCard() {
         <div className="absolute -top-10 -right-10 w-64 h-64 bg-indigo-600 rounded-full opacity-10 blur-3xl no-print" />
       </div>
 
-      <div ref={fitHostRef} className="fit-frame-host relative min-h-0 flex-1 overflow-hidden">
-      <div ref={fitInnerRef} className="fit-frame-inner absolute left-0 top-0">
-      <div className="grid grid-cols-12">
+      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="grid grid-cols-12 items-start">
         {/* GAUCHE : PARAMÈTRES */}
-        <div className="col-span-8 p-2 bg-gray-50 border-r border-gray-200 grid grid-cols-2 items-start gap-2 overflow-hidden">
+        <div className="col-span-8 p-3 bg-gray-50 border-r border-gray-200 grid grid-cols-2 items-start gap-3">
           {/* 0. STATUT */}
-          <div className="bg-indigo-50 p-4 rounded-xl shadow-sm border border-indigo-100">
+          <div className="order-2 bg-indigo-50 p-4 rounded-xl shadow-sm border border-indigo-100">
             <h2 className="text-xl font-bold text-indigo-800 uppercase tracking-wider mb-3 flex items-center gap-2">
               Statut & Facturation
             </h2>
@@ -729,7 +694,7 @@ export default function FreelanceSimulatorCard() {
           </div>
 
           {/* 3. PARAMÈTRES SOCIAUX & FAMILLE */}
-          <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+          <div className="order-1 bg-white p-4 rounded-xl shadow-sm border border-gray-100">
             <h2 className="text-xl font-bold text-red-500 uppercase tracking-wider mb-3">Paramètres Sociaux & Famille</h2>
 
             <div className="grid grid-cols-2 gap-4 mb-4">
@@ -887,7 +852,7 @@ export default function FreelanceSimulatorCard() {
             </div>
           </div>
           {/* 2. CHARGES */}
-          <div className="col-span-2 bg-white p-4 rounded-xl shadow-sm border border-gray-100 ring-1 ring-orange-100">
+          <div className="order-3 col-span-2 bg-white p-4 rounded-xl shadow-sm border border-gray-100 ring-1 ring-orange-100">
             <h2 className="text-xl font-bold text-orange-600 uppercase tracking-wider mb-3">Charges & Investissements</h2>
             <div className="space-y-2">
               <div>
@@ -1203,7 +1168,6 @@ export default function FreelanceSimulatorCard() {
         </div>
       </div>
       </div>
-      </div>
 
       {saving && (
         <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
@@ -1222,27 +1186,26 @@ export default function FreelanceSimulatorCard() {
         .blur-locked { filter: grayscale(1) opacity(0.5); }
         .toggle-checkbox:checked { right: 0; border-color: #2563EB; }
         .toggle-checkbox:checked + .toggle-label { background-color: #2563EB; }
-        .tooltip-trigger:hover .tooltip-content { display: block; }
-        .tooltip-content {
+        :global(.freelance-board .tooltip-trigger:hover .tooltip-content) { display: block; }
+        :global(.freelance-board .tooltip-content) {
           display: none;
           position: absolute;
           bottom: 100%;
-          left: 50%;
-          transform: translateX(-50%);
-          width: 200px;
+          left: 0;
+          width: 240px;
           padding: 8px;
           background-color: #1e293b;
           color: white;
-          font-size: 10px;
+          font-size: 0.8rem;
           border-radius: 6px;
           z-index: 50;
           box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-          text-align: center;
+          text-align: left;
           line-height: 1.4;
           pointer-events: none;
           margin-bottom: 5px;
         }
-        .tooltip-content::after {
+        :global(.freelance-board .tooltip-content)::after {
           content: " ";
           position: absolute;
           top: 100%;

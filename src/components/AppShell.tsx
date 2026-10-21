@@ -100,7 +100,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         html.fit-viewport .budget-card .text-2xl { font-size: 1rem !important; }
         html.fit-viewport .budget-card .text-xl { font-size: 0.95rem !important; }
         html.fit-viewport .freelance-board .text-2xl { font-size: 1.5rem !important; line-height: 2rem !important; }
-        html.fit-viewport .freelance-board .text-xl { font-size: 1.25rem !important; line-height: 1.75rem !important; }
+        html.fit-viewport .freelance-board .text-xl { font-size: 1.35rem !important; line-height: 1.75rem !important; }
+        html.fit-viewport .freelance-board .text-base { font-size: 1.05rem !important; line-height: 1.45 !important; }
+        html.fit-viewport .freelance-board .text-sm { font-size: 1rem !important; line-height: 1.4 !important; }
         html.fit-viewport .budget-card input,
         html.fit-viewport .budget-card select,
         html.fit-viewport .budget-card textarea {
