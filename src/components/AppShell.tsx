@@ -137,6 +137,78 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             transform: none !important;
             width: auto !important;
           }
+          .freelance-board {
+            break-inside: auto !important;
+            border: none !important;
+            padding: 0 !important;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+          }
+          .freelance-board,
+          .freelance-board * {
+            overflow: visible !important;
+          }
+          .freelance-board > .bg-slate-900 {
+            background: white !important;
+            border-bottom: 2px solid #e2e8f0 !important;
+            margin-bottom: 12px !important;
+            padding: 0 0 8px !important;
+          }
+          .freelance-board > .bg-slate-900,
+          .freelance-board > .bg-slate-900 * {
+            color: #0f172a !important;
+          }
+          .freelance-board .grid.grid-cols-12 {
+            display: grid !important;
+            grid-template-columns: 1fr 1fr !important;
+            gap: 16px !important;
+            align-items: start !important;
+          }
+          .freelance-board .col-span-8,
+          .freelance-board .col-span-4,
+          .freelance-board .col-span-2 {
+            width: auto !important;
+            max-width: none !important;
+            grid-column: auto !important;
+            padding: 0 !important;
+            border: none !important;
+            background: transparent !important;
+          }
+          .freelance-board .col-span-8 {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 12px !important;
+          }
+          .freelance-board .col-span-4 {
+            display: flex !important;
+            flex-direction: column !important;
+            gap: 12px !important;
+          }
+          .freelance-board .p-4 { padding: 12px !important; }
+          .freelance-board .grid.grid-cols-3,
+          .freelance-board .col-span-4 .grid.grid-cols-3 {
+            grid-template-columns: 1fr 1fr !important;
+            gap: 8px !important;
+          }
+          .freelance-board .col-span-4 > .grid.grid-cols-3 {
+            grid-template-columns: 1fr !important;
+          }
+          .freelance-board .bg-gradient-to-r,
+          .freelance-board .bg-indigo-900 {
+            background: #f8fafc !important;
+            background-image: none !important;
+            color: #0f172a !important;
+            border: 1px solid #e2e8f0 !important;
+            box-shadow: none !important;
+          }
+          .freelance-board .bg-gradient-to-r *,
+          .freelance-board .bg-indigo-900 * {
+            color: #0f172a !important;
+          }
+          .freelance-board h2 {
+            font-size: 1rem !important;
+            line-height: 1.3 !important;
+          }
         }
       `}</style>
     </div>
