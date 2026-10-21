@@ -519,7 +519,7 @@ export default function FreelanceSimulatorCard() {
           {/* 0. STATUT */}
           <div className="bg-indigo-50 p-4 rounded-xl shadow-sm border border-indigo-100">
             <h2 className="text-xl font-bold text-indigo-800 uppercase tracking-wider mb-3 flex items-center gap-2">
-              0. Statut & Facturation
+              Statut & Facturation
             </h2>
             <div className="space-y-2">
               <div className="relative">
@@ -594,7 +594,7 @@ export default function FreelanceSimulatorCard() {
 
           {/* 3. PARAMÈTRES SOCIAUX & FAMILLE */}
           <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <h2 className="text-xl font-bold text-red-500 uppercase tracking-wider mb-3">3. Paramètres Sociaux & Famille</h2>
+            <h2 className="text-xl font-bold text-red-500 uppercase tracking-wider mb-3">Paramètres Sociaux & Famille</h2>
 
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div className="flex flex-col justify-center bg-red-50 p-2 rounded border border-red-100 relative">
@@ -764,7 +764,7 @@ export default function FreelanceSimulatorCard() {
           </div>
           {/* 2. CHARGES */}
           <div className="col-span-2 bg-white p-4 rounded-xl shadow-sm border border-gray-100 ring-1 ring-orange-100">
-            <h2 className="text-xl font-bold text-orange-600 uppercase tracking-wider mb-3">2. Charges & Investissements</h2>
+            <h2 className="text-xl font-bold text-orange-600 uppercase tracking-wider mb-3">Charges & Investissements</h2>
             <div className="space-y-2">
               <div>
                 <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
