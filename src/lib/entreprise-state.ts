@@ -46,6 +46,7 @@ export interface FreelanceData {
   areEconomicLayoff: boolean;
   areWaitingServed: boolean;
   arceSecondPayment: boolean;
+  tvaRate: number;
 }
 
 export interface EntrepriseState {
@@ -91,6 +92,7 @@ export const DEFAULT_FREELANCE: FreelanceData = {
   areEconomicLayoff: false,
   areWaitingServed: false,
   arceSecondPayment: true,
+  tvaRate: 0,
 };
 
 const EMPTY_CASH_FLOW: CashFlowBackup = { items: [], initialBalance: 0 };
@@ -144,6 +146,7 @@ const FREELANCE_FIELDS: {
   { camel: "areEconomicLayoff", snake: "are_economic_layoff", kind: "boolean" },
   { camel: "areWaitingServed", snake: "are_waiting_served", kind: "boolean" },
   { camel: "arceSecondPayment", snake: "arce_second_payment", kind: "boolean" },
+  { camel: "tvaRate", snake: "tva_rate", kind: "number" },
 ];
 
 export function defaultEntreprise(): EntrepriseState {

@@ -5,6 +5,7 @@ import { formatEUR } from "@/lib/budget";
 import { useFreelanceData, type FreelanceSimulatorData } from "@/hooks/useFreelanceData";
 import { acreDirectorExemption, acreDirectorWindowOpen, describeMicroAcre } from "@/lib/acre";
 import { arceFromAre, areInputFromFreelance, estimateAre } from "@/lib/are";
+import { estimateVat } from "@/lib/tva";
 
 function FieldTip({ label, tip, children }: { label: string; tip: string; children: React.ReactNode }) {
   return (
@@ -130,6 +131,7 @@ export default function FreelanceSimulatorCard() {
   const areEconomicLayoff = savedData?.areEconomicLayoff ?? false;
   const areWaitingServed = savedData?.areWaitingServed ?? false;
   const arceSecondPayment = savedData?.arceSecondPayment ?? true;
+  const tvaRate = savedData?.tvaRate ?? 0;
 
   // Local state for inputs (not auto-saved)
   const [localStatus, setLocalStatus] = useState<StatusType>(status as StatusType);
@@ -168,6 +170,7 @@ export default function FreelanceSimulatorCard() {
   const [localAreEconomicLayoff, setLocalAreEconomicLayoff] = useState<boolean>(areEconomicLayoff);
   const [localAreWaitingServed, setLocalAreWaitingServed] = useState<boolean>(areWaitingServed);
   const [localArceSecondPayment, setLocalArceSecondPayment] = useState<boolean>(arceSecondPayment);
+  const [localTvaRate, setLocalTvaRate] = useState<number>(tvaRate);
 
   // Sync local state with saved data when it changes
   useEffect(() => {
@@ -208,6 +211,7 @@ export default function FreelanceSimulatorCard() {
       setLocalAreEconomicLayoff(savedData.areEconomicLayoff ?? false);
       setLocalAreWaitingServed(savedData.areWaitingServed ?? false);
       setLocalArceSecondPayment(savedData.arceSecondPayment ?? true);
+      setLocalTvaRate(savedData.tvaRate ?? 0);
     }
   }, [savedData]);
 
@@ -330,6 +334,7 @@ export default function FreelanceSimulatorCard() {
       case 'areEconomicLayoff': setLocalAreEconomicLayoff(value as boolean); break;
       case 'areWaitingServed': setLocalAreWaitingServed(value as boolean); break;
       case 'arceSecondPayment': setLocalArceSecondPayment(value as boolean); break;
+      case 'tvaRate': setLocalTvaRate(value as number); break;
     }
   }, []);
 
@@ -366,6 +371,10 @@ export default function FreelanceSimulatorCard() {
   const [areDuration, setAreDuration] = useState<string>("Durée : 18 mois");
   const [areBreakdown, setAreBreakdown] = useState<string>("");
   const [arceBreakdown, setArceBreakdown] = useState<string>("");
+  const [tvaAmount, setTvaAmount] = useState<string>("0 €");
+  const [tvaAnnual, setTvaAnnual] = useState<string>("0 €");
+  const [tvaNotice, setTvaNotice] = useState<string>("");
+  const [tvaDetail, setTvaDetail] = useState<{ label: string; amount: string }[]>([]);
   const [caDetail, setCaDetail] = useState<{ label: string; amount: string }[]>([]);
   const [taxDetail, setTaxDetail] = useState<{ label: string; amount: string }[]>([]);
   const [chargeDetail, setChargeDetail] = useState<{ label: string; amount: string }[]>([]);
@@ -561,14 +570,39 @@ export default function FreelanceSimulatorCard() {
       setAppliedRateLabel("Charges Salariales + Patronales");
     }
 
-    if (caAnnuel > 39100) {
+    const vat = estimateVat(caMois, localTvaRate);
+    setTvaAmount(money(vat.monthly));
+    setTvaAnnual(money(vat.annual));
+    setTvaNotice(vat.notice);
+    setTvaDetail(localTvaRate > 0
+      ? [
+          { label: `${money(caMois)} × ${localTvaRate} %`, amount: money(vat.monthly) },
+          { label: "Sur 12 mois", amount: money(vat.annual) },
+          { label: "CA TTC / mois", amount: money(vat.monthlyTtc) },
+        ]
+      : [
+          { label: "Taux", amount: "0 %" },
+          { label: "Plafond de base", amount: "37 500 €" },
+          { label: "Seuil majoré", amount: "41 250 €" },
+        ]);
+    if (localTvaRate > 0) {
       setTvaBadge({
-        text: "Assujetti TVA (20%)",
+        text: `TVA ${localTvaRate} %`,
         className: "mt-1 inline-flex items-center px-2 py-0.5 rounded text-[9px] font-medium bg-blue-100 text-blue-800"
+      });
+    } else if (caAnnuel > 41250) {
+      setTvaBadge({
+        text: "Seuil majoré dépassé",
+        className: "mt-1 inline-flex items-center px-2 py-0.5 rounded text-[9px] font-medium bg-red-100 text-red-800"
+      });
+    } else if (caAnnuel > 37500) {
+      setTvaBadge({
+        text: "Seuil de base dépassé",
+        className: "mt-1 inline-flex items-center px-2 py-0.5 rounded text-[9px] font-medium bg-amber-100 text-amber-800"
       });
     } else {
       setTvaBadge({
-        text: "Franchise TVA (si Auto)",
+        text: "Franchise TVA",
         className: "mt-1 inline-flex items-center px-2 py-0.5 rounded text-[9px] font-medium bg-green-100 text-green-800"
       });
     }
@@ -640,7 +674,7 @@ export default function FreelanceSimulatorCard() {
     localUseSpouseMutuelle, localActivityStart, localContractEnd, localAreWorkedDays, localAreInactivityDays,
     localAreExcludedDays, localArePartTime, localArePaidLeave, localAreSeverance, localAreRightsUsed,
     localAreOverseas, localAreIndividualAgreement, localAreReducedMinimum, localAreEconomicLayoff,
-    localAreWaitingServed, localArceSecondPayment
+    localAreWaitingServed, localArceSecondPayment, localTvaRate
   ]);
 
   useEffect(() => {
@@ -752,6 +786,30 @@ export default function FreelanceSimulatorCard() {
                     <span className="absolute right-3 top-2 text-gray-400 text-sm pointer-events-none">j</span>
                   </div>
                 </div>
+              </div>
+              <div>
+                <div className="flex items-center gap-1 mb-1 tooltip-trigger w-fit relative cursor-help">
+                  <label className="block text-sm font-semibold text-gray-500">TVA</label>
+                  <svg className="w-3 h-3 text-indigo-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="tooltip-content">Franchise en base pour les prestations de services jusqu&apos;à 37 500 €, avec un seuil majoré de 41 250 €. Au-delà, ou sur option, la TVA est facturée au client et reversée à l&apos;État.</div>
+                </div>
+                <select
+                  value={localTvaRate}
+                  onChange={(event) => {
+                    const value = parseFloat(event.target.value) || 0;
+                    handleChange("tvaRate", value);
+                    handleSave("tvaRate", value);
+                  }}
+                  className="w-full p-2.5 border border-indigo-200 rounded-lg bg-white font-bold text-indigo-900 focus:ring-2 focus:ring-indigo-500 outline-none text-sm"
+                >
+                  <option value="0">Franchise (0 %)</option>
+                  <option value="20">20 % — taux normal</option>
+                  <option value="10">10 % — taux intermédiaire</option>
+                  <option value="5.5">5,5 % — taux réduit</option>
+                  <option value="2.1">2,1 % — taux particulier</option>
+                </select>
               </div>
             </div>
           </div>
@@ -1127,6 +1185,16 @@ export default function FreelanceSimulatorCard() {
               <div className="text-lg font-bold text-orange-700">{displayFrais}</div>
               <KpiTip lines={chargeDetail} />
             </div>
+          </div>
+
+          <div className="tooltip-trigger relative bg-violet-50 px-3 py-2 rounded-xl border border-violet-100 cursor-help">
+            <div className="flex items-baseline justify-between gap-2">
+              <div className="text-violet-600 text-sm font-bold uppercase tracking-wider">TVA collectée</div>
+              <div className="text-sm text-violet-500">{localTvaRate > 0 ? `${localTvaRate} %` : "Franchise"}</div>
+            </div>
+            <div className="text-xl font-bold text-violet-950">{tvaAmount}<span className="text-sm font-medium text-violet-700"> / mois</span></div>
+            <p className="text-sm text-violet-800">{tvaAnnual} / an. {tvaNotice}</p>
+            <KpiTip lines={tvaDetail} />
           </div>
 
           {localAreToggle && (

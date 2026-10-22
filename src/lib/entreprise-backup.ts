@@ -41,6 +41,7 @@ const FREELANCE_FIELDS = [
   "are_economic_layoff",
   "are_waiting_served",
   "arce_second_payment",
+  "tva_rate",
 ] as const;
 
 const GANTT_FIELDS = ["tasks"] as const;
