@@ -23,6 +23,19 @@ function FieldTip({ label, tip, children }: { label: string; tip: string; childr
 
 const fieldClass = "w-full p-2 text-base border border-gray-200 rounded text-right bg-white";
 
+function KpiTip({ lines }: { lines: { label: string; amount: string }[] }) {
+  return (
+    <div className="tooltip-content kpi-tip">
+      {lines.map((line) => (
+        <div key={line.label} className="flex justify-between gap-3 py-0.5">
+          <span>{line.label}</span>
+          {line.amount && <span className="font-semibold whitespace-nowrap">{line.amount}</span>}
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function SocialCheck({
   label,
   tip,
@@ -353,6 +366,9 @@ export default function FreelanceSimulatorCard() {
   const [areDuration, setAreDuration] = useState<string>("Durée : 18 mois");
   const [areBreakdown, setAreBreakdown] = useState<string>("");
   const [arceBreakdown, setArceBreakdown] = useState<string>("");
+  const [caDetail, setCaDetail] = useState<{ label: string; amount: string }[]>([]);
+  const [taxDetail, setTaxDetail] = useState<{ label: string; amount: string }[]>([]);
+  const [chargeDetail, setChargeDetail] = useState<{ label: string; amount: string }[]>([]);
   const [verdictTitle, setVerdictTitle] = useState<string>("Analyse en cours...");
   const [verdictText, setVerdictText] = useState<string>("Analyse en cours...");
 
@@ -440,6 +456,69 @@ export default function FreelanceSimulatorCard() {
     setHeaderCA(money(caAnnuel));
     setCaMensuel(money(caMois));
     setTotalChargesInput(money(Object.values(costs).reduce((a, b) => a + b, 0) + CFE_LISSEE));
+    const micro = describeMicroAcre(isAcreVal, localActivityStart);
+    const chargeOnNet = localStatus === "eurl" ? 0.45 : localStatus === "sasu" ? 0.82 : 0;
+    const included = (amount: number) => amount > 0;
+    const chargeLines = [
+      included(costs.lld) ? { label: "Loyer véhicule", amount: money(costs.lld) } : null,
+      included(costs.fuel) ? { label: "Carburant / entretien", amount: money(costs.fuel) } : null,
+      localUseSpouseMutuelle
+        ? { label: "Mutuelle prise en charge par le conjoint", amount: "" }
+        : included(costs.mutuelle) ? { label: "Mutuelle", amount: money(costs.mutuelle) } : null,
+      included(costs.bank) ? { label: "RC Pro & banque", amount: money(costs.bank) } : null,
+      included(costs.meals) ? { label: "Repas", amount: money(costs.meals) } : null,
+      included(costs.tel) ? { label: "Télécom", amount: money(costs.tel) } : null,
+      included(costs.tech) ? { label: "Matériel / logiciels", amount: money(costs.tech) } : null,
+      included(costs.ret) ? { label: "Épargne retraite", amount: money(costs.ret) } : null,
+    ].filter((line): line is { label: string; amount: string } => line !== null);
+    setCaDetail([
+      { label: `${money(localTjm)} × ${localDays} jours`, amount: money(caMois) },
+      { label: "Soit sur 12 mois", amount: money(caAnnuel) },
+    ]);
+    if (localStatus === "auto") {
+      setTaxDetail([
+        { label: `Cotisations ${micro.label}`, amount: money(currentSim.taxes) },
+        { label: `Impôt (${localFiscalParts} part${localFiscalParts > 1 ? "s" : ""}, base 66 % du CA)`, amount: money(currentSim.ir) },
+        { label: "Total", amount: money(currentSim.taxes + currentSim.ir) },
+      ]);
+      setChargeDetail([
+        ...chargeLines,
+        { label: "CFE lissée", amount: money(CFE_LISSEE) },
+        { label: "Total (comptable non repris en micro)", amount: money(currentSim.nonDeductible) },
+      ]);
+    } else if (localStatus === "eurl" || localStatus === "sasu") {
+      const marge = caMois - currentSim.deductible;
+      const exemption = marge > 0
+        ? acreDirectorExemption(isAcreVal, marge / (1 + chargeOnNet) * 12, localActivityStart)
+        : 0;
+      setTaxDetail([
+        {
+          label: localStatus === "eurl"
+            ? `Cotisations TNS${exemption > 0 ? `, ACRE −${Math.round(exemption * 100)} %` : ""}`
+            : `Cotisations salarié${exemption > 0 ? `, ACRE −${Math.round(exemption * 100)} %` : ""}`,
+          amount: money(currentSim.taxes),
+        },
+        { label: `Impôt sur le revenu (${localFiscalParts} part${localFiscalParts > 1 ? "s" : ""})`, amount: money(currentSim.ir) },
+        { label: "Total", amount: money(currentSim.taxes + currentSim.ir) },
+      ]);
+      setChargeDetail([
+        ...chargeLines,
+        included(costs.acct) ? { label: "Expert-comptable", amount: money(costs.acct) } : { label: "Expert-comptable", amount: money(0) },
+        { label: "CFE lissée", amount: money(CFE_LISSEE) },
+        { label: "Total déductible", amount: money(currentSim.deductible) },
+      ]);
+    } else {
+      setTaxDetail([
+        { label: `Charges salariales et patronales (49 % du disponible)`, amount: money(currentSim.taxes) },
+        { label: `Impôt sur le revenu (${localFiscalParts} part${localFiscalParts > 1 ? "s" : ""})`, amount: money(currentSim.ir) },
+        { label: "Total", amount: money(currentSim.taxes + currentSim.ir) },
+      ]);
+      setChargeDetail([
+        ...chargeLines,
+        { label: `Commission de portage ${localPctPortage} %`, amount: money(caMois * localPctPortage / 100) },
+        { label: "Total déductible", amount: money(currentSim.deductible) },
+      ]);
+    }
     setDisplayTaxes(`- ${money(currentSim.taxes + currentSim.ir)}`);
     setDisplayFrais(`- ${money(currentSim.deductible + currentSim.nonDeductible)}`);
     setSuperNet(money(currentSim.net));
@@ -1034,24 +1113,27 @@ export default function FreelanceSimulatorCard() {
         </div>
 
         {/* DROITE : DASHBOARD */}
-        <div className="col-span-4 p-2 bg-white flex flex-col gap-1.5 overflow-hidden">
+        <div className="col-span-4 p-2 bg-white flex flex-col gap-1.5">
           <div className="bg-indigo-50 px-3 py-2 rounded-xl border border-indigo-100">
             <div className="text-indigo-500 text-sm font-bold uppercase tracking-wider">CA Annuel Projeté</div>
             <div id="headerAnnualCA" className="text-2xl font-bold text-indigo-950">{headerCA}</div>
           </div>
           <div className="grid grid-cols-3 gap-1.5">
-            <div className="bg-blue-50 px-2 py-2 rounded-xl border border-blue-100">
+            <div className="tooltip-trigger relative bg-blue-50 px-2 py-2 rounded-xl border border-blue-100 cursor-help">
               <div className="text-blue-500 text-sm font-bold uppercase tracking-wider">CA Mensuel HT</div>
               <div className="text-xl font-bold text-blue-900">{caMensuel}</div>
               <div className={tvaBadge.className}>{tvaBadge.text}</div>
+              <KpiTip lines={caDetail} />
             </div>
-            <div className="bg-red-50 px-2 py-2 rounded-xl border border-red-100">
+            <div className="tooltip-trigger relative bg-red-50 px-2 py-2 rounded-xl border border-red-100 cursor-help">
               <div className="text-red-500 text-sm font-bold uppercase tracking-wider">Cotis. & Impôts</div>
               <div className="text-lg font-bold text-red-900">{displayTaxes}</div>
+              <KpiTip lines={taxDetail} />
             </div>
-            <div className="bg-orange-50 px-2 py-2 rounded-xl border border-orange-100">
+            <div className="tooltip-trigger relative bg-orange-50 px-2 py-2 rounded-xl border border-orange-100 cursor-help">
               <div className="text-orange-600 text-sm font-bold uppercase tracking-wider">Total Charges</div>
               <div className="text-lg font-bold text-orange-700">{displayFrais}</div>
+              <KpiTip lines={chargeDetail} />
             </div>
           </div>
 
@@ -1200,6 +1282,14 @@ export default function FreelanceSimulatorCard() {
           line-height: 1.4;
           pointer-events: none;
           margin-bottom: 5px;
+        }
+        :global(.freelance-board .kpi-tip) {
+          width: 280px;
+          z-index: 60;
+        }
+        :global(.freelance-board .grid.grid-cols-3 > :last-child .kpi-tip) {
+          left: auto;
+          right: 0;
         }
         :global(.freelance-board .tooltip-content)::after {
           content: " ";
