@@ -193,6 +193,9 @@ export default function FreelanceSimulatorCard() {
       setLocalAcre(savedData.acre ?? true);
       setLocalFiscalParts(savedData.fiscalParts ?? 1);
       setLocalAreToggle(savedData.areToggle ?? false);
+      if (savedData.areToggle === false && savedData.arceConversion) {
+        saveField("arceConversion", false);
+      }
       setLocalSalaryGross(savedData.salaryGross ?? 3500);
       setLocalSalaryBonus(savedData.salaryBonus ?? 0);
       setLocalSalaryMonths(savedData.salaryMonths ?? 12);
@@ -213,10 +216,10 @@ export default function FreelanceSimulatorCard() {
       setLocalAreEconomicLayoff(savedData.areEconomicLayoff ?? false);
       setLocalAreWaitingServed(savedData.areWaitingServed ?? false);
       setLocalArceSecondPayment(savedData.arceSecondPayment ?? true);
-      setLocalArceConversion(savedData.arceConversion ?? false);
+      setLocalArceConversion(Boolean(savedData.areToggle) && Boolean(savedData.arceConversion));
       setLocalTvaRate(savedData.tvaRate ?? 0);
     }
-  }, [savedData]);
+  }, [savedData, saveField]);
 
   // Helper functions
   const money = (val: number): string => {
@@ -847,30 +850,14 @@ export default function FreelanceSimulatorCard() {
             <h2 className="text-xl font-bold text-red-500 uppercase tracking-wider mb-3">Paramètres Sociaux & Famille</h2>
 
             <div className="grid grid-cols-2 gap-4 mb-4">
-              <div className="flex flex-col justify-center bg-red-50 p-2 rounded border border-red-100 relative">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1 tooltip-trigger cursor-help relative">
-                    <span className="text-sm font-bold text-red-800">ACRE (An 1)</span>
-                    <svg className="w-3 h-3 text-red-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                    <div className="tooltip-content">Micro : 10,6 % avant le 01/07/2026, puis 15,9 % jusqu&apos;à la fin du 3e trimestre civil suivant le début. Dirigeant : −25 % des cotisations si le revenu annuel est inférieur ou égal à 36 045 €, puis dégressif jusqu&apos;à 48 060 €, pendant 12 mois.</div>
-                  </div>
-                  <div className="relative inline-block w-8 align-middle select-none">
-                    <input
-                      type="checkbox"
-                      checked={localAcre}
-                      onChange={(e) => {
-                        const value = e.target.checked;
-                        handleChange('acre', value);
-                        handleSave('acre', value);
-                      }}
-                      className="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300"
-                    />
-                    <label className="toggle-label block overflow-hidden h-4 rounded-full bg-gray-300 cursor-pointer" />
-                  </div>
+              <div className="bg-red-50 p-2 rounded border border-red-100 relative">
+                <div className="flex items-center gap-1 mb-1 tooltip-trigger cursor-help relative">
+                  <label className="block text-sm font-bold text-red-800">Début d&apos;activité</label>
+                  <svg className="w-3 h-3 text-red-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <div className="tooltip-content">Mois 1 du planning de lancement, de la trésorerie et du choix de statut. L&apos;ACRE et l&apos;ARCE partent aussi de cette date.</div>
                 </div>
-                <label className="block text-sm text-red-800 mt-2">Début d&apos;activité</label>
                 <input
                   type="date"
                   value={localActivityStart}
@@ -926,6 +913,10 @@ export default function FreelanceSimulatorCard() {
                     const value = e.target.checked;
                     handleChange('areToggle', value);
                     handleSave('areToggle', value);
+                    if (!value) {
+                      handleChange('arceConversion', false);
+                      handleSave('arceConversion', false);
+                    }
                   }}
                   className="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300"
                 />
@@ -933,7 +924,7 @@ export default function FreelanceSimulatorCard() {
               </div>
             </div>
 
-            <div className="flex items-center justify-between mb-3 bg-indigo-50 p-2 rounded border border-indigo-100 relative">
+            <div className={`flex items-center justify-between mb-3 bg-indigo-50 p-2 rounded border border-indigo-100 relative ${localAreToggle ? "" : "opacity-60"}`}>
               <div className="flex items-center gap-1 tooltip-trigger cursor-help relative">
                 <span className="text-sm font-bold text-indigo-800">Conversion en ARCE ?</span>
                 <svg className="w-3 h-3 text-indigo-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -944,21 +935,41 @@ export default function FreelanceSimulatorCard() {
               <div className="relative inline-block w-8 align-middle select-none">
                 <input
                   type="checkbox"
-                  checked={localArceConversion}
+                  checked={localAreToggle && localArceConversion}
+                  disabled={!localAreToggle}
                   onChange={(e) => {
-                    const value = e.target.checked;
+                    const value = e.target.checked && localAreToggle;
                     handleChange("arceConversion", value);
                     handleSave("arceConversion", value);
+                  }}
+                  className="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300 disabled:cursor-not-allowed"
+                />
+                <label className="toggle-label block overflow-hidden h-4 rounded-full bg-gray-300 cursor-pointer" />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between mb-3 bg-red-50 p-2 rounded border border-red-100 relative">
+              <div className="flex items-center gap-1 tooltip-trigger cursor-help relative">
+                <span className="text-sm font-bold text-red-800">ACRE (An 1)</span>
+                <svg className="w-3 h-3 text-red-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="tooltip-content">Micro : 10,6 % avant le 01/07/2026, puis 15,9 % jusqu&apos;à la fin du 3e trimestre civil suivant le début. Dirigeant : −25 % des cotisations si le revenu annuel est inférieur ou égal à 36 045 €, puis dégressif jusqu&apos;à 48 060 €, pendant 12 mois.</div>
+              </div>
+              <div className="relative inline-block w-8 align-middle select-none">
+                <input
+                  type="checkbox"
+                  checked={localAcre}
+                  onChange={(e) => {
+                    const value = e.target.checked;
+                    handleChange('acre', value);
+                    handleSave('acre', value);
                   }}
                   className="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300"
                 />
                 <label className="toggle-label block overflow-hidden h-4 rounded-full bg-gray-300 cursor-pointer" />
               </div>
             </div>
-
-            {localArceConversion && !localAreToggle && (
-              <p className="text-sm text-indigo-800 -mt-2 mb-3">Activez aussi « Bénéficiaire Chômage (ARE) » pour calculer les deux versements.</p>
-            )}
 
             {localAreToggle && (
               <div className="space-y-2 bg-blue-50/50 p-3 rounded-lg border border-blue-100">

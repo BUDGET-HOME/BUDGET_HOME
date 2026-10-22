@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { activityMonthStart, addCalendarMonths, formatActivityMonth } from "@/lib/activity-calendar";
 import { CATEGORY_COLORS, DEFAULT_TASKS, type GanttTask } from "@/lib/gantt";
+import { useFreelanceData } from "@/hooks/useFreelanceData";
 import { useGanttData } from "@/hooks/useGanttData";
 
 const MONTHS = 24;
@@ -14,6 +16,10 @@ export default function GanttCard() {
     saving,
     saveData,
   } = useGanttData();
+  const { data: freelanceData } = useFreelanceData();
+  const activityStart = freelanceData?.activityStartDate ?? "";
+  const origin = activityMonthStart(activityStart);
+  const hasActivityStart = activityStart.length > 0;
 
   // Local state for inputs (not auto-saved)
   const [tasks, setTasks] = useState<GanttTask[]>(DEFAULT_TASKS);
@@ -59,8 +65,9 @@ export default function GanttCard() {
     saveData({ tasks: newTasks });
   }, [tasks, saveData]);
 
-  const yearLabel = (m: number) =>
-    m <= 12 ? `A1-M${m}` : `A2-M${m - 12}`;
+  const monthDate = (monthNumber: number) => addCalendarMonths(origin, monthNumber - 1);
+  const axisLabel = (monthNumber: number) =>
+    monthDate(monthNumber).toLocaleDateString("fr-FR", { month: "short" }).replace(".", "");
 
   if (dataLoading) {
     return (
@@ -87,9 +94,14 @@ export default function GanttCard() {
 
   return (
     <section className="budget-card">
-      <h2 className="text-xl font-bold border-b-2 border-slate-100 pb-2 mb-5">
+      <h2 className="text-xl font-bold border-b-2 border-slate-100 pb-2 mb-2">
         Planning de lancement — 24 mois
       </h2>
+      <p className="text-sm text-slate-600 mb-5">
+        {hasActivityStart
+          ? `Mois 1 = ${formatActivityMonth(origin)}. Le planning court jusqu'en ${formatActivityMonth(addCalendarMonths(origin, 23))}.`
+          : "Début d'activité non renseigné : le mois 1 est le mois en cours. Saisissez la date dans le simulateur freelance."}
+      </p>
 
       <div className="flex flex-wrap items-end gap-3 mb-5 no-print">
         <div>
@@ -103,7 +115,7 @@ export default function GanttCard() {
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1">Début (mois)</label>
+          <label className="block text-xs font-semibold text-slate-500 mb-1">Début (mois 1 = {formatActivityMonth(origin)})</label>
           <input
             type="number"
             min={1}
@@ -147,12 +159,15 @@ export default function GanttCard() {
 
       <div className="overflow-x-auto">
         <div className="min-w-[720px]">
-          <div className="flex text-xs text-slate-400 mb-1 pl-1">
-            {Array.from({ length: MONTHS }, (_, i) => i + 1).map((m) => (
-              <div key={m} className="w-8 text-center">
-                {m % 3 === 1 ? yearLabel(m) : ""}
-              </div>
-            ))}
+          <div className="flex text-xs text-slate-400 mb-1">
+            <div className="w-64 shrink-0" />
+            <div className="flex flex-1">
+              {Array.from({ length: MONTHS }, (_, i) => i + 1).map((m) => (
+                <div key={m} className="flex-1 text-center truncate" title={formatActivityMonth(monthDate(m))}>
+                  {m % 3 === 1 ? axisLabel(m) : ""}
+                </div>
+              ))}
+            </div>
           </div>
           {tasks.map((task) => (
             <div key={task.id} className="flex items-center mb-1 group">
@@ -178,8 +193,8 @@ export default function GanttCard() {
                     left: `${((task.startMonth - 1) / MONTHS) * 100}%`,
                     width: `${(Math.min(task.durationMonths, MONTHS - task.startMonth + 1) / MONTHS) * 100}%`,
                   }}
-                  title={`${task.name} : ${yearLabel(task.startMonth)} → ${yearLabel(
-                    Math.min(task.startMonth + task.durationMonths - 1, MONTHS)
+                  title={`${task.name} : ${formatActivityMonth(monthDate(task.startMonth))} → ${formatActivityMonth(
+                    monthDate(Math.min(task.startMonth + task.durationMonths - 1, MONTHS))
                   )}`}
                 />
               </div>

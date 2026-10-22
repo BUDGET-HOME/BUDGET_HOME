@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { activityMonthStart, addCalendarMonths, formatActivityMonth } from "@/lib/activity-calendar";
 import { bestStatus, plafonds, simulateYear } from "@/lib/business";
 import { formatEUR } from "@/lib/budget";
 import { useFreelanceData, type FreelanceSimulatorData } from "@/hooks/useFreelanceData";
@@ -97,14 +98,21 @@ export default function StatusCompareCard() {
   }
 
   // Get EURL and SASU results for comparison
+  const activityOrigin = activityMonthStart(freelanceData?.activityStartDate ?? "");
+  const activityEnd = addCalendarMonths(activityOrigin, 11);
   const eurlResult = results.find(r => r.status === "eurl");
   const sasuResult = results.find(r => r.status === "sasu");
 
   return (
     <section className="budget-card">
-      <h2 className="text-xl font-bold border-b-2 border-slate-100 pb-2 mb-5">
+      <h2 className="text-xl font-bold border-b-2 border-slate-100 pb-2 mb-2">
         Choix du statut
       </h2>
+      <p className="text-sm text-slate-600 mb-5">
+        {freelanceData?.activityStartDate
+          ? `Comparaison de l'année 1, de ${formatActivityMonth(activityOrigin)} à ${formatActivityMonth(activityEnd)}.`
+          : "Début d'activité non renseigné : la comparaison porte sur une année type à partir du mois en cours."}
+      </p>
 
       <div className="grid grid-cols-2 items-start gap-3">
       <div className="min-w-0">

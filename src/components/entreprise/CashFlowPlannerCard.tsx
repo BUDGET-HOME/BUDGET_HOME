@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { formatEUR } from "@/lib/budget";
 import { useCashFlowData, type CashFlowItem, type CashFlowFrequency } from "@/hooks/useCashFlowData";
 import { CASH_FLOW_AUTOSYNC_KEY } from "@/lib/entreprise-backup";
+import { activityMonthStart, activityStartIso, addCalendarMonths, formatActivityMonth } from "@/lib/activity-calendar";
 import { occursInMonth, openingBalanceWithoutFirstRevenue, projectCashFlow } from "@/lib/cash-flow";
 import { arceCreditsByMonth, arceFromAre, areInputFromFreelance, estimateAre } from "@/lib/are";
 import { useFreelanceData } from "@/hooks/useFreelanceData";
@@ -89,7 +90,7 @@ export default function CashFlowPlannerCard() {
 
     const tjm = freelanceData.tjm ?? 480;
     const days = freelanceData.days ?? 18;
-    const startDate = new Date().toISOString().split("T")[0];
+    const startDate = activityStartIso(freelanceData.activityStartDate ?? "");
 
     // Calculate annual revenue
     const monthlyRevenue = tjm * days;
@@ -269,13 +270,13 @@ export default function CashFlowPlannerCard() {
         amount: 0,
         type: "credit",
         frequency: "ponctuel",
-        startDate: new Date().toISOString().split("T")[0],
+        startDate: activityStartIso(freelanceData?.activityStartDate ?? ""),
         endDate: "",
         category: "",
         notes: "",
       });
     }
-  }, [editingItem]);
+  }, [editingItem, freelanceData?.activityStartDate]);
 
   const items = savedData?.items ?? [];
 
@@ -302,7 +303,11 @@ export default function CashFlowPlannerCard() {
     return estimateAre(areInputFromFreelance(freelanceData));
   }, [freelanceData]);
 
-  const arceConversion = freelanceData?.arceConversion === true;
+  const arceConversion = freelanceData?.areToggle === true && freelanceData?.arceConversion === true;
+  const activityOrigin = useMemo(
+    () => activityMonthStart(freelanceData?.activityStartDate ?? ""),
+    [freelanceData?.activityStartDate],
+  );
   const arcePlan = useMemo(
     () => (areEstimate
       ? arceFromAre(areEstimate, {
@@ -318,11 +323,11 @@ export default function CashFlowPlannerCard() {
     () => projectCashFlow(
       items,
       initialBalance,
-      new Date(),
+      activityOrigin,
       12,
       arceConversion && arcePlan ? arceCreditsByMonth(arcePlan) : [],
     ),
-    [items, initialBalance, arceConversion, arcePlan],
+    [items, initialBalance, arceConversion, arcePlan, activityOrigin],
   );
   const months = projection.map((row) => row.label);
   const monthlyBalances = projection.map((row) => row.balance);
@@ -451,9 +456,16 @@ export default function CashFlowPlannerCard() {
   return (
     <section className="budget-card">
       <div className="flex justify-between items-center mb-5">
-        <h2 className="text-xl font-bold border-b-2 border-slate-100 pb-2">
-          Planning prévisionnel de trésorerie
-        </h2>
+        <div>
+          <h2 className="text-xl font-bold border-b-2 border-slate-100 pb-2">
+            Planning prévisionnel de trésorerie
+          </h2>
+          <p className="text-sm text-slate-600 mt-2">
+            {freelanceData?.activityStartDate
+              ? `12 mois à partir de ${formatActivityMonth(activityOrigin)}. L'ARCE, si la conversion est cochée, tombe au mois 1 et au mois 7.`
+              : "Début d'activité non renseigné : les 12 mois partent du mois en cours."}
+          </p>
+        </div>
         <div className="flex gap-2 items-center">
           <button
             onClick={() => syncFromFreelance()}
@@ -823,7 +835,6 @@ export default function CashFlowPlannerCard() {
                 
                 {/* Rows */}
                 {items.map((item) => {
-                  const now = new Date();
                   return (
                     <div key={item.id} className="contents">
                       <div className="col-span-4 bg-white p-2 text-sm border-r border-slate-200">
@@ -833,7 +844,7 @@ export default function CashFlowPlannerCard() {
                         </div>
                       </div>
                       {Array.from({ length: 12 }).map((_, colIndex) => {
-                        const month = new Date(now.getFullYear(), now.getMonth() + colIndex, 1);
+                        const month = addCalendarMonths(activityOrigin, colIndex);
                         const active = occursInMonth(item, month);
                         return (
                           <div
