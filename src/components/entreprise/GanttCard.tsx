@@ -263,11 +263,11 @@ export default function GanttCard() {
   return (
     <section className="budget-card">
       <h2 className="text-xl font-bold border-b-2 border-slate-100 pb-2 mb-2">Planning</h2>
-      <p className="text-sm text-slate-600 mb-5">
-        {hasActivityStart
-          ? `Les traits rouges sont les jalons : cliquez leur titre pour les modifier. Le lancement est au ${formatTaskDay(launch)}.`
-          : "Cliquez le titre du jalon de lancement, puis enregistrez sa date pour la reprendre dans les autres onglets."}
-      </p>
+      {!hasActivityStart && (
+        <p className="text-sm text-slate-600 mb-5">
+          Cliquez le titre du jalon de lancement, puis enregistrez sa date pour la reprendre dans les autres onglets.
+        </p>
+      )}
 
       <div className="flex flex-wrap items-end gap-3 mb-2 no-print">
         <div>
