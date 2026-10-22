@@ -13,6 +13,7 @@ import {
   dependencyCreatesCycle,
   formatIsoDate,
   formatTaskDay,
+  milestoneTitleOffsets,
   monthTicks,
   planningWindow,
   scheduleDependencies,
@@ -456,20 +457,22 @@ export default function GanttCard() {
                 );
               })}
             </div>
-            {rows.filter((task) => task.kind === "milestone").map((task) => {
-              const point = datePercent(taskDates(task, launch).start, window);
-              const label = formatTaskDay(taskDates(task, launch).start);
+            {rows.filter((task) => task.kind === "milestone").map((task, index, milestones) => {
+              const dates = taskDates(task, launch);
+              const point = datePercent(dates.start, window);
+              const label = formatTaskDay(dates.start);
+              const offset = milestoneTitleOffsets(milestones.map((item) => formatIsoDate(taskDates(item, launch).start)))[index];
               return (
                 <div
                   key={`${task.id}-line`}
-                  className="pointer-events-none absolute bottom-0 top-0 z-10 w-0.5 bg-rose-600"
-                  style={{ left: `${point}%` }}
+                  className="pointer-events-none absolute bottom-0 z-10 w-0.5 bg-rose-600"
+                  style={{ left: `${point}%`, top: offset }}
                 >
                   <button
                     type="button"
                     onClick={() => selectTask(task)}
                     title={`${task.name} : ${label}`}
-                    className={`pointer-events-auto absolute top-0 whitespace-nowrap text-[10px] font-bold text-rose-700 ${point > 78 ? "right-1" : "left-1"} ${editingId === task.id ? "underline" : ""}`}
+                    className={`pointer-events-auto absolute top-0 whitespace-nowrap text-[10px] font-bold leading-[14px] text-rose-700 ${point > 78 ? "right-1" : "left-1"} ${editingId === task.id ? "underline" : ""}`}
                   >
                     {task.name}
                   </button>

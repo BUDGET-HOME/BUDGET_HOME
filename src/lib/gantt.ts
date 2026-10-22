@@ -72,6 +72,18 @@ export function barPercent(start: Date, end: Date, window: PlanningWindow): { le
   return { left, width: Math.max(right - left, 0.35) };
 }
 
+export const MILESTONE_TITLE_STEP = 14;
+
+/** Décale les titres qui partagent le même jour, du haut vers le bas. */
+export function milestoneTitleOffsets(dates: string[]): number[] {
+  const seen = new Map<string, number>();
+  return dates.map((date) => {
+    const index = seen.get(date) ?? 0;
+    seen.set(date, index + 1);
+    return index * MILESTONE_TITLE_STEP;
+  });
+}
+
 export function monthTicks(window: PlanningWindow): { date: Date; label: string }[] {
   const ticks: { date: Date; label: string }[] = [];
   let cursor = new Date(window.start.getFullYear(), window.start.getMonth(), 1);
