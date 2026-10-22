@@ -1,5 +1,7 @@
 import { addCalendarMonths, formatIsoDate, parseActivityStart } from "./activity-calendar";
 
+export type GanttKind = "task" | "milestone";
+
 export interface GanttTask {
   id: string;
   name: string;
@@ -7,6 +9,9 @@ export interface GanttTask {
   endDate: string;
   category: "admin" | "finance" | "produit" | "commercial" | "rh";
   done: boolean;
+  kind: GanttKind;
+  /** Identifiant de la tâche dont il faut attendre la fin. */
+  dependsOn: string;
   /** Ancien planning au mois, utilisé seulement tant que les dates ne sont pas saisies. */
   startMonth?: number;
   durationMonths?: number;
@@ -86,7 +91,18 @@ function legacyTask(
   durationMonths: number,
   category: GanttTask["category"],
 ): GanttTask {
-  return { id, name, startDate: "", endDate: "", startMonth, durationMonths, category, done: false };
+  return {
+    id,
+    name,
+    startDate: "",
+    endDate: "",
+    startMonth,
+    durationMonths,
+    category,
+    done: false,
+    kind: "task",
+    dependsOn: "",
+  };
 }
 
 export const DEFAULT_TASKS: GanttTask[] = [
@@ -105,6 +121,83 @@ export const DEFAULT_TASKS: GanttTask[] = [
   legacyTask("developpement", "Développement de l'activité", 13, 12, "commercial"),
   legacyTask("bilan2", "Bilan année 2 & projection", 24, 1, "finance"),
 ];
+
+export function dependencyCreatesCycle(
+  tasks: Pick<GanttTask, "id" | "dependsOn">[],
+  id: string,
+  dependsOn: string,
+): boolean {
+  if (!dependsOn || dependsOn === id) return true;
+  const seen = new Set<string>([id]);
+  let cursor = dependsOn;
+  while (cursor) {
+    if (seen.has(cursor)) return true;
+    seen.add(cursor);
+    cursor = tasks.find((task) => task.id === cursor)?.dependsOn ?? "";
+  }
+  return false;
+}
+
+function shiftAfter(task: GanttTask, predecessorEnd: Date, launch: Date): Pick<GanttTask, "startDate" | "endDate"> {
+  const earliest = formatIsoDate(addDays(predecessorEnd, 1));
+  const dates = taskDates(task, launch);
+  if (task.kind === "milestone") {
+    const day = formatIsoDate(dates.start);
+    const next = day > earliest ? day : earliest;
+    return { startDate: next, endDate: next };
+  }
+  const duration = dayIndex(dates.end) - dayIndex(dates.start);
+  if (formatIsoDate(dates.start) > earliest) {
+    return { startDate: formatIsoDate(dates.start), endDate: formatIsoDate(dates.end) };
+  }
+  const start = earliest > formatIsoDate(dates.start) ? parseActivityStart(earliest)! : dates.start;
+  return { startDate: formatIsoDate(start), endDate: formatIsoDate(addDays(start, duration)) };
+}
+
+/** Décale chaque tâche au lendemain de la fin de celle dont elle dépend. */
+export function scheduleDependencies(tasks: GanttTask[], launch: Date): GanttTask[] {
+  let current = tasks.map((task) => ({ ...task }));
+  for (let pass = 0; pass < current.length; pass += 1) {
+    let changed = false;
+    current = current.map((task) => {
+      if (!task.dependsOn || dependencyCreatesCycle(current, task.id, task.dependsOn)) {
+        return task.dependsOn ? { ...task, dependsOn: "" } : task;
+      }
+      const predecessor = current.find((item) => item.id === task.dependsOn);
+      if (!predecessor) return { ...task, dependsOn: "" };
+      const nextDates = shiftAfter(task, taskDates(predecessor, launch).end, launch);
+      if (nextDates.startDate === task.startDate && nextDates.endDate === task.endDate) return task;
+      changed = true;
+      return { ...task, ...nextDates };
+    });
+    if (!changed) break;
+  }
+  return current;
+}
+
+export interface DependencyArrow {
+  id: string;
+  fromX: number;
+  toX: number;
+  fromRow: number;
+  toRow: number;
+}
+
+export function dependencyArrows(tasks: GanttTask[], launch: Date, window: PlanningWindow): DependencyArrow[] {
+  return tasks.flatMap((task, row) => {
+    if (!task.dependsOn) return [];
+    const predecessorIndex = tasks.findIndex((item) => item.id === task.dependsOn);
+    if (predecessorIndex < 0) return [];
+    const predecessor = tasks[predecessorIndex];
+    const from = taskDates(predecessor, launch);
+    const to = taskDates(task, launch);
+    const fromX = predecessor.kind === "milestone"
+      ? datePercent(from.start, window)
+      : datePercent(addDays(from.end, 1), window);
+    const toX = datePercent(to.start, window);
+    return [{ id: `${predecessor.id}->${task.id}`, fromX, toX, fromRow: predecessorIndex, toRow: row }];
+  });
+}
 
 export function formatTaskDay(date: Date): string {
   return date.toLocaleDateString("fr-FR");

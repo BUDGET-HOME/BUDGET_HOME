@@ -205,13 +205,16 @@ function normalizeTask(raw: unknown, index: number): GanttTask | null {
     : "admin";
   const startDate = typeof task.startDate === "string" && parseActivityStart(task.startDate) ? task.startDate : "";
   const endDate = typeof task.endDate === "string" && parseActivityStart(task.endDate) ? task.endDate : "";
+  const kind = task.kind === "milestone" ? "milestone" : "task";
   const normalized: GanttTask = {
     id: typeof task.id === "string" && task.id ? task.id : `t-${index + 1}`,
     name: task.name.trim(),
     startDate,
-    endDate,
+    endDate: kind === "milestone" && startDate ? startDate : endDate,
     category,
     done: task.done === true,
+    kind,
+    dependsOn: typeof task.dependsOn === "string" ? task.dependsOn : "",
   };
   if (!startDate || !endDate) {
     normalized.startMonth = finiteNumber(task.startMonth, 1);
@@ -227,7 +230,13 @@ export function ganttFromRecord(raw: unknown): { tasks: GanttTask[] } {
   const tasks = (raw as { tasks?: unknown }).tasks;
   if (tasks === undefined) return { tasks: DEFAULT_TASKS.map((task) => ({ ...task })) };
   if (!Array.isArray(tasks)) return { tasks: DEFAULT_TASKS.map((task) => ({ ...task })) };
-  return { tasks: tasks.map(normalizeTask).filter((task): task is GanttTask => task !== null) };
+  const normalized = tasks.map(normalizeTask).filter((task): task is GanttTask => task !== null);
+  const ids = new Set(normalized.map((task) => task.id));
+  return {
+    tasks: normalized.map((task) => (
+      task.dependsOn && !ids.has(task.dependsOn) ? { ...task, dependsOn: "" } : task
+    )),
+  };
 }
 
 export function cashFlowFromRecord(raw: unknown): CashFlowBackup {

@@ -15,7 +15,7 @@ import FitFrame from "../FitFrame";
 const TOOLS = [
   { id: "freelance", label: "Simulateur Freelance" },
   { id: "statuts", label: "Choix du statut" },
-  { id: "gantt", label: "Planning de lancement" },
+  { id: "gantt", label: "Planning" },
   { id: "cashflow", label: "Trésorerie" },
 ] as const;
 

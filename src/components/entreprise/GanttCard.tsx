@@ -8,11 +8,15 @@ import {
   addDays,
   barPercent,
   datePercent,
+  dependencyArrows,
+  dependencyCreatesCycle,
   formatIsoDate,
   formatTaskDay,
   monthTicks,
   planningWindow,
+  scheduleDependencies,
   taskDates,
+  type GanttKind,
   type GanttTask,
 } from "@/lib/gantt";
 import { useFreelanceData } from "@/hooks/useFreelanceData";
@@ -25,6 +29,8 @@ const CATEGORY_LABELS: Record<GanttTask["category"], string> = {
   commercial: "Commercial",
   rh: "RH",
 };
+
+const ROW_HEIGHT = 40;
 
 export default function GanttCard() {
   const {
@@ -45,8 +51,11 @@ export default function GanttCard() {
   const [startDate, setStartDate] = useState(launchIso);
   const [endDate, setEndDate] = useState(formatIsoDate(addDays(launch, 30)));
   const [category, setCategory] = useState<GanttTask["category"]>("admin");
+  const [kind, setKind] = useState<GanttKind>("task");
+  const [dependsOn, setDependsOn] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formDirty, setFormDirty] = useState(false);
+  const [notice, setNotice] = useState("");
 
   useEffect(() => {
     if (savedData?.tasks) setTasks(savedData.tasks);
@@ -62,41 +71,77 @@ export default function GanttCard() {
     setEditingId(null);
     setName("");
     setCategory("admin");
+    setKind("task");
+    setDependsOn("");
     setFormDirty(false);
+    setNotice("");
     setStartDate(launchIso);
     setEndDate(formatIsoDate(addDays(parseActivityStart(launchIso) ?? launch, 30)));
   }, [launch, launchIso]);
 
-  const commitTask = useCallback(() => {
-    if (!name.trim() || !parseActivityStart(startDate) || !parseActivityStart(endDate)) return;
-    const orderedStart = startDate <= endDate ? startDate : endDate;
-    const orderedEnd = startDate <= endDate ? endDate : startDate;
-    const previous = editingId ? tasks.find((task) => task.id === editingId) : undefined;
-    const next: GanttTask = {
-      id: editingId ?? `t-${Date.now()}`,
-      name: name.trim(),
-      startDate: orderedStart,
-      endDate: orderedEnd,
-      category,
-      done: previous?.done ?? false,
-    };
-    const newTasks = editingId
-      ? tasks.map((task) => (task.id === editingId ? next : task))
-      : [...tasks, next];
-    setTasks(newTasks);
-    saveData({ tasks: newTasks });
-    resetForm();
-  }, [name, startDate, endDate, category, editingId, tasks, saveData, resetForm]);
-
-  const beginEdit = useCallback((task: GanttTask) => {
+  const selectTask = useCallback((task: GanttTask) => {
     const dates = taskDates(task, launch);
     setEditingId(task.id);
     setName(task.name);
     setStartDate(formatIsoDate(dates.start));
     setEndDate(formatIsoDate(dates.end));
     setCategory(task.category);
+    setKind(task.kind === "milestone" ? "milestone" : "task");
+    setDependsOn(task.dependsOn);
     setFormDirty(true);
+    setNotice("");
   }, [launch]);
+
+  const commitTask = useCallback(() => {
+    if (!name.trim() || !parseActivityStart(startDate)) return;
+    if (kind === "task" && !parseActivityStart(endDate)) return;
+    const orderedStart = kind === "milestone" || startDate <= endDate ? startDate : endDate;
+    const orderedEnd = kind === "milestone" ? orderedStart : startDate <= endDate ? endDate : startDate;
+    const id = editingId ?? `t-${Date.now()}`;
+    const previous = tasks.find((task) => task.id === id);
+    const draft: GanttTask = {
+      id,
+      name: name.trim(),
+      startDate: orderedStart,
+      endDate: orderedEnd,
+      category,
+      done: previous?.done ?? false,
+      kind,
+      dependsOn,
+    };
+    const pool = [...tasks.filter((task) => task.id !== id), draft];
+    if (dependsOn && dependencyCreatesCycle(pool, id, dependsOn)) {
+      setNotice("Cette dépendance formerait une boucle.");
+      return;
+    }
+    const scheduled = scheduleDependencies(
+      tasks.some((task) => task.id === id)
+        ? tasks.map((task) => (task.id === id ? draft : task))
+        : [...tasks, draft],
+      launch,
+    );
+    const saved = scheduled.find((task) => task.id === id);
+    setTasks(scheduled);
+    saveData({ tasks: scheduled });
+    if (saved && (saved.startDate !== orderedStart || saved.endDate !== orderedEnd)) {
+      const predecessor = tasks.find((task) => task.id === dependsOn);
+      setNotice(predecessor
+        ? `Début décalé au ${formatTaskDay(parseActivityStart(saved.startDate) ?? launch)}, après « ${predecessor.name} ».`
+        : "");
+      setStartDate(saved.startDate);
+      setEndDate(saved.endDate);
+      setEditingId(id);
+      setFormDirty(true);
+      return;
+    }
+    if (editingId) {
+      setStartDate(saved?.startDate ?? orderedStart);
+      setEndDate(saved?.endDate ?? orderedEnd);
+      setNotice("");
+      return;
+    }
+    resetForm();
+  }, [name, startDate, endDate, category, kind, dependsOn, editingId, tasks, saveData, launch, resetForm]);
 
   const toggleDone = useCallback((id: string) => {
     const newTasks = tasks.map((task) => (task.id === id ? { ...task, done: !task.done } : task));
@@ -104,17 +149,33 @@ export default function GanttCard() {
     saveData({ tasks: newTasks });
   }, [tasks, saveData]);
 
-  const removeTask = useCallback((id: string) => {
-    const newTasks = tasks.filter((task) => task.id !== id);
+  const removeSelected = useCallback(() => {
+    if (!editingId) return;
+    const newTasks = scheduleDependencies(
+      tasks
+        .filter((task) => task.id !== editingId)
+        .map((task) => (task.dependsOn === editingId ? { ...task, dependsOn: "" } : task)),
+      launch,
+    );
     setTasks(newTasks);
     saveData({ tasks: newTasks });
-    if (editingId === id) resetForm();
-  }, [tasks, saveData, editingId, resetForm]);
+    resetForm();
+  }, [editingId, tasks, saveData, launch, resetForm]);
 
   const window = useMemo(() => planningWindow(tasks, launch), [tasks, launch]);
   const ticks = monthTicks(window);
   const launchPct = datePercent(launch, window);
+  const arrows = useMemo(() => dependencyArrows(tasks, launch, window), [tasks, launch, window]);
   const chartWidth = Math.max(860, ticks.length * 56);
+  const dependencyChoices = tasks.filter((task) => {
+    const selfId = editingId ?? "new";
+    if (task.id === editingId) return false;
+    return !dependencyCreatesCycle(
+      [...tasks.filter((item) => item.id !== editingId).map((item) => ({ id: item.id, dependsOn: item.dependsOn })), { id: selfId, dependsOn }],
+      selfId,
+      task.id,
+    );
+  });
 
   if (dataLoading) {
     return (
@@ -141,19 +202,17 @@ export default function GanttCard() {
 
   return (
     <section className="budget-card">
-      <h2 className="text-xl font-bold border-b-2 border-slate-100 pb-2 mb-2">
-        Planning de lancement
-      </h2>
+      <h2 className="text-xl font-bold border-b-2 border-slate-100 pb-2 mb-2">Planning</h2>
       <p className="text-sm text-slate-600 mb-5">
         {hasActivityStart
-          ? `Le trait rouge marque le lancement du ${formatTaskDay(launch)}. Une tâche peut commencer avant cette date.`
-          : "Début d'activité non renseigné : le trait rouge est placé sur aujourd'hui. Saisissez la date dans le simulateur freelance."}
+          ? `Le trait rouge marque le lancement du ${formatTaskDay(launch)}. Sélectionnez une ligne pour la modifier.`
+          : "Début d'activité non renseigné : le trait rouge est placé sur aujourd'hui. Sélectionnez une ligne pour la modifier."}
       </p>
 
-      <div className="flex flex-wrap items-end gap-3 mb-5 no-print">
+      <div className="flex flex-wrap items-end gap-3 mb-2 no-print">
         <div>
           <label className="block text-xs font-semibold text-slate-500 mb-1">
-            {editingId ? "Modifier la tâche" : "Nouvelle tâche"}
+            {editingId ? "Élément sélectionné" : "Nouvel élément"}
           </label>
           <input
             type="text"
@@ -163,24 +222,43 @@ export default function GanttCard() {
             className="rounded-md border border-slate-300 px-3 py-2"
           />
         </div>
+        <label className="mb-2 flex items-center gap-2 text-sm font-semibold text-slate-700">
+          <input
+            type="checkbox"
+            checked={kind === "milestone"}
+            onChange={(e) => {
+              const milestone = e.target.checked;
+              setKind(milestone ? "milestone" : "task");
+              if (milestone) setEndDate(startDate);
+              setFormDirty(true);
+            }}
+          />
+          Jalon
+        </label>
         <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1">Début</label>
+          <label className="block text-xs font-semibold text-slate-500 mb-1">{kind === "milestone" ? "Date" : "Début"}</label>
           <input
             type="date"
             value={startDate}
-            onChange={(e) => { setStartDate(e.target.value); setFormDirty(true); }}
+            onChange={(e) => {
+              setStartDate(e.target.value);
+              if (kind === "milestone") setEndDate(e.target.value);
+              setFormDirty(true);
+            }}
             className="rounded-md border border-slate-300 px-3 py-2"
           />
         </div>
-        <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1">Fin</label>
-          <input
-            type="date"
-            value={endDate}
-            onChange={(e) => { setEndDate(e.target.value); setFormDirty(true); }}
-            className="rounded-md border border-slate-300 px-3 py-2"
-          />
-        </div>
+        {kind === "task" && (
+          <div>
+            <label className="block text-xs font-semibold text-slate-500 mb-1">Fin</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => { setEndDate(e.target.value); setFormDirty(true); }}
+              className="rounded-md border border-slate-300 px-3 py-2"
+            />
+          </div>
+        )}
         <div>
           <label className="block text-xs font-semibold text-slate-500 mb-1">Catégorie</label>
           <select
@@ -190,6 +268,19 @@ export default function GanttCard() {
           >
             {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-slate-500 mb-1">Attend la fin de</label>
+          <select
+            value={dependsOn}
+            onChange={(e) => { setDependsOn(e.target.value); setFormDirty(true); }}
+            className="rounded-md border border-slate-300 px-3 py-2"
+          >
+            <option value="">Aucune</option>
+            {dependencyChoices.map((task) => (
+              <option key={task.id} value={task.id}>{task.name}</option>
             ))}
           </select>
         </div>
@@ -204,15 +295,62 @@ export default function GanttCard() {
             onClick={resetForm}
             className="rounded-md border border-slate-300 px-4 py-2 text-sm font-semibold text-slate-700"
           >
-            Annuler
+            Nouvelle
           </button>
         )}
       </div>
+      {notice && <p className="mb-4 text-sm text-amber-800">{notice}</p>}
 
       <div className="overflow-x-auto">
-        <div style={{ minWidth: chartWidth }}>
-          <div className="grid grid-cols-[16rem_1fr_9rem] items-center gap-y-1">
-            <div />
+        <div className="flex" style={{ minWidth: chartWidth }}>
+          <div className="w-8 shrink-0">
+            <div className="h-8" />
+            {tasks.map((task) => (
+              <div key={task.id} className="flex h-10 items-center justify-center">
+                {editingId === task.id && (
+                  <button
+                    onClick={removeSelected}
+                    className="rounded bg-red-100 px-1.5 text-sm font-bold text-red-600 no-print"
+                    title="Supprimer"
+                  >
+                    ×
+                  </button>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="w-64 shrink-0 pr-3">
+            <div className="h-8" />
+            {tasks.map((task) => {
+              const dates = taskDates(task, launch);
+              return (
+                <div
+                  key={task.id}
+                  onClick={() => selectTask(task)}
+                  className={`flex h-10 w-full cursor-pointer items-center gap-2 overflow-hidden text-left text-sm ${editingId === task.id ? "rounded bg-blue-50" : ""}`}
+                >
+                  <input
+                    type="checkbox"
+                    checked={task.done}
+                    onChange={() => toggleDone(task.id)}
+                    onClick={(event) => event.stopPropagation()}
+                    className="no-print"
+                  />
+                  <span className="min-w-0">
+                    <span className={`block truncate ${task.done ? "line-through text-slate-400" : ""}`}>
+                      {task.kind === "milestone" ? "◆ " : ""}{task.name}
+                    </span>
+                    <span className="block truncate text-[11px] text-slate-500">
+                      {task.kind === "milestone"
+                        ? formatTaskDay(dates.start)
+                        : `${formatTaskDay(dates.start)} → ${formatTaskDay(dates.end)}`}
+                    </span>
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+          <div className="relative min-w-0 flex-1">
             <div className="relative h-8">
               {ticks.map((tick) => (
                 <span
@@ -223,87 +361,119 @@ export default function GanttCard() {
                   {tick.label}
                 </span>
               ))}
-              <div
-                className="pointer-events-none absolute bottom-0 top-3 z-10 w-0.5 bg-rose-600"
-                style={{ left: `${launchPct}%` }}
-                title={`Lancement ${formatTaskDay(launch)}`}
-              >
-                <span className={`absolute -top-3 whitespace-nowrap text-[10px] font-bold text-rose-700 ${launchPct > 78 ? "right-1" : "left-1"}`}>
-                  Lancement
-                </span>
-              </div>
+              <span className={`absolute top-0 z-20 whitespace-nowrap text-[10px] font-bold text-rose-700 ${launchPct > 78 ? "right-1" : ""}`} style={launchPct > 78 ? undefined : { left: `calc(${launchPct}% + 4px)` }}>
+                Lancement
+              </span>
             </div>
-            <div />
-
-            {tasks.map((task) => {
-              const dates = taskDates(task, launch);
-              const bar = barPercent(dates.start, dates.end, window);
-              return (
-                <div key={task.id} className="contents">
-                  <div className={`pr-3 text-sm ${editingId === task.id ? "rounded bg-blue-50" : ""}`} title={task.name}>
-                    <label className="flex items-center gap-2 cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={task.done}
-                        onChange={() => toggleDone(task.id)}
-                        className="no-print"
+            <div className="relative" style={{ height: tasks.length * ROW_HEIGHT }}>
+              {tasks.map((task) => {
+                const dates = taskDates(task, launch);
+                const bar = barPercent(dates.start, dates.end, window);
+                const point = datePercent(dates.start, window);
+                return (
+                  <button
+                    key={task.id}
+                    type="button"
+                    onClick={() => selectTask(task)}
+                    className="relative block h-10 w-full"
+                  >
+                    {editingId === task.id && <span className="absolute inset-x-0 top-1 h-8 rounded bg-blue-100/40" />}
+                    {task.kind === "milestone" ? (
+                      <span
+                        className={`absolute top-2 h-5 w-5 rotate-45 ${CATEGORY_COLORS[task.category]} ${task.done ? "opacity-40" : ""}`}
+                        style={{ left: `calc(${point}% - 10px)` }}
+                        title={`${task.name} : ${formatTaskDay(dates.start)}`}
                       />
-                      <span className="min-w-0">
-                        <span className={`block truncate ${task.done ? "line-through text-slate-400" : ""}`}>{task.name}</span>
-                        <span className="block text-[11px] text-slate-500">
-                          {formatTaskDay(dates.start)} → {formatTaskDay(dates.end)}
-                        </span>
-                      </span>
-                    </label>
-                  </div>
-                  <div className="relative h-8">
-                    <div
-                      className={`absolute top-1 h-6 rounded ${CATEGORY_COLORS[task.category]} ${task.done ? "opacity-40" : ""}`}
-                      style={{ left: `${bar.left}%`, width: `${bar.width}%` }}
-                      title={`${task.name} : ${formatTaskDay(dates.start)} → ${formatTaskDay(dates.end)}`}
+                    ) : (
+                      <span
+                        className={`absolute top-2 h-6 rounded ${CATEGORY_COLORS[task.category]} ${task.done ? "opacity-40" : ""}`}
+                        style={{ left: `${bar.left}%`, width: `${bar.width}%` }}
+                        title={`${task.name} : ${formatTaskDay(dates.start)} → ${formatTaskDay(dates.end)}`}
+                      />
+                    )}
+                  </button>
+                );
+              })}
+              <svg
+                className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
+                viewBox={`0 0 100 ${Math.max(tasks.length, 1) * ROW_HEIGHT}`}
+                preserveAspectRatio="none"
+              >
+                {arrows.map((arrow) => {
+                  const y1 = arrow.fromRow * ROW_HEIGHT + ROW_HEIGHT / 2;
+                  const y2 = arrow.toRow * ROW_HEIGHT + ROW_HEIGHT / 2;
+                  const leave = Math.min(arrow.fromX + 1.5, 99);
+                  return (
+                    <polyline
+                      key={arrow.id}
+                      points={`${arrow.fromX},${y1} ${leave},${y1} ${leave},${y2} ${arrow.toX},${y2}`}
+                      fill="none"
+                      stroke="#334155"
+                      strokeWidth="1.5"
+                      vectorEffect="non-scaling-stroke"
                     />
-                    <div
-                      className="pointer-events-none absolute inset-y-0 z-10 w-0.5 bg-rose-600"
-                      style={{ left: `${launchPct}%` }}
-                    />
-                  </div>
-                  <div className="flex justify-end gap-1 no-print">
-                    <button
-                      onClick={() => beginEdit(task)}
-                      className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700"
-                    >
-                      Modifier
-                    </button>
-                    <button
-                      onClick={() => removeTask(task.id)}
-                      className="rounded bg-red-100 px-2 py-0.5 text-xs text-red-500"
-                      title="Supprimer"
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
-              );
-            })}
+                  );
+                })}
+              </svg>
+              {arrows.map((arrow) => {
+                const leave = Math.min(arrow.fromX + 1.5, 99);
+                const pointsRight = arrow.toX >= leave;
+                return (
+                  <span
+                    key={`${arrow.id}-head`}
+                    className="pointer-events-none absolute h-0 w-0 border-y-4 border-y-transparent border-l-[7px] border-l-slate-700"
+                    style={{
+                      left: `${arrow.toX}%`,
+                      top: arrow.toRow * ROW_HEIGHT + ROW_HEIGHT / 2,
+                      transform: pointsRight ? "translate(-7px, -4px)" : "translate(0, -4px) rotate(180deg)",
+                    }}
+                  />
+                );
+              })}
+              {tasks.map((task) => {
+                if (task.kind !== "milestone") return null;
+                const point = datePercent(taskDates(task, launch).start, window);
+                return (
+                  <span
+                    key={`${task.id}-line`}
+                    className="pointer-events-none absolute bottom-0 top-0 border-l border-dashed border-slate-400"
+                    style={{ left: `${point}%` }}
+                  />
+                );
+              })}
+            </div>
+            <div
+              className="pointer-events-none absolute bottom-0 top-0 z-10 w-0.5 bg-rose-600"
+              style={{ left: `${launchPct}%` }}
+              title={`Lancement ${formatTaskDay(launch)}`}
+            />
           </div>
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-3 mt-4 text-xs text-slate-500">
+      <div className="mt-4 flex flex-wrap gap-3 text-xs text-slate-500">
         <span className="flex items-center gap-1">
           <span className="inline-block h-3 w-0.5 bg-rose-600" />
           Lancement
         </span>
+        <span className="flex items-center gap-1">
+          <span className="inline-block h-3 w-3 rotate-45 bg-slate-400" />
+          Jalon
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="inline-block h-0 w-4 border-t-2 border-slate-700" />
+          Dépendance
+        </span>
         {Object.entries(CATEGORY_COLORS).map(([cat, color]) => (
           <span key={cat} className="flex items-center gap-1">
-            <span className={`inline-block w-3 h-3 rounded ${color}`} />
+            <span className={`inline-block h-3 w-3 rounded ${color}`} />
             {CATEGORY_LABELS[cat as GanttTask["category"]]}
           </span>
         ))}
       </div>
 
       {saving && (
-        <div className="fixed bottom-4 right-4 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm">
+        <div className="fixed bottom-4 right-4 rounded-lg bg-blue-600 px-4 py-2 text-sm text-white shadow-lg">
           Sauvegarde en cours...
         </div>
       )}
