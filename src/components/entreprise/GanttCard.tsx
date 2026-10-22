@@ -370,7 +370,7 @@ export default function GanttCard() {
         <div className="flex" style={{ minWidth: chartWidth }}>
           <div className="w-8 shrink-0">
             <div className="h-8" />
-            <div className="flex items-start justify-center" style={{ height: jalonBandHeight }}>
+            <div className="flex items-start justify-center bg-yellow-100" style={{ height: jalonBandHeight }}>
               {editingId && editingId !== LAUNCH_ID && tasks.some((task) => task.id === editingId && task.kind === "milestone") && (
                 <button
                   onClick={removeSelected}
@@ -397,7 +397,7 @@ export default function GanttCard() {
           </div>
           <div className="w-64 shrink-0 pr-3">
             <div className="h-8" />
-            <div className="flex items-start text-[10px] font-bold uppercase leading-[14px] tracking-wider text-rose-700" style={{ height: jalonBandHeight }}>
+            <div className="flex items-start bg-yellow-100 text-[10px] font-bold uppercase leading-[14px] tracking-wider text-rose-700" style={{ height: jalonBandHeight }}>
               Jalon
             </div>
             {taskRows.map((task) => {
@@ -440,7 +440,7 @@ export default function GanttCard() {
               ))}
             </div>
             <div className="relative">
-            <div className="border-b border-slate-100" style={{ height: jalonBandHeight }} />
+            <div className="border-b border-yellow-200 bg-yellow-100" style={{ height: jalonBandHeight }} />
             <div className="relative" style={{ height: chartBodyHeight }}>
               {taskRows.map((task) => {
                 const dates = taskDates(task, launch);
