@@ -3,7 +3,7 @@ import "./globals.css";
 import AppShell from "@/components/AppShell";
 
 export const metadata: Metadata = {
-  title: "Budget & Projet Immo",
+  title: "ERP",
   description: "Gestion de budget familial et simulateur d'achat immobilier",
 };
 
