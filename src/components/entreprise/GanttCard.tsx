@@ -174,8 +174,10 @@ export default function GanttCard() {
 
   const window = useMemo(() => planningWindow(tasks, launch), [tasks, launch]);
   const ticks = monthTicks(window);
-  const arrows = useMemo(() => dependencyArrows(tasks, launch, window), [tasks, launch, window]);
+  const taskRows = useMemo(() => tasks.filter((task) => task.kind !== "milestone"), [tasks]);
+  const arrows = useMemo(() => dependencyArrows(taskRows, launch, window), [taskRows, launch, window]);
   const chartWidth = Math.max(860, ticks.length * 56);
+  const chartBodyHeight = Math.max(taskRows.length * ROW_HEIGHT, 120);
   const launchRow = useMemo<GanttTask>(() => ({
     id: LAUNCH_ID,
     name: "Lancement",
@@ -225,8 +227,8 @@ export default function GanttCard() {
       <h2 className="text-xl font-bold border-b-2 border-slate-100 pb-2 mb-2">Planning</h2>
       <p className="text-sm text-slate-600 mb-5">
         {hasActivityStart
-          ? `Les traits rouges sont les jalons. Le lancement est au ${formatTaskDay(launch)} : le modifier met à jour cette date partout.`
-          : "Le jalon de lancement est sur aujourd'hui. Enregistrez sa date pour la reprendre dans les autres onglets."}
+          ? `Les traits rouges sont les jalons : cliquez leur titre pour les modifier. Le lancement est au ${formatTaskDay(launch)}.`
+          : "Cliquez le titre du jalon de lancement, puis enregistrez sa date pour la reprendre dans les autres onglets."}
       </p>
 
       <div className="flex flex-wrap items-end gap-3 mb-2 no-print">
@@ -329,10 +331,20 @@ export default function GanttCard() {
       <div className="overflow-x-auto">
         <div className="flex" style={{ minWidth: chartWidth }}>
           <div className="w-8 shrink-0">
-            <div className="h-8" />
-            {rows.map((task) => (
+            <div className="flex h-8 items-center justify-center">
+              {editingId && editingId !== LAUNCH_ID && tasks.some((task) => task.id === editingId && task.kind === "milestone") && (
+                <button
+                  onClick={removeSelected}
+                  className="rounded bg-red-100 px-1.5 text-sm font-bold text-red-600 no-print"
+                  title="Supprimer"
+                >
+                  ×
+                </button>
+              )}
+            </div>
+            {taskRows.map((task) => (
               <div key={task.id} className="flex h-10 items-center justify-center">
-                {editingId === task.id && task.id !== LAUNCH_ID && (
+                {editingId === task.id && (
                   <button
                     onClick={removeSelected}
                     className="rounded bg-red-100 px-1.5 text-sm font-bold text-red-600 no-print"
@@ -346,7 +358,7 @@ export default function GanttCard() {
           </div>
           <div className="w-64 shrink-0 pr-3">
             <div className="h-8" />
-            {rows.map((task) => {
+            {taskRows.map((task) => {
               const dates = taskDates(task, launch);
               return (
                 <div
@@ -354,7 +366,6 @@ export default function GanttCard() {
                   onClick={() => selectTask(task)}
                   className={`flex h-10 w-full cursor-pointer items-center gap-2 overflow-hidden text-left text-sm ${editingId === task.id ? "rounded bg-blue-50" : ""}`}
                 >
-                  {task.id === LAUNCH_ID ? <span className="inline-block w-4" /> : (
                   <input
                     type="checkbox"
                     checked={task.done}
@@ -362,15 +373,12 @@ export default function GanttCard() {
                     onClick={(event) => event.stopPropagation()}
                     className="no-print"
                   />
-                  )}
                   <span className="min-w-0">
                     <span className={`block truncate ${task.done ? "line-through text-slate-400" : ""}`}>
                       {task.name}
                     </span>
                     <span className="block truncate text-[11px] text-slate-500">
-                      {task.kind === "milestone"
-                        ? formatTaskDay(dates.start)
-                        : `${formatTaskDay(dates.start)} → ${formatTaskDay(dates.end)}`}
+                      {`${formatTaskDay(dates.start)} → ${formatTaskDay(dates.end)}`}
                     </span>
                   </span>
                 </div>
@@ -389,8 +397,8 @@ export default function GanttCard() {
                 </span>
               ))}
             </div>
-            <div className="relative" style={{ height: rows.length * ROW_HEIGHT }}>
-              {rows.map((task) => {
+            <div className="relative" style={{ height: chartBodyHeight }}>
+              {taskRows.map((task) => {
                 const dates = taskDates(task, launch);
                 const bar = barPercent(dates.start, dates.end, window);
                 return (
@@ -413,12 +421,12 @@ export default function GanttCard() {
               })}
               <svg
                 className="pointer-events-none absolute inset-0 h-full w-full overflow-visible"
-                viewBox={`0 0 100 ${Math.max(rows.length, 1) * ROW_HEIGHT}`}
+                viewBox={`0 0 100 ${chartBodyHeight}`}
                 preserveAspectRatio="none"
               >
                 {arrows.map((arrow) => {
-                  const y1 = (arrow.fromRow + 1) * ROW_HEIGHT + ROW_HEIGHT / 2;
-                  const y2 = (arrow.toRow + 1) * ROW_HEIGHT + ROW_HEIGHT / 2;
+                  const y1 = arrow.fromRow * ROW_HEIGHT + ROW_HEIGHT / 2;
+                  const y2 = arrow.toRow * ROW_HEIGHT + ROW_HEIGHT / 2;
                   const leave = Math.min(arrow.fromX + 1.5, 99);
                   return (
                     <polyline
@@ -441,7 +449,7 @@ export default function GanttCard() {
                     className="pointer-events-none absolute h-0 w-0 border-y-4 border-y-transparent border-l-[7px] border-l-slate-700"
                     style={{
                       left: `${arrow.toX}%`,
-                      top: (arrow.toRow + 1) * ROW_HEIGHT + ROW_HEIGHT / 2,
+                      top: arrow.toRow * ROW_HEIGHT + ROW_HEIGHT / 2,
                       transform: pointsRight ? "translate(-7px, -4px)" : "translate(0, -4px) rotate(180deg)",
                     }}
                   />
@@ -456,11 +464,15 @@ export default function GanttCard() {
                   key={`${task.id}-line`}
                   className="pointer-events-none absolute bottom-0 top-0 z-10 w-0.5 bg-rose-600"
                   style={{ left: `${point}%` }}
-                  title={`${task.name} : ${label}`}
                 >
-                  <span className={`absolute top-0 whitespace-nowrap text-[10px] font-bold text-rose-700 ${point > 78 ? "right-1" : "left-1"}`}>
+                  <button
+                    type="button"
+                    onClick={() => selectTask(task)}
+                    title={`${task.name} : ${label}`}
+                    className={`pointer-events-auto absolute top-0 whitespace-nowrap text-[10px] font-bold text-rose-700 ${point > 78 ? "right-1" : "left-1"} ${editingId === task.id ? "underline" : ""}`}
+                  >
                     {task.name}
-                  </span>
+                  </button>
                 </div>
               );
             })}
