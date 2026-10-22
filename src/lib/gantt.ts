@@ -1,28 +1,116 @@
+import { addCalendarMonths, formatIsoDate, parseActivityStart } from "./activity-calendar";
+
 export interface GanttTask {
   id: string;
   name: string;
-  startMonth: number;
-  durationMonths: number;
+  startDate: string;
+  endDate: string;
   category: "admin" | "finance" | "produit" | "commercial" | "rh";
   done: boolean;
+  /** Ancien planning au mois, utilisé seulement tant que les dates ne sont pas saisies. */
+  startMonth?: number;
+  durationMonths?: number;
+}
+
+export function addDays(date: Date, count: number): Date {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate() + count);
+}
+
+function dayIndex(date: Date): number {
+  return Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()) / 86_400_000;
+}
+
+export function taskDates(task: Pick<GanttTask, "startDate" | "endDate" | "startMonth" | "durationMonths">, launch: Date): { start: Date; end: Date } {
+  const start = parseActivityStart(task.startDate);
+  const end = parseActivityStart(task.endDate);
+  if (start && end) {
+    return end < start ? { start, end: start } : { start, end };
+  }
+  const origin = new Date(launch.getFullYear(), launch.getMonth(), 1);
+  const startMonth = Math.max(1, task.startMonth ?? 1);
+  const duration = Math.max(1, task.durationMonths ?? 1);
+  const legacyStart = addCalendarMonths(origin, startMonth - 1);
+  const next = addCalendarMonths(origin, startMonth - 1 + duration);
+  return { start: legacyStart, end: addDays(next, -1) };
+}
+
+export interface PlanningWindow {
+  start: Date;
+  end: Date;
+}
+
+/** Fenêtre qui contient le lancement et toutes les tâches, y compris celles d'avant. */
+export function planningWindow(tasks: GanttTask[], launch: Date): PlanningWindow {
+  let min = launch;
+  let max = launch;
+  for (const task of tasks) {
+    const dates = taskDates(task, launch);
+    if (dates.start < min) min = dates.start;
+    if (dates.end > max) max = dates.end;
+  }
+  const start = addDays(min, -7);
+  let end = addDays(max, 7);
+  if (dayIndex(end) - dayIndex(start) < 28) end = addDays(start, 28);
+  return { start, end };
+}
+
+export function datePercent(date: Date, window: PlanningWindow): number {
+  const span = dayIndex(window.end) + 1 - dayIndex(window.start);
+  return ((dayIndex(date) - dayIndex(window.start)) / span) * 100;
+}
+
+export function barPercent(start: Date, end: Date, window: PlanningWindow): { left: number; width: number } {
+  const left = datePercent(start, window);
+  const right = datePercent(addDays(end, 1), window);
+  return { left, width: Math.max(right - left, 0.35) };
+}
+
+export function monthTicks(window: PlanningWindow): { date: Date; label: string }[] {
+  const ticks: { date: Date; label: string }[] = [];
+  let cursor = new Date(window.start.getFullYear(), window.start.getMonth(), 1);
+  if (cursor < window.start) cursor = addCalendarMonths(cursor, 1);
+  while (cursor <= window.end) {
+    ticks.push({
+      date: new Date(cursor),
+      label: cursor.toLocaleDateString("fr-FR", { month: "short" }).replace(".", ""),
+    });
+    cursor = addCalendarMonths(cursor, 1);
+  }
+  return ticks;
+}
+
+function legacyTask(
+  id: string,
+  name: string,
+  startMonth: number,
+  durationMonths: number,
+  category: GanttTask["category"],
+): GanttTask {
+  return { id, name, startDate: "", endDate: "", startMonth, durationMonths, category, done: false };
 }
 
 export const DEFAULT_TASKS: GanttTask[] = [
-  { id: "statuts", name: "Choix du statut & rédaction des statuts", startMonth: 1, durationMonths: 1, category: "admin", done: false },
-  { id: "immat", name: "Immatriculation (registre national des entreprises)", startMonth: 1, durationMonths: 1, category: "admin", done: false },
-  { id: "compte", name: "Ouverture compte bancaire pro", startMonth: 2, durationMonths: 1, category: "finance", done: false },
-  { id: "acre", name: "Demande ACRE / aides région", startMonth: 2, durationMonths: 1, category: "finance", done: false },
-  { id: "assurances", name: "Assurances (RC pro, prévoyance)", startMonth: 2, durationMonths: 1, category: "admin", done: false },
-  { id: "offres", name: "Création des offres / prix", startMonth: 2, durationMonths: 2, category: "produit", done: false },
-  { id: "site", name: "Site web & identité visuelle", startMonth: 3, durationMonths: 2, category: "commercial", done: false },
-  { id: "compta", name: "Mise en place comptabilité / facturation", startMonth: 3, durationMonths: 1, category: "finance", done: false },
-  { id: "reseau", name: "Réseaux & partenariats", startMonth: 4, durationMonths: 3, category: "commercial", done: false },
-  { id: "premiers-clients", name: "Signature des premiers clients", startMonth: 5, durationMonths: 3, category: "commercial", done: false },
-  { id: "embauche", name: "Étude première embauche", startMonth: 12, durationMonths: 2, category: "rh", done: false },
-  { id: "bilan1", name: "Bilan année 1 & ajustement prix", startMonth: 12, durationMonths: 1, category: "finance", done: false },
-  { id: "developpement", name: "Développement de l'activité", startMonth: 13, durationMonths: 12, category: "commercial", done: false },
-  { id: "bilan2", name: "Bilan année 2 & projection", startMonth: 24, durationMonths: 1, category: "finance", done: false },
+  legacyTask("statuts", "Choix du statut & rédaction des statuts", 1, 1, "admin"),
+  legacyTask("immat", "Immatriculation (registre national des entreprises)", 1, 1, "admin"),
+  legacyTask("compte", "Ouverture compte bancaire pro", 2, 1, "finance"),
+  legacyTask("acre", "Demande ACRE / aides région", 2, 1, "finance"),
+  legacyTask("assurances", "Assurances (RC pro, prévoyance)", 2, 1, "admin"),
+  legacyTask("offres", "Création des offres / prix", 2, 2, "produit"),
+  legacyTask("site", "Site web & identité visuelle", 3, 2, "commercial"),
+  legacyTask("compta", "Mise en place comptabilité / facturation", 3, 1, "finance"),
+  legacyTask("reseau", "Réseaux & partenariats", 4, 3, "commercial"),
+  legacyTask("premiers-clients", "Signature des premiers clients", 5, 3, "commercial"),
+  legacyTask("embauche", "Étude première embauche", 12, 2, "rh"),
+  legacyTask("bilan1", "Bilan année 1 & ajustement prix", 12, 1, "finance"),
+  legacyTask("developpement", "Développement de l'activité", 13, 12, "commercial"),
+  legacyTask("bilan2", "Bilan année 2 & projection", 24, 1, "finance"),
 ];
+
+export function formatTaskDay(date: Date): string {
+  return date.toLocaleDateString("fr-FR");
+}
+
+export { formatIsoDate };
 
 export const CATEGORY_COLORS: Record<GanttTask["category"], string> = {
   admin: "bg-slate-400",

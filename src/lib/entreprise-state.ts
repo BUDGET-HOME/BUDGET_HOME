@@ -1,3 +1,4 @@
+import { parseActivityStart } from "./activity-calendar";
 import { DEFAULT_TASKS, type GanttTask } from "./gantt";
 import {
   ENTREPRISE_BACKUP_KIND,
@@ -202,14 +203,21 @@ function normalizeTask(raw: unknown, index: number): GanttTask | null {
   const category = TASK_CATEGORIES.includes(task.category as GanttTask["category"])
     ? (task.category as GanttTask["category"])
     : "admin";
-  return {
+  const startDate = typeof task.startDate === "string" && parseActivityStart(task.startDate) ? task.startDate : "";
+  const endDate = typeof task.endDate === "string" && parseActivityStart(task.endDate) ? task.endDate : "";
+  const normalized: GanttTask = {
     id: typeof task.id === "string" && task.id ? task.id : `t-${index + 1}`,
     name: task.name.trim(),
-    startMonth: finiteNumber(task.startMonth, 1),
-    durationMonths: Math.max(1, finiteNumber(task.durationMonths, 1)),
+    startDate,
+    endDate,
     category,
     done: task.done === true,
   };
+  if (!startDate || !endDate) {
+    normalized.startMonth = finiteNumber(task.startMonth, 1);
+    normalized.durationMonths = Math.max(1, finiteNumber(task.durationMonths, 1));
+  }
+  return normalized;
 }
 
 export function ganttFromRecord(raw: unknown): { tasks: GanttTask[] } {

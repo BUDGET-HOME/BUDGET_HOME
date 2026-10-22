@@ -41,6 +41,16 @@ describe("état entreprise", () => {
     expect(migrated?.freelance.costMeals).toBe(0);
     expect(migrated?.gantt.tasks[0].name).toBe("Statuts");
     expect(migrated?.gantt.tasks[0].done).toBe(true);
+    expect(migrated?.gantt.tasks[0].startMonth).toBe(2);
+
+    const dated = normalizeEntreprise({
+      gantt: {
+        tasks: [{ id: "b", name: "Marque", startDate: "2026-08-03", endDate: "2026-08-21", category: "admin", done: false }],
+      },
+    });
+    expect(dated.gantt.tasks[0].startDate).toBe("2026-08-03");
+    expect(dated.gantt.tasks[0].endDate).toBe("2026-08-21");
+    expect(dated.gantt.tasks[0].startMonth).toBeUndefined();
   });
 
   it("complète la trésorerie locale seulement si le compte est vide", () => {
