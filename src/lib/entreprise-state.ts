@@ -46,6 +46,7 @@ export interface FreelanceData {
   areEconomicLayoff: boolean;
   areWaitingServed: boolean;
   arceSecondPayment: boolean;
+  arceConversion: boolean;
   tvaRate: number;
 }
 
@@ -92,6 +93,7 @@ export const DEFAULT_FREELANCE: FreelanceData = {
   areEconomicLayoff: false,
   areWaitingServed: false,
   arceSecondPayment: true,
+  arceConversion: false,
   tvaRate: 0,
 };
 
@@ -146,6 +148,7 @@ const FREELANCE_FIELDS: {
   { camel: "areEconomicLayoff", snake: "are_economic_layoff", kind: "boolean" },
   { camel: "areWaitingServed", snake: "are_waiting_served", kind: "boolean" },
   { camel: "arceSecondPayment", snake: "arce_second_payment", kind: "boolean" },
+  { camel: "arceConversion", snake: "arce_conversion", kind: "boolean" },
   { camel: "tvaRate", snake: "tva_rate", kind: "number" },
 ];
 

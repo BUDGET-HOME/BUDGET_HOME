@@ -88,6 +88,7 @@ describe("état entreprise", () => {
         areWorkedDays: 400,
         contractEndDate: "2024-05-01",
         arceSecondPayment: false,
+        arceConversion: true,
         areInactivityDays: 0,
       },
     });
@@ -96,12 +97,14 @@ describe("état entreprise", () => {
       are_worked_days: 400,
       contract_end_date: "2024-05-01",
       arce_second_payment: false,
+      arce_conversion: true,
       are_inactivity_days: 0,
     });
     const again = normalizeEntreprise(backup);
     expect(again.freelance.areWorkedDays).toBe(400);
     expect(again.freelance.contractEndDate).toBe("2024-05-01");
     expect(again.freelance.arceSecondPayment).toBe(false);
+    expect(again.freelance.arceConversion).toBe(true);
     expect(again.freelance.activityStartDate).toBe("");
   });
 });

@@ -302,6 +302,7 @@ export default function CashFlowPlannerCard() {
     return estimateAre(areInputFromFreelance(freelanceData));
   }, [freelanceData]);
 
+  const arceConversion = freelanceData?.arceConversion === true;
   const arcePlan = useMemo(
     () => (areEstimate
       ? arceFromAre(areEstimate, {
@@ -319,9 +320,9 @@ export default function CashFlowPlannerCard() {
       initialBalance,
       new Date(),
       12,
-      arcePlan ? arceCreditsByMonth(arcePlan) : [],
+      arceConversion && arcePlan ? arceCreditsByMonth(arcePlan) : [],
     ),
-    [items, initialBalance, arcePlan],
+    [items, initialBalance, arceConversion, arcePlan],
   );
   const months = projection.map((row) => row.label);
   const monthlyBalances = projection.map((row) => row.balance);
@@ -505,6 +506,12 @@ export default function CashFlowPlannerCard() {
         {!areEstimate && (
           <p className="mt-3 text-sm text-purple-800">
             Activez « Bénéficiaire Chômage (ARE) » dans le simulateur freelance, partie Paramètres Sociaux & Famille, et renseignez le salaire, les primes et l&apos;âge.
+          </p>
+        )}
+
+        {areEstimate && !arceConversion && (
+          <p className="mt-3 text-sm text-purple-800">
+            Cochez « Conversion en ARCE » pour retirer l&apos;ARE mensuelle et verser les deux moitiés dans la trésorerie.
           </p>
         )}
 

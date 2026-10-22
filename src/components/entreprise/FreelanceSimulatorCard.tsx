@@ -131,6 +131,7 @@ export default function FreelanceSimulatorCard() {
   const areEconomicLayoff = savedData?.areEconomicLayoff ?? false;
   const areWaitingServed = savedData?.areWaitingServed ?? false;
   const arceSecondPayment = savedData?.arceSecondPayment ?? true;
+  const arceConversion = savedData?.arceConversion ?? false;
   const tvaRate = savedData?.tvaRate ?? 0;
 
   // Local state for inputs (not auto-saved)
@@ -170,6 +171,7 @@ export default function FreelanceSimulatorCard() {
   const [localAreEconomicLayoff, setLocalAreEconomicLayoff] = useState<boolean>(areEconomicLayoff);
   const [localAreWaitingServed, setLocalAreWaitingServed] = useState<boolean>(areWaitingServed);
   const [localArceSecondPayment, setLocalArceSecondPayment] = useState<boolean>(arceSecondPayment);
+  const [localArceConversion, setLocalArceConversion] = useState<boolean>(arceConversion);
   const [localTvaRate, setLocalTvaRate] = useState<number>(tvaRate);
 
   // Sync local state with saved data when it changes
@@ -211,6 +213,7 @@ export default function FreelanceSimulatorCard() {
       setLocalAreEconomicLayoff(savedData.areEconomicLayoff ?? false);
       setLocalAreWaitingServed(savedData.areWaitingServed ?? false);
       setLocalArceSecondPayment(savedData.arceSecondPayment ?? true);
+      setLocalArceConversion(savedData.arceConversion ?? false);
       setLocalTvaRate(savedData.tvaRate ?? 0);
     }
   }, [savedData]);
@@ -334,6 +337,7 @@ export default function FreelanceSimulatorCard() {
       case 'areEconomicLayoff': setLocalAreEconomicLayoff(value as boolean); break;
       case 'areWaitingServed': setLocalAreWaitingServed(value as boolean); break;
       case 'arceSecondPayment': setLocalArceSecondPayment(value as boolean); break;
+      case 'arceConversion': setLocalArceConversion(value as boolean); break;
       case 'tvaRate': setLocalTvaRate(value as number); break;
     }
   }, []);
@@ -354,6 +358,8 @@ export default function FreelanceSimulatorCard() {
 
   // State for outputs (calculated values)
   const [headerCA, setHeaderCA] = useState<string>("0 €");
+  const [annualCaption, setAnnualCaption] = useState<string>("");
+  const [annualDetail, setAnnualDetail] = useState<{ label: string; amount: string }[]>([]);
   const [caMensuel, setCaMensuel] = useState<string>("0 €");
   const [tvaBadge, setTvaBadge] = useState<{ text: string; className: string }>({
     text: "Franchise TVA",
@@ -402,6 +408,9 @@ export default function FreelanceSimulatorCard() {
   const calculate = useCallback(() => {
     const caMois = localTjm * localDays;
     const caAnnuel = caMois * 12;
+    let arceAdded = 0;
+    let arceFirst = 0;
+    let arceSecond = 0;
     const parts = localFiscalParts;
     const costs = {
       ret: localCostRetirement,
@@ -453,6 +462,11 @@ export default function FreelanceSimulatorCard() {
       setArceBreakdown(plan.blockedReason
         ? plan.blockedReason
         : `ARCE ${Math.round(plan.rate * 100)} % : ${money(plan.capital)} (${money(plan.first)} fin de mois 1${plan.second > 0 ? `, ${money(plan.second)} à +6 mois` : ", second versement non retenu"}). Départ de l'ARE repoussé de ${deferDays} j.`);
+      if (localArceConversion && !plan.blockedReason) {
+        arceAdded = plan.total;
+        arceFirst = plan.first;
+        arceSecond = plan.second;
+      }
     } else {
       setAreBreakdown("");
       setArceBreakdown("");
@@ -462,7 +476,21 @@ export default function FreelanceSimulatorCard() {
 
     const currentSim = simulateStatus(localStatus, params);
 
-    setHeaderCA(money(caAnnuel));
+    const projectedAnnual = caAnnuel + arceAdded;
+    setHeaderCA(money(projectedAnnual));
+    setAnnualCaption(arceAdded > 0
+      ? arceSecond > 0
+        ? `dont ${money(arceAdded)} d'ARCE : ${money(arceFirst)} puis ${money(arceSecond)}.`
+        : `dont ${money(arceFirst)} d'ARCE (second versement non retenu).`
+      : "");
+    setAnnualDetail(arceAdded > 0
+      ? [
+          { label: "CA d'activité sur 12 mois", amount: money(caAnnuel) },
+          { label: "ARCE, 1er versement (50 %)", amount: money(arceFirst) },
+          ...(arceSecond > 0 ? [{ label: "ARCE, 2e versement (50 %)", amount: money(arceSecond) }] : []),
+          { label: "CA annuel projeté", amount: money(projectedAnnual) },
+        ]
+      : [{ label: "CA d'activité sur 12 mois", amount: money(caAnnuel) }]);
     setCaMensuel(money(caMois));
     setTotalChargesInput(money(Object.values(costs).reduce((a, b) => a + b, 0) + CFE_LISSEE));
     const micro = describeMicroAcre(isAcreVal, localActivityStart);
@@ -674,7 +702,7 @@ export default function FreelanceSimulatorCard() {
     localUseSpouseMutuelle, localActivityStart, localContractEnd, localAreWorkedDays, localAreInactivityDays,
     localAreExcludedDays, localArePartTime, localArePaidLeave, localAreSeverance, localAreRightsUsed,
     localAreOverseas, localAreIndividualAgreement, localAreReducedMinimum, localAreEconomicLayoff,
-    localAreWaitingServed, localArceSecondPayment, localTvaRate
+    localAreWaitingServed, localArceSecondPayment, localArceConversion, localTvaRate
   ]);
 
   useEffect(() => {
@@ -905,6 +933,33 @@ export default function FreelanceSimulatorCard() {
               </div>
             </div>
 
+            <div className="flex items-center justify-between mb-3 bg-indigo-50 p-2 rounded border border-indigo-100 relative">
+              <div className="flex items-center gap-1 tooltip-trigger cursor-help relative">
+                <span className="text-sm font-bold text-indigo-800">Conversion en ARCE ?</span>
+                <svg className="w-3 h-3 text-indigo-400 no-print" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div className="tooltip-content">Remplace l&apos;ARE mensuelle par l&apos;aide à la reprise : deux versements de 50 % ajoutés au CA annuel projeté. Les cotisations restent calculées sur le CA d&apos;activité.</div>
+              </div>
+              <div className="relative inline-block w-8 align-middle select-none">
+                <input
+                  type="checkbox"
+                  checked={localArceConversion}
+                  onChange={(e) => {
+                    const value = e.target.checked;
+                    handleChange("arceConversion", value);
+                    handleSave("arceConversion", value);
+                  }}
+                  className="toggle-checkbox absolute block w-4 h-4 rounded-full bg-white border-4 appearance-none cursor-pointer border-gray-300"
+                />
+                <label className="toggle-label block overflow-hidden h-4 rounded-full bg-gray-300 cursor-pointer" />
+              </div>
+            </div>
+
+            {localArceConversion && !localAreToggle && (
+              <p className="text-sm text-indigo-800 -mt-2 mb-3">Activez aussi « Bénéficiaire Chômage (ARE) » pour calculer les deux versements.</p>
+            )}
+
             {localAreToggle && (
               <div className="space-y-2 bg-blue-50/50 p-3 rounded-lg border border-blue-100">
                 <div className="grid grid-cols-2 gap-2">
@@ -959,10 +1014,16 @@ export default function FreelanceSimulatorCard() {
                   <SocialCheck label="Second versement ARCE" tip="La seconde moitié est versée 6 mois plus tard seulement si l'activité continue et qu'il n'y a pas de CDI à temps plein." checked={localArceSecondPayment} onToggle={(value) => { handleChange("arceSecondPayment", value); handleSave("arceSecondPayment", value); }} />
                 </div>
                 <div className="text-sm text-blue-900 bg-white rounded border border-blue-100 p-2 space-y-1">
-                  <p><span className="font-semibold">ARE nette / mois :</span> {areMonthly} · <span className="font-semibold">nette / jour :</span> {areDaily}</p>
-                  <p><span className="font-semibold">Durée :</span> {areDuration}</p>
-                  {areBreakdown && <p>{areBreakdown}</p>}
-                  {arceBreakdown && <p>{arceBreakdown}</p>}
+                  {localArceConversion ? (
+                    <p><span className="font-semibold">ARE mensuelle retirée.</span> {arceBreakdown}</p>
+                  ) : (
+                    <>
+                      <p><span className="font-semibold">ARE nette / mois :</span> {areMonthly} · <span className="font-semibold">nette / jour :</span> {areDaily}</p>
+                      <p><span className="font-semibold">Durée :</span> {areDuration}</p>
+                      {areBreakdown && <p>{areBreakdown}</p>}
+                      {arceBreakdown && <p>{arceBreakdown}</p>}
+                    </>
+                  )}
                 </div>
               </div>
             )}
@@ -1164,9 +1225,11 @@ export default function FreelanceSimulatorCard() {
 
         {/* DROITE : DASHBOARD */}
         <div className="col-span-4 p-2 bg-white flex flex-col gap-1.5">
-          <div className="bg-indigo-50 px-3 py-2 rounded-xl border border-indigo-100">
+          <div className="tooltip-trigger relative bg-indigo-50 px-3 py-2 rounded-xl border border-indigo-100 cursor-help">
             <div className="text-indigo-500 text-sm font-bold uppercase tracking-wider">CA Annuel Projeté</div>
             <div id="headerAnnualCA" className="text-2xl font-bold text-indigo-950">{headerCA}</div>
+            {annualCaption && <p className="text-sm text-indigo-800">{annualCaption}</p>}
+            <KpiTip lines={annualDetail} />
           </div>
           <div className="grid grid-cols-3 gap-1.5">
             <div className="tooltip-trigger relative bg-blue-50 px-2 py-2 rounded-xl border border-blue-100 cursor-help">
@@ -1197,7 +1260,16 @@ export default function FreelanceSimulatorCard() {
             <KpiTip lines={tvaDetail} />
           </div>
 
-          {localAreToggle && (
+          {localAreToggle && localArceConversion && (
+            <div className="bg-gradient-to-r from-indigo-600 to-violet-700 px-3 py-2 rounded-xl shadow-lg text-white relative overflow-hidden">
+              <div className="relative z-10">
+                <div className="text-indigo-100 text-sm font-bold uppercase tracking-wider">ARCE à la place de l&apos;ARE</div>
+                <p className="text-sm text-indigo-50 mt-1">{arceBreakdown || "Renseignez les paramètres ARE pour calculer les deux versements."}</p>
+              </div>
+            </div>
+          )}
+
+          {localAreToggle && !localArceConversion && (
             <div className="bg-gradient-to-r from-blue-600 to-indigo-700 px-3 py-2 rounded-xl shadow-lg text-white relative overflow-hidden">
               <div className="relative z-10 flex justify-between items-center">
                 <div>
