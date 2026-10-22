@@ -150,14 +150,14 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           .freelance-board * {
             overflow: visible !important;
           }
-          .freelance-board > .bg-slate-900 {
+          .freelance-board > .freelance-title {
             background: white !important;
             border-bottom: 2px solid #e2e8f0 !important;
             margin-bottom: 12px !important;
             padding: 0 0 8px !important;
           }
-          .freelance-board > .bg-slate-900,
-          .freelance-board > .bg-slate-900 * {
+          .freelance-board > .freelance-title,
+          .freelance-board > .freelance-title * {
             color: #0f172a !important;
           }
           .freelance-board .grid.grid-cols-12 {

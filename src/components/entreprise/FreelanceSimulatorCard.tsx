@@ -672,19 +672,11 @@ export default function FreelanceSimulatorCard() {
 
   return (
     <section className="budget-card freelance-board !mb-0 flex h-full min-h-0 flex-col !p-0 overflow-hidden">
-      <div className="bg-slate-900 px-4 py-2 text-white flex items-center relative overflow-hidden shrink-0">
-        <div className="relative z-10 flex items-center gap-3">
-          <div className="bg-indigo-600 p-2 rounded-lg no-print">
-            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <h1 className="text-lg font-bold tracking-tight">Simulateur Freelance</h1>
-        </div>
-        <div className="absolute -top-10 -right-10 w-64 h-64 bg-indigo-600 rounded-full opacity-10 blur-3xl no-print" />
+      <div className="freelance-title relative z-0 shrink-0 border-b-2 border-slate-100 bg-white px-4 pb-2 pt-3">
+        <h2 className="text-xl font-bold text-slate-900">Simulateur Freelance</h2>
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="relative z-10 min-h-0 flex-1 overflow-y-auto">
       <div className="grid grid-cols-12 items-start">
         {/* GAUCHE : PARAMÈTRES */}
         <div className="col-span-8 p-3 bg-gray-50 border-r border-gray-200 grid grid-cols-2 items-start gap-3">
@@ -1268,7 +1260,7 @@ export default function FreelanceSimulatorCard() {
         :global(.freelance-board .tooltip-content) {
           display: none;
           position: absolute;
-          bottom: 100%;
+          top: calc(100% + 6px);
           left: 0;
           width: 240px;
           padding: 8px;
@@ -1276,12 +1268,11 @@ export default function FreelanceSimulatorCard() {
           color: white;
           font-size: 0.8rem;
           border-radius: 6px;
-          z-index: 50;
+          z-index: 30;
           box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
           text-align: left;
           line-height: 1.4;
           pointer-events: none;
-          margin-bottom: 5px;
         }
         :global(.freelance-board .kpi-tip) {
           width: 280px;
@@ -1294,12 +1285,11 @@ export default function FreelanceSimulatorCard() {
         :global(.freelance-board .tooltip-content)::after {
           content: " ";
           position: absolute;
-          top: 100%;
-          left: 50%;
-          margin-left: -5px;
+          bottom: 100%;
+          left: 16px;
           border-width: 5px;
           border-style: solid;
-          border-color: #1e293b transparent transparent transparent;
+          border-color: transparent transparent #1e293b transparent;
         }
       `}</style>
     </section>
