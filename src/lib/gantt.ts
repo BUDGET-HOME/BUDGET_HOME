@@ -2,6 +2,8 @@ import { addCalendarMonths, formatIsoDate, parseActivityStart } from "./activity
 
 export type GanttKind = "task" | "milestone";
 
+export const LAUNCH_ID = "lancement";
+
 export interface GanttTask {
   id: string;
   name: string;
@@ -154,9 +156,19 @@ function shiftAfter(task: GanttTask, predecessorEnd: Date, launch: Date): Pick<G
   return { startDate: formatIsoDate(start), endDate: formatIsoDate(addDays(start, duration)) };
 }
 
+/** Un jalon ne dépend de rien et aucune tâche ne peut en dépendre. */
+export function stripMilestoneDependencies(tasks: GanttTask[]): GanttTask[] {
+  const milestoneIds = new Set(tasks.filter((task) => task.kind === "milestone").map((task) => task.id));
+  return tasks.map((task) => {
+    if (task.kind === "milestone") return task.dependsOn ? { ...task, dependsOn: "" } : task;
+    if (task.dependsOn && milestoneIds.has(task.dependsOn)) return { ...task, dependsOn: "" };
+    return task;
+  });
+}
+
 /** Décale chaque tâche au lendemain de la fin de celle dont elle dépend. */
 export function scheduleDependencies(tasks: GanttTask[], launch: Date): GanttTask[] {
-  let current = tasks.map((task) => ({ ...task }));
+  let current = stripMilestoneDependencies(tasks).map((task) => ({ ...task }));
   for (let pass = 0; pass < current.length; pass += 1) {
     let changed = false;
     current = current.map((task) => {
@@ -185,15 +197,14 @@ export interface DependencyArrow {
 
 export function dependencyArrows(tasks: GanttTask[], launch: Date, window: PlanningWindow): DependencyArrow[] {
   return tasks.flatMap((task, row) => {
-    if (!task.dependsOn) return [];
+    if (!task.dependsOn || task.kind === "milestone") return [];
     const predecessorIndex = tasks.findIndex((item) => item.id === task.dependsOn);
     if (predecessorIndex < 0) return [];
     const predecessor = tasks[predecessorIndex];
+    if (predecessor.kind === "milestone") return [];
     const from = taskDates(predecessor, launch);
     const to = taskDates(task, launch);
-    const fromX = predecessor.kind === "milestone"
-      ? datePercent(from.start, window)
-      : datePercent(addDays(from.end, 1), window);
+    const fromX = datePercent(addDays(from.end, 1), window);
     const toX = datePercent(to.start, window);
     return [{ id: `${predecessor.id}->${task.id}`, fromX, toX, fromRow: predecessorIndex, toRow: row }];
   });

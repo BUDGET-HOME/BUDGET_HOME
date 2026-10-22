@@ -1,5 +1,5 @@
 import { parseActivityStart } from "./activity-calendar";
-import { DEFAULT_TASKS, type GanttTask } from "./gantt";
+import { DEFAULT_TASKS, stripMilestoneDependencies, type GanttTask } from "./gantt";
 import {
   ENTREPRISE_BACKUP_KIND,
   type CashFlowBackup,
@@ -233,9 +233,9 @@ export function ganttFromRecord(raw: unknown): { tasks: GanttTask[] } {
   const normalized = tasks.map(normalizeTask).filter((task): task is GanttTask => task !== null);
   const ids = new Set(normalized.map((task) => task.id));
   return {
-    tasks: normalized.map((task) => (
+    tasks: stripMilestoneDependencies(normalized.map((task) => (
       task.dependsOn && !ids.has(task.dependsOn) ? { ...task, dependsOn: "" } : task
-    )),
+    ))),
   };
 }
 
