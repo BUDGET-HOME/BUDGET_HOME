@@ -13,6 +13,7 @@ import {
   dependencyCreatesCycle,
   formatIsoDate,
   formatTaskDay,
+  MILESTONE_TITLE_STEP,
   monthTicks,
   stackOverlappingLabels,
   planningWindow,
@@ -221,6 +222,11 @@ export default function GanttCard() {
     measure();
     return () => observer.disconnect();
   }, [dataLoading, dataError, milestoneKey]);
+  const jalonLaneCount = Math.max(
+    1,
+    ...rows.filter((task) => task.kind === "milestone").map((task) => (titleOffsets[task.id] ?? 0) / MILESTONE_TITLE_STEP + 1),
+  );
+  const jalonBandHeight = jalonLaneCount * MILESTONE_TITLE_STEP;
   const dependencyChoices = tasks.filter((task) => {
     const selfId = editingId ?? "new";
     if (task.kind === "milestone" || task.id === editingId) return false;
@@ -363,7 +369,8 @@ export default function GanttCard() {
       <div className="overflow-x-auto">
         <div className="flex" style={{ minWidth: chartWidth }}>
           <div className="w-8 shrink-0">
-            <div className="flex h-8 items-center justify-center">
+            <div className="h-8" />
+            <div className="flex items-start justify-center" style={{ height: jalonBandHeight }}>
               {editingId && editingId !== LAUNCH_ID && tasks.some((task) => task.id === editingId && task.kind === "milestone") && (
                 <button
                   onClick={removeSelected}
@@ -390,6 +397,9 @@ export default function GanttCard() {
           </div>
           <div className="w-64 shrink-0 pr-3">
             <div className="h-8" />
+            <div className="flex items-start text-[10px] font-bold uppercase leading-[14px] tracking-wider text-rose-700" style={{ height: jalonBandHeight }}>
+              Jalon
+            </div>
             {taskRows.map((task) => {
               const dates = taskDates(task, launch);
               return (
@@ -418,7 +428,7 @@ export default function GanttCard() {
             })}
           </div>
           <div ref={timelineRef} className="relative min-w-0 flex-1">
-            <div className="relative h-8">
+            <div className="relative h-8 border-b border-slate-100">
               {ticks.map((tick) => (
                 <span
                   key={formatIsoDate(tick.date)}
@@ -429,6 +439,8 @@ export default function GanttCard() {
                 </span>
               ))}
             </div>
+            <div className="relative">
+            <div className="border-b border-slate-100" style={{ height: jalonBandHeight }} />
             <div className="relative" style={{ height: chartBodyHeight }}>
               {taskRows.map((task) => {
                 const dates = taskDates(task, launch);
@@ -511,6 +523,7 @@ export default function GanttCard() {
                 </div>
               );
             })}
+            </div>
           </div>
         </div>
       </div>
