@@ -593,22 +593,14 @@ export default function FreelanceSimulatorCard() {
 
   return (
     <section className="budget-card freelance-board !mb-0 flex h-full min-h-0 flex-col !p-0 overflow-hidden">
-      <div className="bg-slate-900 px-4 py-2 text-white flex justify-between items-center relative overflow-hidden shrink-0">
-        <div className="relative z-10">
-          <div className="flex items-center gap-3">
-            <div className="bg-indigo-600 p-2 rounded-lg no-print">
-              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
-              </svg>
-            </div>
-            <div>
-              <h1 className="text-lg font-bold tracking-tight">Simulateur Freelance</h1>
-            </div>
+      <div className="bg-slate-900 px-4 py-2 text-white flex items-center relative overflow-hidden shrink-0">
+        <div className="relative z-10 flex items-center gap-3">
+          <div className="bg-indigo-600 p-2 rounded-lg no-print">
+            <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+            </svg>
           </div>
-        </div>
-        <div className="relative z-10 text-right">
-          <div className="text-sm text-slate-400 uppercase tracking-widest font-semibold print:text-gray-500">CA Annuel Projeté</div>
-          <div id="headerAnnualCA" className="text-xl font-bold text-white tracking-tight">{headerCA}</div>
+          <h1 className="text-lg font-bold tracking-tight">Simulateur Freelance</h1>
         </div>
         <div className="absolute -top-10 -right-10 w-64 h-64 bg-indigo-600 rounded-full opacity-10 blur-3xl no-print" />
       </div>
@@ -1043,6 +1035,10 @@ export default function FreelanceSimulatorCard() {
 
         {/* DROITE : DASHBOARD */}
         <div className="col-span-4 p-2 bg-white flex flex-col gap-1.5 overflow-hidden">
+          <div className="bg-indigo-50 px-3 py-2 rounded-xl border border-indigo-100">
+            <div className="text-indigo-500 text-sm font-bold uppercase tracking-wider">CA Annuel Projeté</div>
+            <div id="headerAnnualCA" className="text-2xl font-bold text-indigo-950">{headerCA}</div>
+          </div>
           <div className="grid grid-cols-3 gap-1.5">
             <div className="bg-blue-50 px-2 py-2 rounded-xl border border-blue-100">
               <div className="text-blue-500 text-sm font-bold uppercase tracking-wider">CA Mensuel HT</div>
