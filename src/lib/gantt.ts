@@ -74,14 +74,27 @@ export function barPercent(start: Date, end: Date, window: PlanningWindow): { le
 
 export const MILESTONE_TITLE_STEP = 14;
 
-/** Décale les titres qui partagent le même jour, du haut vers le bas. */
-export function milestoneTitleOffsets(dates: string[]): number[] {
-  const seen = new Map<string, number>();
-  return dates.map((date) => {
-    const index = seen.get(date) ?? 0;
-    seen.set(date, index + 1);
-    return index * MILESTONE_TITLE_STEP;
-  });
+export interface LabelBox {
+  id: string;
+  left: number;
+  right: number;
+}
+
+/** Empile les titres dont les rectangles se recouvrent, du haut vers le bas. */
+export function stackOverlappingLabels(boxes: LabelBox[], step = MILESTONE_TITLE_STEP): Record<string, number> {
+  const sorted = [...boxes].sort((a, b) => a.left - b.left || a.right - b.right || a.id.localeCompare(b.id));
+  const placed: { left: number; right: number; level: number }[] = [];
+  const offsets: Record<string, number> = {};
+  const gap = 4;
+  for (const box of sorted) {
+    let level = 0;
+    while (placed.some((item) => item.level === level && box.left < item.right + gap && box.right > item.left - gap)) {
+      level += 1;
+    }
+    placed.push({ left: box.left, right: box.right, level });
+    offsets[box.id] = level * step;
+  }
+  return offsets;
 }
 
 export function monthTicks(window: PlanningWindow): { date: Date; label: string }[] {

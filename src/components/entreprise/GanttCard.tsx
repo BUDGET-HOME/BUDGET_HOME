@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from "react";
 import { activityStartIso, parseActivityStart } from "@/lib/activity-calendar";
 import {
   CATEGORY_COLORS,
@@ -13,8 +13,8 @@ import {
   dependencyCreatesCycle,
   formatIsoDate,
   formatTaskDay,
-  milestoneTitleOffsets,
   monthTicks,
+  stackOverlappingLabels,
   planningWindow,
   scheduleDependencies,
   taskDates,
@@ -190,6 +190,37 @@ export default function GanttCard() {
     dependsOn: "",
   }), [launchIso]);
   const rows = useMemo(() => [launchRow, ...tasks], [launchRow, tasks]);
+  const timelineRef = useRef<HTMLDivElement | null>(null);
+  const titleRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const [titleOffsets, setTitleOffsets] = useState<Record<string, number>>({});
+  const milestoneKey = rows
+    .filter((task) => task.kind === "milestone")
+    .map((task) => `${task.id}:${task.name}:${task.startDate}`)
+    .join("|");
+
+  useLayoutEffect(() => {
+    if (dataLoading || dataError) return;
+    const node = timelineRef.current;
+    if (!node) return;
+    const measure = () => {
+      const boxes = Object.entries(titleRefs.current).flatMap(([id, element]) => {
+        if (!element) return [];
+        const rect = element.getBoundingClientRect();
+        if (rect.width <= 0) return [];
+        return [{ id, left: rect.left, right: rect.right }];
+      });
+      const next = stackOverlappingLabels(boxes);
+      setTitleOffsets((current) => {
+        const same = Object.keys(current).length === Object.keys(next).length
+          && Object.entries(next).every(([id, offset]) => current[id] === offset);
+        return same ? current : next;
+      });
+    };
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    measure();
+    return () => observer.disconnect();
+  }, [dataLoading, dataError, milestoneKey]);
   const dependencyChoices = tasks.filter((task) => {
     const selfId = editingId ?? "new";
     if (task.kind === "milestone" || task.id === editingId) return false;
@@ -386,7 +417,7 @@ export default function GanttCard() {
               );
             })}
           </div>
-          <div className="relative min-w-0 flex-1">
+          <div ref={timelineRef} className="relative min-w-0 flex-1">
             <div className="relative h-8">
               {ticks.map((tick) => (
                 <span
@@ -457,11 +488,11 @@ export default function GanttCard() {
                 );
               })}
             </div>
-            {rows.filter((task) => task.kind === "milestone").map((task, index, milestones) => {
+            {rows.filter((task) => task.kind === "milestone").map((task) => {
               const dates = taskDates(task, launch);
               const point = datePercent(dates.start, window);
               const label = formatTaskDay(dates.start);
-              const offset = milestoneTitleOffsets(milestones.map((item) => formatIsoDate(taskDates(item, launch).start)))[index];
+              const offset = titleOffsets[task.id] ?? 0;
               return (
                 <div
                   key={`${task.id}-line`}
@@ -470,6 +501,7 @@ export default function GanttCard() {
                 >
                   <button
                     type="button"
+                    ref={(node) => { titleRefs.current[task.id] = node; }}
                     onClick={() => selectTask(task)}
                     title={`${task.name} : ${label}`}
                     className={`pointer-events-auto absolute top-0 whitespace-nowrap text-[10px] font-bold leading-[14px] text-rose-700 ${point > 78 ? "right-1" : "left-1"} ${editingId === task.id ? "underline" : ""}`}

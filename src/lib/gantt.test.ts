@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { barPercent, datePercent, dependencyArrows, dependencyCreatesCycle, milestoneTitleOffsets, planningWindow, scheduleDependencies, taskDates } from "./gantt";
+import { barPercent, datePercent, dependencyArrows, dependencyCreatesCycle, planningWindow, scheduleDependencies, stackOverlappingLabels, taskDates } from "./gantt";
 import type { GanttTask } from "./gantt";
 
 const launch = new Date(2026, 9, 15);
@@ -59,7 +59,11 @@ describe("planning au jour", () => {
     expect(dependencyArrows(tasks, launch, planningWindow(tasks, launch))).toHaveLength(0);
   });
 
-  it("empile les titres des jalons posés le même jour", () => {
-    expect(milestoneTitleOffsets(["2026-10-15", "2026-10-20", "2026-10-15"])).toEqual([0, 0, 14]);
+  it("empile les titres qui se recouvrent vraiment", () => {
+    expect(stackOverlappingLabels([
+      { id: "a", left: 0, right: 80 },
+      { id: "b", left: 70, right: 140 },
+      { id: "c", left: 200, right: 240 },
+    ])).toEqual({ a: 0, b: 14, c: 0 });
   });
 });
